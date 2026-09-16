@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   id="Definitions_SimpleApproval"
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+
+    <bpmn:process id="Process_SimpleApproval" isExecutable="true">
+        <bpmn:startEvent id="StartEvent_1" name="Start">
+            <bpmn:outgoing>Flow_1</bpmn:outgoing>
+        </bpmn:startEvent>
+
+        <bpmn:userTask id="Task_SubmitRequest" name="Submit Request">
+            <bpmn:incoming>Flow_1</bpmn:incoming>
+            <bpmn:outgoing>Flow_2</bpmn:outgoing>
+            <bpmn:documentation>User submits a request for approval</bpmn:documentation>
+        </bpmn:userTask>
+
+        <bpmn:exclusiveGateway id="Gateway_Approval" name="Approved?">
+            <bpmn:incoming>Flow_2</bpmn:incoming>
+            <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+            <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+        </bpmn:exclusiveGateway>
+
+        <bpmn:endEvent id="EndEvent_Approved" name="Request Approved">
+            <bpmn:incoming>Flow_Approved</bpmn:incoming>
+        </bpmn:endEvent>
+
+        <bpmn:endEvent id="EndEvent_Rejected" name="Request Rejected">
+            <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+        </bpmn:endEvent>
+
+        <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_SubmitRequest" />
+        <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_SubmitRequest" targetRef="Gateway_Approval" />
+        <bpmn:sequenceFlow id="Flow_Approved" name="approved = true" sourceRef="Gateway_Approval" targetRef="EndEvent_Approved">
+            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${approved == true}</bpmn:conditionExpression>
+        </bpmn:sequenceFlow>
+        <bpmn:sequenceFlow id="Flow_Rejected" name="approved = false" sourceRef="Gateway_Approval" targetRef="EndEvent_Rejected">
+            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">${approved == false}</bpmn:conditionExpression>
+        </bpmn:sequenceFlow>
+    </bpmn:process>
+
+</bpmn:definitions>

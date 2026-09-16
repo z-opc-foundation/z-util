@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-serialize</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>z-util-serialize-schema</artifactId>
+    <packaging>jar</packaging>
+    <name>z-util :: serialize :: schema (annotations only, zero runtime deps)</name>
+
+</project>

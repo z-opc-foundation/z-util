@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>z-util-parser</artifactId>
+    <packaging>pom</packaging>
+    <name>z-util :: parser (multi-format parser aggregator: json/xml/yaml/csv/ini/properties/proto/toml)</name>
+    <description>静态文件解析分支：JSON、XML、YAML、Properties、INI、CSV、TOML、Proto</description>
+
+    <modules>
+        <module>z-util-parser-json</module>
+        <module>z-util-parser-xml</module>
+        <module>z-util-parser-yaml</module>
+        <module>z-util-parser-properties</module>
+        <module>z-util-parser-ini</module>
+        <module>z-util-parser-csv</module>
+        <module>z-util-parser-toml</module>
+        <module>z-util-parser-proto</module>
+    </modules>
+</project>

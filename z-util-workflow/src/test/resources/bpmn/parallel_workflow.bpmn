@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   id="Definitions_ParallelWorkflow"
+                   targetNamespace="http://bpmn.io/schema/bpmn">
+
+    <bpmn:process id="Process_ParallelWorkflow" isExecutable="true">
+        <bpmn:startEvent id="StartEvent_1" name="Start">
+            <bpmn:outgoing>Flow_1</bpmn:outgoing>
+        </bpmn:startEvent>
+
+        <bpmn:parallelGateway id="Gateway_Split" name="Split">
+            <bpmn:incoming>Flow_1</bpmn:incoming>
+            <bpmn:outgoing>Flow_TaskA</bpmn:outgoing>
+            <bpmn:outgoing>Flow_TaskB</bpmn:outgoing>
+        </bpmn:parallelGateway>
+
+        <bpmn:serviceTask id="Task_A" name="Task A">
+            <bpmn:incoming>Flow_TaskA</bpmn:incoming>
+            <bpmn:outgoing>Flow_JoinA</bpmn:outgoing>
+            <bpmn:documentation>Parallel task A execution</bpmn:documentation>
+        </bpmn:serviceTask>
+
+        <bpmn:serviceTask id="Task_B" name="Task B">
+            <bpmn:incoming>Flow_TaskB</bpmn:incoming>
+            <bpmn:outgoing>Flow_JoinB</bpmn:outgoing>
+            <bpmn:documentation>Parallel task B execution</bpmn:documentation>
+        </bpmn:serviceTask>
+
+        <bpmn:parallelGateway id="Gateway_Join" name="Join">
+            <bpmn:incoming>Flow_JoinA</bpmn:incoming>
+            <bpmn:incoming>Flow_JoinB</bpmn:incoming>
+            <bpmn:outgoing>Flow_End</bpmn:outgoing>
+        </bpmn:parallelGateway>
+
+        <bpmn:endEvent id="EndEvent_1" name="End">
+            <bpmn:incoming>Flow_End</bpmn:incoming>
+        </bpmn:endEvent>
+
+        <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Gateway_Split" />
+        <bpmn:sequenceFlow id="Flow_TaskA" sourceRef="Gateway_Split" targetRef="Task_A" />
+        <bpmn:sequenceFlow id="Flow_TaskB" sourceRef="Gateway_Split" targetRef="Task_B" />
+        <bpmn:sequenceFlow id="Flow_JoinA" sourceRef="Task_A" targetRef="Gateway_Join" />
+        <bpmn:sequenceFlow id="Flow_JoinB" sourceRef="Task_B" targetRef="Gateway_Join" />
+        <bpmn:sequenceFlow id="Flow_End" sourceRef="Gateway_Join" targetRef="EndEvent_1" />
+    </bpmn:process>
+
+</bpmn:definitions>

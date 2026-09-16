@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  log4j2 标准配置模板（z-util 推荐版）。
+  复制本文件到项目的 src/main/resources/log4j2.xml 即可使用。
+  若不需要 JSON 路由，可以删除 marker / routing 相关段落。
+
+  使用本模板需在 pom.xml 引入：
+      org.apache.logging.log4j:log4j-core
+      org.apache.logging.log4j:log4j-slf4j-impl
+      （log4j-jackson / log4j-layout-json-template-core：用于 JSON 输出）
+
+  关键约定：
+    - 所有日志自动包含 traceId / spanId（来自 SLF4J MDC，由 z-util-core 的 TraceContextHolder 注入）
+    - 用户可以加自己的 MDC 字段：LogContext.put("userId", uid)
+    - 业务/安全/性能日志用 marker 路由到独立文件：LogMarkers.BUSINESS / SECURITY / PERFORMANCE
+-->
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <!-- 应用名（每条日志都有）：通过 -Dapp.name=xxx 覆盖 -->
+        <Property name="APP_NAME">${sys:app.name:-unknown-app}</Property>
+        <!-- 日志根目录：-Dlog.dir=/var/logs/app 覆盖 -->
+        <Property name="LOG_DIR">${sys:log.dir:-logs}</Property>
+        <!-- 日志文件最大 100MB，保留 30 天 -->
+        <Property name="MAX_SIZE">100 MB</Property>
+        <Property name="MAX_DAYS">30</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台：开发环境用 pattern；生产用 JSON -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %X{traceId:-no-trace} %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- JSON 控制台（生产推荐，配合 k8s/容器 stdout 收集） -->
+        <Console name="ConsoleJson" target="SYSTEM_OUT">
+            <JsonTemplateLayout eventTemplateUri="classpath:Log4j2JsonTemplate.json"/>
+        </Console>
+
+        <!-- 全量日志：按大小+时间滚动 -->
+        <RollingFile name="AppLog"
+                     fileName="${LOG_DIR}/app.log"
+                     filePattern="${LOG_DIR}/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %X{traceId:-no-trace} %X{userId:-} %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="${MAX_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${MAX_DAYS}">
+                <Delete basePath="${LOG_DIR}" maxDepth="2">
+                    <IfFileName glob="app-*.log.gz"/>
+                    <IfLastModified age="${MAX_DAYS}d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- 错误日志：单独文件，便于报警 -->
+        <RollingFile name="ErrorLog"
+                     fileName="${LOG_DIR}/error.log"
+                     filePattern="${LOG_DIR}/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %X{traceId:-no-trace} %X{userId:-} %logger{36} - %msg%n"/>
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="${MAX_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${MAX_DAYS}"/>
+        </RollingFile>
+
+        <!-- 异步包装：所有 FileAppender 走 Async，业务线程不阻塞 -->
+        <Async name="AsyncApp" bufferSize="8192" blocking="false">
+            <AppenderRef ref="AppLog"/>
+            <AppenderRef ref="ErrorLog"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- 框架日志调高门槛，减少噪音 -->
+        <Logger name="org.springframework" level="INFO"/>
+        <Logger name="org.apache.kafka" level="WARN"/>
+        <Logger name="org.apache.zookeeper" level="WARN"/>
+        <Logger name="okhttp3" level="INFO"/>
+
+        <!-- 业务包：DEBUG 可在线调整而不重启（Log4j2 monitorInterval=30） -->
+        <Logger name="com.zifang" level="DEBUG"/>
+
+        <!-- 根：异步输出 -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AsyncApp"/>
+        </Root>
+    </Loggers>
+</Configuration>

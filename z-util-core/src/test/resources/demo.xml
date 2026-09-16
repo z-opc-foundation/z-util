@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Java Tutorials and Examples 2</title>
+        <language>en-us</language>
+        <item>
+            <title><![CDATA[Java Tutorials 2]]></title>
+            <link>http://www.javacodegeeks.com/</link>
+        </item>
+        <item>
+            <title><![CDATA[Java Examples 2]]></title>
+            <link>http://examples.javacodegeeks.com/</link>
+        </item>
+    </channel>
+    <college name="c1">
+        <class name="class1">
+            <student name="stu1" sex='male' age="21"/>
+            <student name="stu2" sex='female' age="20"/>
+            <student name="stu3" sex='female' age="20"/>
+        </class>
+    </college>
+    <bookstore>
+        <book>
+            <title lang="eng">Harry Potter</title>
+            <price>29.99</price>
+        </book>
+        <book>
+            <title lang="eng">Learning XML</title>
+            <price>39.95</price>
+        </book>
+    </bookstore>
+</rss>

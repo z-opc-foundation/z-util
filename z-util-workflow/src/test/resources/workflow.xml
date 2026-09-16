@@ -1,0 +1,55 @@
+<workflow>
+    <configurations>
+        <!--执行引擎，为多种处理模式做扩展点-->
+        <executor-engine>engine.mode.spark</executor-engine>
+        <property>
+            <com.zifang.util.proxy.aa>cc</com.zifang.util.proxy.aa>
+            <bb>dd</bb>
+        </property>
+    </configurations>
+    <!--<resource-adapter>engine.</resource-adapter>-->
+    <node-list>
+        <!--模仿css,name可以是表明一类别组件，id为特指某个，跳转的标识号-->
+        <!--每个resource只能携带一个单纯的数据-->
+        <node name="input" id="1">
+            <!--表明是什么类型的-->
+            <type>engine.nodeType.resource</type>
+            <service-unit>engine.service.resourceHandler</service-unit>
+            <parameter>
+                <hdfs>/user/a/a/com.zifang.util.proxy.aa.csv</hdfs>
+                <local>/home/zifang/com.zifang.util.proxy.aa.csv</local>
+                <hive>css.aaa</hive>
+            </parameter>
+        </node>
+        <node name="mapping" id="2">
+            <!--表明是什么类型的-->
+            <type>engine.nodeType.standard</type>
+            <!--表明需要什么服务单元-->
+            <service-unit>engine.service.changeColumnName</service-unit>
+            <!--每个服务所需要的参数构成可能不一样，需要动态传入单元组件，让单元组件自行处理参数操作，
+            如果发现参数不是服务组件需要的,就会报错-->
+            <parameter>
+                <pair>
+                    <master>com.zifang.util.proxy.aa</master>
+                    <refer>bb</refer>
+                </pair>
+                <pair>
+                    <master>cc</master>
+                    <refer>dd</refer>
+                </pair>
+            </parameter>
+            <!--每个node是双向链表结构-->
+            <connector>
+                <!--前面的节点-->
+                <pre>1</pre>
+                <!--后面的节点-->
+                <post>2</post>
+            </connector>
+        </node>
+        <node name="" id="3">
+
+        </node>
+    </node-list>
+
+
+</workflow>

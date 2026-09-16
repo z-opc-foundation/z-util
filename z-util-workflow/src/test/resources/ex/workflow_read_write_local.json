@@ -1,0 +1,72 @@
+{
+  "configurations": {
+    "engine": {
+      "type": "spark",
+      "mode": "engine.spark.mode.local",
+      "properties": {
+        "master": "spark://192.168.1.103:7077",
+        "appName": "cc",
+        "spark.sql.warehouse.dir": "hdfs://192.168.1.103:9000/user/hive/warehouse",
+        "hive.metastore.uris": "thrift://192.168.1.103:9083",
+        "spark.executor.memory": "2g",
+        "spark.driver.maxResultSize": "2g",
+        "spark.cores.max": "1",
+        "jars": "/home/zifang/workplace/idea_workplace/components/util-bigdata/target/util-bigdata-1.0-SNAPSHOT.jar",
+        "logLevel": "ERROR"
+      }
+    },
+    "runtimeParameter": {
+      "HADOOP_USER_NAME": "piday"
+    }
+  },
+  "workflowNodeList": [
+    {
+      "nodeId": "start",
+      "serviceUnit": "engine.service.empty",
+      "connector": {
+        "pre": [],
+        "post": [
+          "input_local"
+        ]
+      }
+    },
+    {
+      "nodeId": "input_local",
+      "name": "input_local",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleLocalInput",
+      "invokeParameter": {
+        "localFile": "/Users/zifang/workplace/idea_workplace/components/util-workflow/src/test/resources/data/input1.csv",
+        "tempName": "input_local",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "start"
+        ],
+        "post": [
+          "output_local"
+        ]
+      }
+    },
+    {
+      "nodeId": "output_local",
+      "name": "output_local",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleLocalOutput",
+      "invokeParameter": {
+        "outputDir": "/Users/zifang/workplace/idea_workplace/components/util-workflow/src/test/resources/data/input1_output",
+        "tempName": "input_local",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "input_local"
+        ],
+        "post": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+userId,name1   ,name1_value,c  ,d,e         ,name2
+u1    ,name1_u1,1          ,1  ,1,2019-10-11,name2_u3
+u1    ,name1_u1,1          ,2  ,2,2019-10-11,name2_u4
+u1    ,name1_u3,2          ,3  ,3,2019-10-11,name2_u2
+u2    ,name1_u2,3          ,4  ,4,2019-10-11,name2_u1
+u3    ,name1_u3,4          ,5  ,5,2019-10-11,name2_u1
+u4    ,name1_u4,5          ,6.1,a,2019-10-11,name2_u1

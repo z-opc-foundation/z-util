@@ -1,0 +1,643 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.yuku123</groupId>
+    <artifactId>z-util</artifactId>
+    <packaging>pom</packaging>
+    <version>${revision}</version>
+
+    <!-- ============================================================== -->
+    <!-- Maven Central 必需的 POM 元数据（缺一不可）                          -->
+    <!-- 由 `central` profile 触发，确保 GitHub Packages 流程不受影响         -->
+    <!-- ============================================================== -->
+    <name>z-util</name>
+    <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/aop/dsl/parser/expr/workflow/http/jdbc/math/ml/office/media/visualization/monitor/devops/distribute/cli/ch 等）</description>
+    <url>https://github.com/yuku123/z-util</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>yuku123</id>
+            <name>yuku123</name>
+            <email>1340947819@qq.com</email>
+            <organization>z-team</organization>
+            <organizationUrl>https://github.com/yuku123</organizationUrl>
+            <timezone>+08:00</timezone>
+            <roles>
+                <role>owner</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/yuku123/z-util.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/yuku123/z-util.git</developerConnection>
+        <url>https://github.com/yuku123/z-util</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <url>https://github.com/yuku123/z-util/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <properties>
+        <revision>1.0.10</revision>
+        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <compile.version>8</compile.version>
+
+        <!-- ==================== 第三方依赖版本集中管理 ==================== -->
+        <log4j.version>2.26.1</log4j.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <junit.version>5.11.4</junit.version>
+        <javax.inject.version>1</javax.inject.version>
+        <javax.annotation.version>1.3.2</javax.annotation.version>
+        <validation.version>2.0.1.Final</validation.version>
+        <javax.mail.version>1.6.2</javax.mail.version>
+        <servlet.version>3.1.0</servlet.version>
+        <jaxb.version>2.3.1</jaxb.version>
+        <jaxb.impl.version>2.3.9</jaxb.impl.version>
+        <jaxb.core.version>2.3.0.1</jaxb.core.version>
+        <druid.version>1.2.24</druid.version>
+        <guava.version>33.6.0-jre</guava.version>
+        <cglib.version>3.3.0</cglib.version>
+        <gson.version>2.14.0</gson.version>
+        <jackson.version>2.18.9</jackson.version>
+        <okhttp.version>4.12.0</okhttp.version>
+        <netty.version>4.1.137.Final</netty.version>
+        <antlr.version>4.13.2</antlr.version>
+        <jsoup.version>1.23.1</jsoup.version>
+        <javassist.version>3.32.0-GA</javassist.version>
+        <jol.version>0.17</jol.version>
+        <javaparser.version>3.28.2</javaparser.version>
+        <pdfbox.version>3.0.8</pdfbox.version>
+        <poi.version>5.5.1</poi.version>
+        <github-api.version>1.330</github-api.version>
+        <protobuf-java.version>3.25.5</protobuf-java.version>
+
+        <!-- Central Portal 上传凭证（由环境变量 CENTRAL_USERNAME / CENTRAL_TOKEN 注入） -->
+        <centralPortalUrl>https://central.sonatype.com</centralPortalUrl>
+        <centralPublishingServerUrl>https://central.sonatype.com</centralPublishingServerUrl>
+        <!-- 跳过 GPG 签名（本地 dry-run 时打开；真发 Central 时保持 false） -->
+        <central.gpg.skip>false</central.gpg.skip>
+    </properties>
+
+    <modules>
+        <module>z-util-core</module>
+        <module>z-util-office</module>
+        <module>z-util-media</module>
+        <module>z-util-dsl</module>
+        <module>z-util-parser</module>
+        <module>z-util-expr</module>
+        <module>z-util-workflow</module>
+        <module>z-util-visualization</module>
+        <module>z-util-jdbc</module>
+        <module>z-util-http</module>
+        <module>z-util-math</module>
+        <module>z-util-ml</module>
+        <module>z-util-monitor</module>
+        <module>z-util-devops</module>
+        <module>z-util-source</module>
+        <module>z-util-distribute</module>
+        <module>z-util-proxy</module>
+        <module>z-util-ch</module>
+        <module>z-util-cli</module>
+        <module>z-util-validation</module>
+        <module>z-util-cache</module>
+        <module>z-util-ioc</module>
+        <module>z-util-aop</module>
+        <module>z-util-serialize</module>
+        <module>z-util-all</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-all</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-monitor</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-schema</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-codegen</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-formats</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-distribute</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-cache</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-aop</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-jdbc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-math</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-proxy</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+
+            <!-- JUnit 5 全家桶（API + 注解 + 引擎），新测试统一用这个 -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <!-- Vintage Engine：让老 JUnit 4 测试（@Test org.junit.Test）在 JUnit 5 平台上跑 -->
+            <dependency>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>${javax.inject.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.annotation</groupId>
+                <artifactId>javax.annotation-api</artifactId>
+                <version>${javax.annotation.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>${validation.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib</artifactId>
+                <version>${cglib.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>${servlet.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- 强制升级 transitive jackson-core 到修复版本（部分依赖会拉入旧版） -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- Jackson JSR310 模块：支持 java.time (LocalDate / LocalDateTime / Instant) 序列化 -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- OkHttp HTTP 客户端 -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-sse</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+
+            <!-- Netty 网络框架 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+
+            <!-- JAXB API：提供 javax.xml.bind 相关注解 -->
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>${jaxb.version}</version>
+            </dependency>
+
+            <!-- JAXB 实现：提供具体的 XML 绑定功能 -->
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>${jaxb.impl.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- JAXB 核心工具类 -->
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-core</artifactId>
+                <version>${jaxb.core.version}</version>
+            </dependency>
+
+            <!-- Mail (迁移自已弃用的 javax.mail:mail 1.4.7，修复 CVE-2007-4566 / CVE-2019-10086 等历史漏洞) -->
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javax.mail.version}</version>
+            </dependency>
+
+            <!-- Apache Antlr (修复 CVE-2023-48728 等解析漏洞) -->
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
+            </dependency>
+
+            <!-- Javassist (高版本默认开启 module 支持，修复 Java 17+ 兼容性) -->
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javassist.version}</version>
+            </dependency>
+
+            <!-- JOL (Java Object Layout) -->
+            <dependency>
+                <groupId>org.openjdk.jol</groupId>
+                <artifactId>jol-core</artifactId>
+                <version>${jol.version}</version>
+            </dependency>
+
+            <!-- JavaParser (修复 GHSA-7jpf-6353-jpw9 / GHSA-3q4w-fp89-2g7c 等解析漏洞) -->
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-symbol-solver-core</artifactId>
+                <version>${javaparser.version}</version>
+            </dependency>
+
+            <!-- Apache PDFBox (升级到 3.0.8，修复 CVE-2022-28284 等高危 RCE) -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>fontbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>xmpbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>preflight</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
+            <!-- Apache POI (升级到 5.5.1，修复 CVE-2022-26336 等历史 OOB 漏洞；保持 poi-ooxml-full 与 poi 一致) -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml-full</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
+
+            <!-- jsoup (1.23.x 修复 CVE-2024-46506 等) -->
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoup.version}</version>
+            </dependency>
+
+            <!-- github-api (升级到 1.321) -->
+            <dependency>
+                <groupId>org.kohsuke</groupId>
+                <artifactId>github-api</artifactId>
+                <version>${github-api.version}</version>
+            </dependency>
+
+            <!-- 强制升级 transitive protobuf-java（mysql-connector-j 拉入旧版） -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <source>${compile.version}</source>
+                    <target>${compile.version}</target>
+                    <encoding>utf-8</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.17.1</version>
+                <configuration>
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version> <!-- 使用最新稳定版 -->
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <!-- 绑定到 verify，确保 deploy 到任何仓库（含 Central）时都附带 sources.jar -->
+                        <phase>verify</phase>
+                        <goals>
+                            <!-- 生成源码包并附加到构建结果中 -->
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.7.3</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>sandbox</id>
+            <modules>
+                <module>z-util-zex</module>
+            </modules>
+        </profile>
+
+        <!-- ============================================================== -->
+        <!-- `mvn deploy -Pcentral` 走 Maven Central（Sonatype Central Portal）-->
+        <!-- 同时改写 distributionManagement、追加 gpg/javadoc/central-publishing -->
+        <!-- ============================================================== -->
+        <profile>
+            <id>central</id>
+            <properties>
+                <!-- true 跳过 javadoc 生成（用于本地 dry-run）；真发 Central 时改为 false -->
+                <maven.javadoc.skip>false</maven.javadoc.skip>
+                <!-- true 跳过 GPG 签名（用于本地 dry-run）；真发 Central 时改为 false -->
+                <central.gpg.skip>false</central.gpg.skip>
+            </properties>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </repository>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </snapshotRepository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <!-- 中央发布场景下，禁用 maven-deploy-plugin 的 default-deploy，
+                         改由 central-publishing-maven-plugin 接管（不会重复 deploy 到 snapshotRepository） -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>3.1.4</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Maven Central 强制要求 javadoc.jar；用 doclint=none 规避 Java 8+ 的 HTML5 校验 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.11.2</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <failOnError>false</failOnError>
+                            <failOnWarnings>false</failOnWarnings>
+                            <quiet>true</quiet>
+                            <source>${compile.version}</source>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- GPG 签名：passphrase 通过环境变量 CENTRAL_GPG_PASSPHRASE 传入 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <configuration>
+                            <skip>${central.gpg.skip}</skip>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central Portal 上传插件（替代老的 nexus-staging-maven-plugin） -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <tokenAuth>true</tokenAuth>
+                            <autoPublish>true</autoPublish>
+                            <!-- waitUntil=uploaded：每个子模块 deploy 完只等上传成功不等 published -->
+                            <waitUntil>uploaded</waitUntil>
+                            <!-- waitMaxTime=1800s（30 分钟）：中央 Portal validation 可能慢 -->
+                            <waitMaxTime>1800</waitMaxTime>
+                            <waitPollingInterval>10</waitPollingInterval>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ============================================================== -->
+        <!-- dry-run profile：跳过 javadoc/gpg/central-publishing，便于本地验证 -->
+        <!-- ============================================================== -->
+        <profile>
+            <id>central-dryrun</id>
+            <properties>
+                <maven.javadoc.skip>true</maven.javadoc.skip>
+                <central.gpg.skip>true</central.gpg.skip>
+            </properties>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </repository>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+    </profiles>
+</project>

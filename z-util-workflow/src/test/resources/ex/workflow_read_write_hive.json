@@ -1,0 +1,70 @@
+{
+  "configurations": {
+    "engine": {
+      "type": "spark",
+      "mode": "engine.spark.mode.cluster",
+      "properties": {
+        "master": "spark://192.168.1.103:7077",
+        "appName": "cc",
+        "spark.sql.warehouse.dir": "hdfs://192.168.1.103:9000/user/hive/warehouse",
+        "hive.metastore.uris": "thrift://192.168.1.103:9083",
+        "spark.executor.memory": "2g",
+        "spark.driver.maxResultSize": "2g",
+        "spark.cores.max": "1",
+        "jars": "/home/zifang/workplace/idea_workplace/components/util-bigdata/target/util-bigdata-1.0-SNAPSHOT.jar",
+        "logLevel": "ERROR"
+      }
+    },
+    "runtimeParameter": {
+      "HADOOP_USER_NAME": "piday"
+    }
+  },
+  "workflowNodeList": [
+    {
+      "nodeId": "start",
+      "serviceUnit": "engine.service.empty",
+      "connector": {
+        "pre": [],
+        "post": [
+          "input_hive"
+        ]
+      }
+    },
+    {
+      "nodeId": "input_hive",
+      "name": "input_hive",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleHiveInput",
+      "properties": {
+        "tableName": "model_test.raw",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "start"
+        ],
+        "post": [
+          "output_hive"
+        ]
+      }
+    },
+    {
+      "nodeId": "output_hive",
+      "name": "output_hive",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleHiveOutput",
+      "properties": {
+        "tableName": "model_test.raw_other",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "input_hive"
+        ],
+        "post": []
+      }
+    }
+  ]
+}

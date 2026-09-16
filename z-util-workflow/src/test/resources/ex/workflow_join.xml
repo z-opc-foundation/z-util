@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configurations>
+    <engine>
+        <type>spark</type>
+        <mode>engine.spark.mode.local</mode>
+        <properties>
+            <master>spark://192.168.1.103:7077</master>
+            <appName>cc</appName>
+            <spark.sql.warehouse.dir>hdfs://192.168.1.103:9000/user/hive/warehouse</spark.sql.warehouse.dir>
+            <hive.metastore.uris>thrift://192.168.1.103:9083</hive.metastore.uris>
+            <spark.executor.memory>2g</spark.executor.memory>
+            <spark.driver.maxResultSize>2g</spark.driver.maxResultSize>
+            <spark.cores.max>1</spark.cores.max>
+            <jars>/home/zifang/workplace/idea_workplace/components/util-bigdata/target/util-bigdata-1.0-SNAPSHOT.jar
+            </jars>
+            <logLevel>ERROR</logLevel>
+        </properties>
+    </engine>
+    <runtimeParameter>
+        <HADOOP_USER_NAME>piday</HADOOP_USER_NAME>
+    </runtimeParameter>
+</configurations>
+<workflowNodeList>
+<nodeId>start</nodeId>
+<serviceUnit>engine.service.empty</serviceUnit>
+<connector>
+    <post>input1</post>
+    <post>input2</post>
+</connector>
+</workflowNodeList>
+<workflowNodeList>
+<nodeId>input1</nodeId>
+<name>input1</name>
+<type>engine.nodeType.resource</type>
+<serviceUnit>engine.service.resourceHandler</serviceUnit>
+<properties>
+    <localFile>/Users/zifang/workplace/idea_workplace/components/util-workflow/src/test/resources/input1.csv</localFile>
+    <tempName>input1</tempName>
+</properties>
+<connector>
+    <pre>start</pre>
+    <post>join1</post>
+</connector>
+</workflowNodeList>
+<workflowNodeList>
+<nodeId>input2</nodeId>
+<name>input2</name>
+<type>engine.nodeType.resource</type>
+<serviceUnit>engine.service.resourceHandler</serviceUnit>
+<properties>
+    <localFile>/Users/zifang/workplace/idea_workplace/components/util-workflow/src/test/resources/input2.csv</localFile>
+    <tempName>input2</tempName>
+</properties>
+<connector>
+    <pre>start</pre>
+    <post>join1</post>
+</connector>
+</workflowNodeList>
+<workflowNodeList>
+<nodeId>join1</nodeId>
+<name>join_input1_input2</name>
+<type>engine.nodeType.connectors</type>
+<serviceUnit>engine.service.joinHandler</serviceUnit>
+<properties>
+    <sql>select input1.*,input2.score from input1 inner join input2 on input1.userId = input2.userId</sql>
+</properties>
+<connector>
+    <pre>input1</pre>
+    <pre>input2</pre>
+    <post>changeColumnName</post>
+</connector>
+</workflowNodeList>
+<workflowNodeList>
+<nodeId>changeColumnName</nodeId>
+<name>changeColumnName</name>
+<type>engine.nodeType.connectors</type>
+<serviceUnit>engine.service.changeColumn</serviceUnit>
+<properties>
+    <name>changedName</name>
+</properties>
+<connector>
+    <pre>join1</pre>
+</connector>
+</workflowNodeList>
+

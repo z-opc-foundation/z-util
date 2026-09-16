@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util-expr</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: expr :: js (self-made JS engine + PlayScript reference)</name>
+
+    <artifactId>z-util-expr-js</artifactId>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!-- 排除 resources 下的演示代码（SpEL 等教程示例），不打包到生产 JAR -->
+                <excludes>
+                    <exclude>**/*.java</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/java</directory>
+            </resource>
+        </resources>
+    </build>
+
+    <dependencies>
+        <!-- 解析框架依赖（ANTLR 等） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-dsl</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 测试：JUnit 4 @Test 注解 + Vintage Engine 让老测试在 JUnit 5 平台运行 -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

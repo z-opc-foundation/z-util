@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: cache (in-memory cache with TTL + LRU / W-TinyLFU + CacheBuilder + decorators)</name>
+
+    <artifactId>z-util-cache</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <!-- z-util-core for base utilities -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-core</artifactId>
+        </dependency>
+
+        <!--
+            IT 测试需要 z-util-aop：
+            - WebLogAspectReplacementIT 用 @Advise / @Intercept / ProxyFactory
+            通过 z-util-core 传递依赖可见，但显式声明便于阅读。
+            保持 test scope：不污染 cache 模块的运行时依赖。
+        -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-aop</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

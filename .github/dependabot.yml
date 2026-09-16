@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      apache-commons:
+        patterns:
+          - "org.apache.commons:*"
+          - "commons-*:"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson*:*"
+      log4j:
+        patterns:
+          - "org.apache.logging.log4j:*"
+      spring:
+        patterns:
+          - "org.springframework:*"
+      testing:
+        patterns:
+          - "junit:*"
+          - "org.junit.jupiter:*"
+          - "org.mockito:*"
+          - "org.powermock:*"
+          - "org.seleniumhq.selenium:*"
+    # 自动 rebase / auto-merge 适合：CI 绿、单一依赖、非破坏性更新
+    rebase-strategy: "auto"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"

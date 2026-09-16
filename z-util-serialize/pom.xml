@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: serialize (cross-language, schema-first, zero-copy, interoperable codec)</name>
+    <description>自研序列化框架：Schema-first 多语言 codegen + 零拷贝 + 预编译 + 主流格式互转 + 压缩加密一体化</description>
+    <artifactId>z-util-serialize</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>z-util-serialize-schema</module>
+        <module>z-util-serialize-core</module>
+        <module>z-util-serialize-codegen</module>
+        <module>z-util-serialize-formats</module>
+        <module>z-util-serialize-benchmarks</module>
+        <module>z-util-serialize-it</module>
+    </modules>
+
+</project>

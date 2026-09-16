@@ -1,0 +1,54 @@
+package com.zifang.util.core.concurrency.problems;
+
+/**
+ * @author zifang Lee (oldratlee at gmail dot com)
+ */
+
+/**
+ * InconsistentReadDemo类。
+ */
+public class InconsistentReadDemo {
+    int count = 1;
+
+    /**
+     * main方法。
+     * * @param args String[]类型参数
+     *
+     * @return static void类型返回值
+     */
+    public static void main(String[] args) {
+        InconsistentReadDemo demo = new InconsistentReadDemo();
+
+        Thread thread = new Thread(demo.getConcurrencyCheckTask());
+        thread.start();
+
+        while (true) {
+            demo.count++;
+        }
+    }
+
+    ConcurrencyCheckTask getConcurrencyCheckTask() {
+        return new ConcurrencyCheckTask();
+    }
+
+    private class ConcurrencyCheckTask implements Runnable {
+        @Override
+        /**
+         * run方法。
+         */
+        public void run() {
+            int c = 0;
+            for (int i = 0; ; i++) {
+                // 在同一线程连读2次
+                int c1 = count;
+                int c2 = count;
+                if (c1 != c2) {
+                    c++;
+                    // 我的开发机上，进程启动时可以观察到一批不一致读
+                    System.err.printf("Fuck! Got inconsistent read!! check time=%s, happen time=%s(%s%%), 1=%s, 2=%s\n",
+                            i + 1, c, (float) c / (i + 1) * 100, c1, c2);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,77 @@
+{
+  "configurations": {
+    "engine": {
+      "type": "spark",
+      "mode": "engine.spark.mode.local",
+      "properties": {
+        "master": "spark://192.168.1.103:7077",
+        "appName": "cc",
+        "spark.sql.warehouse.dir": "hdfs://192.168.1.103:9000/user/hive/warehouse",
+        "hive.metastore.uris": "thrift://192.168.1.103:9083",
+        "spark.executor.memory": "2g",
+        "spark.driver.maxResultSize": "2g",
+        "spark.cores.max": "1",
+        "jars": "/home/zifang/workplace/idea_workplace/components/util-bigdata/target/util-bigdata-1.0-SNAPSHOT.jar",
+        "logLevel": "ERROR"
+      }
+    },
+    "runtimeParameter": {
+      "HADOOP_USER_NAME": "piday"
+    }
+  },
+  "workflowNodeList": [
+    {
+      "nodeId": "start",
+      "serviceUnit": "engine.service.empty",
+      "connector": {
+        "pre": [],
+        "post": [
+          "input_mysql"
+        ]
+      }
+    },
+    {
+      "nodeId": "input_mysql",
+      "name": "input_mysql",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleMysqlInput",
+      "properties": {
+        "dbUrl": "jdbc:mysql://localhost:3306/test",
+        "table": "test",
+        "user": "root",
+        "password": "zxc123",
+        "tempName": "input_mysql",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "start"
+        ],
+        "post": [
+          "output_mysql"
+        ]
+      }
+    },
+    {
+      "nodeId": "output_mysql",
+      "name": "output_mysql",
+      "type": "engine.nodeType.resource",
+      "serviceUnit": "engine.service.resourceHandler",
+      "invokeDynamic": "handleMysqlOutput",
+      "properties": {
+        "dbUrl": "jdbc:mysql://localhost:3306/test",
+        "table": "test2",
+        "user": "root",
+        "password": "zxc123",
+        "flush": "yes"
+      },
+      "connector": {
+        "pre": [
+          "input_mysql"
+        ],
+        "post": []
+      }
+    }
+  ]
+}
