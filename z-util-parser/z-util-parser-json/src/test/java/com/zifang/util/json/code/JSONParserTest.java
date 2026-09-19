@@ -321,4 +321,35 @@ public class JSONParserTest {
         JsonObject obj = (JsonObject) jsonParser.fromJSON("{\"a\": \"str\"}");
         obj.getJsonArray("a");
     }
+
+    // ===== 长字符串（StringLiteral unrolled loop，防正则递归爆栈） =====
+
+    @Test
+    /**
+     * testParseLongPlainString方法：10KB 无转义长字符串不得 StackOverflowError。
+     * 历史：StringLiteral 为 (A|B)* 交替循环时，Java 正则按字符递归 match，>2KB 即爆栈。
+     */
+    public void testParseLongPlainString() throws Exception {
+        StringBuilder big = new StringBuilder();
+        for (int i = 0; i < 1000; i++) {
+            big.append("0123456789");
+        }
+        JsonObject obj = (JsonObject) jsonParser.fromJSON("{\"k\": \"" + big + "\"}");
+        assertEquals(10000, ((String) obj.get("k")).length());
+    }
+
+    @Test
+    /**
+     * testParseLongEscapedString方法：长字符串含转义序列（unrolled loop 迭代路径）。
+     */
+    public void testParseLongEscapedString() throws Exception {
+        StringBuilder esc = new StringBuilder();
+        for (int i = 0; i < 2000; i++) {
+            esc.append("a\\\"b");
+        }
+        JsonObject obj = (JsonObject) jsonParser.fromJSON("{\"k\": \"" + esc + "\"}");
+        String v = (String) obj.get("k");
+        assertEquals(6000, v.length());
+        assertEquals(true, v.contains("\""));
+    }
 }
