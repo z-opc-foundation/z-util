@@ -67,7 +67,7 @@
         <javax.mail.version>1.6.2</javax.mail.version>
         <servlet.version>3.1.0</servlet.version>
         <jaxb.version>2.3.1</jaxb.version>
-        <jaxb.impl.version>2.3.9</jaxb.impl.version>
+        <jaxb.impl.version>4.0.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
         <druid.version>1.2.24</druid.version>
         <guava.version>33.6.0-jre</guava.version>
