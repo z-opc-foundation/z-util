@@ -131,12 +131,24 @@ public class FileUtilTest {
     @Test
     /**
      * testPathValidate方法。
+     * <p>
+     * pathValidate 的契约是"沿路径逐级 mkdir，全通才 true"，且它无条件剥掉首个 '/'，
+     * 所以只对相对 CWD 的路径有意义：绝对路径（如系统临时目录）会被当成 CWD 下的相对路径，
+     * 而"不存在的路径返回 false"的假设更危险——它会真的在仓库里把目录建出来。
      */
     public void testPathValidate() throws IOException {
-        File f = File.createTempFile("validate", ".txt", tempBaseDir);
-        assertTrue(FileUtil.pathValidate(f.getPath()));
-        f.delete();
-        assertFalse(FileUtil.pathValidate("/non/existent/path/12345.txt"));
+        File base = new File("target/path-validate-" + System.nanoTime());
+        try {
+            File nested = new File(base, "a/b");
+            assertTrue(FileUtil.pathValidate(nested.getPath()));
+            assertTrue("沿途目录必须被建出来", nested.exists());
+
+            File blocker = new File(nested, "blocker");
+            Files.write(blocker.toPath(), new byte[0]);
+            assertFalse("中间层是文件时建不出下级目录", FileUtil.pathValidate(new File(blocker, "deeper").getPath()));
+        } finally {
+            deleteRecursively(base);
+        }
     }
 
     // ==================== getFileContent ====================
