@@ -52,7 +52,7 @@
 | [z-util-jdbc](#z-util-jdbc) | 数据源注册 + 多方言动态查询 + 内存表处理 + 极简 ORM | `com.zifang.util.db.*` |
 | [z-util-dsl](#z-util-dsl) | 自研 DSL 解析框架 | `com.zifang.util.dsl.*` |
 | [z-util-parser](#z-util-parser) | 多格式解析器（JSON/XML/YAML/CSV/TOML） | `com.zifang.util.parser.*` |
-| [z-util-expr](#z-util-expr) | 表达式引擎（EL/Groovy/JS/Lua/SQL） | `com.zifang.util.expr.*` |
+| [z-util-expr](#z-util-expr) | 表达式引擎（EL/Groovy/JS/Lua/SQL + OBJ 对象整形语言） | `com.zifang.util.expr.*` |
 
 ### 数学与机器学习
 
@@ -173,6 +173,8 @@ def.setPortNumber(3306);
 def.setSchemaMark("report_db");
 def.setUserName("readonly");
 def.setPw("******");
+// 拿不到 host/port 拆分、只有整条地址时（如从别处导入的数据源）：
+// def.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/report_db"); // 方言按 URL 识别，datasourceType 可省
 registry.register(def);
 
 // 动态查询：结构化条件 → 参数化 SQL，无需实体类
@@ -199,14 +201,55 @@ Table paid = mem.table("t_order").where("status", "PAID").sort("amount", false);
 ```
 
 **核心能力**：
-- 数据源管理：`DataSourceRegistry`（多源注册/换绑/注销，探活通过才发布）/ `DataSourceContext` / `PoolSpec`（连接池与保活策略）
+- 数据源管理：`DataSourceRegistry`（多源注册/换绑/注销，探活通过才发布）/ `DataSourceContext` / `PoolSpec`（连接池与保活策略）；`DataSourceDTO` 即可按 host+port+库建串，也可直接给 `jdbcUrl` 整条接入
 - 方言抽象：`Dialect` + `MySqlDialect` / `PostgresDialect` / `H2Dialect`，`Dialects` 按标识、JDBC URL 或连接自动识别；覆盖建串、标识符引用、分页、计数包装
 - 动态查询：`Query` / `Criteria` / `QueryCompiler`（条件树编译，标识符白名单 + 值全部 `?` 绑定）、`SqlTemplate`（`${name}` 命名参数，跳过字面量与注释）、`DynamicQuery`（执行 + 分页 + 元数据读取）
 - 内存处理：`InMemoryTables` 把 JDBC 取出的行注册到 `z-util-expr-sql` 的 `VirtualTableEngine`，之后的 join / group by / 聚合 / 表达式函数与链式算子（`where` `sort` `addColumn` `groupBy` `aggregate`）都在内存完成（引擎暂不支持窗口函数）；`DynamicQuery.maxRows(n)` 控制进入内存的量级
+- 结构整形：SQL 只能产出二维表，`InMemoryTables.shape(spec)` 再交给 `z-util-expr-obj` 的对象整形语言，把这张表抬成渲染要的高维结构（嵌套对象 / 键值映射 / 树 / 矩阵）。取数链因此是完整一段：库里拿原始数据 → 内存 SQL 粗糙产出二维表 → 对象 DSL 抬成任意结构
 - 注解驱动：`@Select` / `@Insert` / `@Update` / `@Delete`
 - 事务支持：`@Transactional` + `TransactionManager`
 - 分页插件：`MyBatisPageInterceptor` + `PageDialect`（含 Oracle ROWNUM / 标准 FETCH）
 - 代码生成：`JpaStratege` / `MybaitsStratige`
+
+### z-util-expr
+
+表达式语言家族，每种语言一个入口类，彼此不共用 SPI（选型按场景，不强行抽象）：
+
+| 子模块 | 入口 | 用途 |
+|--------|------|------|
+| z-util-expr-el | `ElEvaluator` | 自研 EL，零三方依赖，`${a}` / 算术 / 比较 / 三元 |
+| z-util-expr-groovy / -lua | `GroovyExecutor` / `LuaExecutor` | 脚本扩展点 |
+| z-util-expr-js | `ExpressionEngine`（接口） | 自研表达式引擎雏形 |
+| z-util-expr-sql | `VirtualTableEngine` | 内存 SQL：把行数据当表来查，join / group by / 聚合 |
+| z-util-expr-obj | `ObjEngine` | 对象整形：二维表 → 任意高维结构 |
+
+**OBJ 是链路的最后一段**：库里拿原始数据 → 内存 SQL 粗糙产出二维表 → OBJ 把二维表抬成渲染要的形状。
+SQL 表达不了"一个分组一个对象、对象里再套明细数组"，而前端要的恰恰是这种结构，所以这段既不能省，
+也不该被各产品用自己的 Java 重写一遍。
+
+程序的形状就是 JSON（Map / List / 字面量），因此本语言不带语法解析器——任何给出保序 Map/List 树的
+解析器（Jackson `readValue(json, Object.class)`、Spring `@RequestBody Map`）解析出来即可直接执行：
+
+```java
+// [取数, 整形] 管道：分组 + 组内聚合 + 明细数组 + 按键值对象收口
+Object spec = mapper.readValue("["
+        + " {\"op\": \"from\", \"sql\": \"SELECT dept, name, amount FROM v_order\"},"
+        + " {\"op\": \"group\", \"by\": \"dept\", \"items\": \"orders\","
+        + "  \"agg\": {\"total\": \"SUM(amount)\"},"
+        + "  \"into\": {\"dept\": \"${dept}\", \"total\": \"${total}\","
+        + "             \"orders\": {\"op\": \"map\", \"of\": \"orders\","
+        + "                            \"into\": {\"who\": \"${name}\", \"amount\": \"${amount}\"}}}},"
+        + " {\"op\": \"keyBy\", \"key\": \"dept\"}"
+        + "]", Object.class);
+// {A组: {dept, total, orders: [{who, amount}, ...]}, B组: ...}
+Object doc = new ObjEngine(tableSource).shape(spec);
+```
+
+算子清单：`from` `select` `where` `order` `limit` `one` `group` `fold` `map` `keyBy` `tree`
+`pivot` `unpivot` `get` `set`。行内表达式一律是 EL 原文，模板槽位（`into` / `value`）里的字符串
+才是字面量，取值要写 `${列名}`。报错一律带上槽位名与实际值——spec 多由 AI 生成，静默 null 会把
+问题推到渲染时才发现。`order` 的空值不参与升降序翻转：`desc` 也把空桶排在最后，因为"取最高的那一档"
+取回一个 null 是最难查的错。
 
 ### z-util-parser
 

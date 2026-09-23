@@ -180,6 +180,32 @@ public class DataSourceRegistryTest {
     }
 
     @Test
+    public void jdbcUrlOverridesAssembledAddress() {
+        DataSourceDTO def = h2("report", "reg_raw_url");
+        def.setDatasourceType(null);
+        def.setJdbcUrl("jdbc:h2:mem:reg_raw_url;DB_CLOSE_DELAY=-1");
+        def.setDatasourceUrl("10.255.255.1");
+        def.setPortNumber(1);
+        registry.register(def);
+        assertEquals(H2Dialect.ID, registry.dialect("report").id());
+        assertEquals("jdbc:h2:mem:reg_raw_url;DB_CLOSE_DELAY=-1", registry.def("report").getJdbcUrl());
+    }
+
+    @Test
+    public void illegalJdbcUrlRejected() {
+        DataSourceDTO def = h2("report", "reg_bad_url");
+        def.setJdbcUrl("mysql://127.0.0.1:3306/db");
+        try {
+            registry.register(def);
+            fail("缺 jdbc: 前缀的地址应被拒绝");
+        } catch (BusinessException expected) {
+            assertTrue(expected.getMessage().contains("非法 JDBC URL"));
+        }
+        assertFalse(registry.contains("report"));
+        assertEquals(0, registry.size());
+    }
+
+    @Test
     public void closeReleasesEverything() {
         DruidDataSource a = (DruidDataSource) registry.register(h2("one", "reg_close"));
         DruidDataSource b = (DruidDataSource) registry.register(h2("two", "reg_close2"));

@@ -57,6 +57,12 @@
             <artifactId>z-util-expr-sql</artifactId>
         </dependency>
 
+        <!-- InMemoryTables.shape: 二维表再交给对象整形语言抬成高维结构 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-expr-obj</artifactId>
+        </dependency>
+
         <!-- OrderCreationIT 需要 distribute（NanoId, SegmentIdGenerator, UuidV7） -->
         <dependency>
             <groupId>io.github.yuku123</groupId>

@@ -23,6 +23,9 @@ public class DataSourceDTO {
     @Description("数据源地址")
     private String datasourceUrl;
 
+    @Description("完整 JDBC URL, 给出时优先于 datasourceUrl/portNumber/schemaMark 拼装")
+    private String jdbcUrl;
+
     @Description("端口")
     private Integer portNumber;
 
@@ -111,6 +114,24 @@ public class DataSourceDTO {
      */
     public void setDatasourceUrl(String datasourceUrl) {
         this.datasourceUrl = datasourceUrl;
+    }
+
+    /**
+     * 获取完整 JDBC 地址
+     *
+     * @return 完整 JDBC 地址
+     */
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    /**
+     * 设置完整 JDBC 地址。设置后方言按该地址识别, 不再由 {@code datasourceUrl} 与端口拼装。
+     *
+     * @param jdbcUrl 完整 JDBC 地址
+     */
+    public void setJdbcUrl(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
     }
 
     /**
@@ -227,7 +248,7 @@ public class DataSourceDTO {
      * @return String类型返回值
      */
     public String toString() {
-        return "DataSourceDTO{id=" + id + ", datasourceCode=" + datasourceCode + ", datasourceName=" + datasourceName + ", datasourceUrl=" + datasourceUrl + ", portNumber=" + portNumber + ", schemaMark=" + schemaMark + ", userName=" + userName + ", pw=" + (pw == null ? null : "******") + ", descriptions=" + descriptions + ", datasourceType=" + datasourceType + "}";
+        return "DataSourceDTO{id=" + id + ", datasourceCode=" + datasourceCode + ", datasourceName=" + datasourceName + ", datasourceUrl=" + datasourceUrl + ", jdbcUrl=" + jdbcUrl + ", portNumber=" + portNumber + ", schemaMark=" + schemaMark + ", userName=" + userName + ", pw=" + (pw == null ? null : "******") + ", descriptions=" + descriptions + ", datasourceType=" + datasourceType + "}";
     }
 
     @Override
@@ -244,6 +265,7 @@ public class DataSourceDTO {
                 Objects.equals(datasourceCode, that.datasourceCode) &&
                 Objects.equals(datasourceName, that.datasourceName) &&
                 Objects.equals(datasourceUrl, that.datasourceUrl) &&
+                Objects.equals(jdbcUrl, that.jdbcUrl) &&
                 Objects.equals(portNumber, that.portNumber) &&
                 Objects.equals(schemaMark, that.schemaMark) &&
                 Objects.equals(userName, that.userName) &&
@@ -258,6 +280,6 @@ public class DataSourceDTO {
      * @return int类型返回值
      */
     public int hashCode() {
-        return Objects.hash(id, datasourceCode, datasourceName, datasourceUrl, portNumber, schemaMark, userName, pw, descriptions, datasourceType);
+        return Objects.hash(id, datasourceCode, datasourceName, datasourceUrl, jdbcUrl, portNumber, schemaMark, userName, pw, descriptions, datasourceType);
     }
 }

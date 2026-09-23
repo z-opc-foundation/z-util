@@ -52,7 +52,7 @@
     </issueManagement>
 
     <properties>
-        <revision>1.0.11</revision>
+        <revision>1.0.12</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <compile.version>8</compile.version>
@@ -187,6 +187,12 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-expr-sql</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-obj</artifactId>
                 <version>${revision}</version>
             </dependency>
 

@@ -5,6 +5,7 @@ import com.zifang.util.core.meta.BaseStatusCode;
 import com.zifang.util.db.dialect.Dialect;
 import com.zifang.util.db.dialect.Dialects;
 import com.zifang.util.db.dialect.SqlType;
+import com.zifang.util.db.support.Identifiers;
 import com.zifang.util.db.sync.ResultSetMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,11 +208,15 @@ public class DynamicQuery {
 
     // ---------------------------------------------------------------- 元数据
 
+    /**
+     * 当前库可见的表与视图。视图一并返回：报表和低代码把视图当作一等数据单元。
+     */
     public List<String> tables() {
         List<String> names = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData meta = conn.getMetaData();
-            try (ResultSet rs = meta.getTables(conn.getCatalog(), conn.getSchema(), "%", new String[]{"TABLE"})) {
+            try (ResultSet rs = meta.getTables(conn.getCatalog(), conn.getSchema(), "%",
+                    new String[]{"TABLE", "VIEW"})) {
                 while (rs.next()) {
                     names.add(rs.getString("TABLE_NAME"));
                 }
@@ -224,19 +229,35 @@ public class DynamicQuery {
 
     /**
      * 表结构：列名 → 归一类型，保持数据库中的列序。
+     * 传 {@code qualifier.table} 时按该限定名定位。
      */
     public Map<String, SqlType> columns(String table) {
+        String[] segments = Identifiers.parts(table);
+        String name = segments[segments.length - 1];
         Map<String, SqlType> columns = new LinkedHashMap<>();
         try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData meta = conn.getMetaData();
-            try (ResultSet rs = meta.getColumns(conn.getCatalog(), conn.getSchema(), table, "%")) {
-                while (rs.next()) {
-                    columns.put(rs.getString("COLUMN_NAME"), SqlType.of(rs.getInt("DATA_TYPE")));
+            if (segments.length == 1) {
+                readColumns(meta, conn.getCatalog(), conn.getSchema(), name, columns);
+            } else {
+                // 限定名前缀是 catalog 还是 schema 由库决定: MySQL 把库当 catalog, PG/H2 把库当 schema
+                readColumns(meta, segments[0], null, name, columns);
+                if (columns.isEmpty()) {
+                    readColumns(meta, conn.getCatalog(), segments[0], name, columns);
                 }
             }
             return columns;
         } catch (SQLException e) {
             throw new BusinessException(BaseStatusCode.FAIL, "读取表结构失败: " + table + " - " + e.getMessage());
+        }
+    }
+
+    private static void readColumns(DatabaseMetaData meta, String catalog, String schema,
+                                    String table, Map<String, SqlType> into) throws SQLException {
+        try (ResultSet rs = meta.getColumns(catalog, schema, table, "%")) {
+            while (rs.next()) {
+                into.put(rs.getString("COLUMN_NAME"), SqlType.of(rs.getInt("DATA_TYPE")));
+            }
         }
     }
 

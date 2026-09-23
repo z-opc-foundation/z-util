@@ -203,6 +203,23 @@ public class DynamicQueryH2Test {
     }
 
     @Test
+    public void viewsAreDataUnitsAndQualifiedNamesResolve() {
+        dq.executeUpdate(SqlSpec.of("CREATE VIEW \"v_paid\" AS SELECT \"id\", \"amount\" FROM \"t_order\""));
+        try {
+            assertTrue(dq.tables().contains("v_paid"));
+            // 限定名前缀既可能是 catalog 也可能是 schema, 两侧都要能定位到
+            Map<String, SqlType> viaSchema = dq.columns("PUBLIC.v_paid");
+            assertEquals(2, viaSchema.size());
+            assertEquals(SqlType.DECIMAL, viaSchema.get("amount"));
+            Map<String, SqlType> viaCatalog = dq.columns("DYNAMIC_QUERY.v_paid");
+            assertEquals(viaSchema, viaCatalog);
+        } finally {
+            dq.executeUpdate(SqlSpec.of("DROP VIEW \"v_paid\""));
+        }
+        assertFalse(dq.tables().contains("v_paid"));
+    }
+
+    @Test
     public void maxRowsCapsRead() {
         assertEquals(4, new DynamicQuery(registry.require(CODE), new H2Dialect())
                 .list(Query.select().from("t_order")).size());

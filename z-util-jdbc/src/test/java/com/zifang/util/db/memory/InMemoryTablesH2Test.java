@@ -7,6 +7,7 @@ import com.zifang.util.db.query.Criteria;
 import com.zifang.util.db.query.DynamicQuery;
 import com.zifang.util.db.query.Query;
 import com.zifang.util.db.query.SqlSpec;
+import com.zifang.util.expr.obj.ObjException;
 import com.zifang.util.expr.sql.engine.Table;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,6 +29,9 @@ import static org.junit.Assert.fail;
 /**
  * JDBC 取数 → 内存 SQL 引擎端到端：真实建库取行，在内存里做 join、分组聚合、
  * 链式算子与索引加速，验证复杂处理不必再把 SQL 打回数据库。
+ * <p>
+ * 尾部的 shape 用例覆盖完整一段链：库里的原始行 → 内存 SQL 粗糙产出二维表 →
+ * 对象整形语言把二维表抬成渲染要的高维结构。
  */
 public class InMemoryTablesH2Test {
 
@@ -189,6 +193,52 @@ public class InMemoryTablesH2Test {
         InMemoryTables mem = new InMemoryTables(dq.maxRows(2))
                 .load("t_order", Query.select().from("t_order"));
         assertEquals(2, mem.table("t_order").size());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shapeTurnsTheTwoDimensionalResultIntoARenderReadyDoc() {
+        Object out = loaded().shape(Arrays.asList(
+                map("op", "from", "sql", "SELECT u.dept, u.name, o.amount FROM t_order o"
+                        + " INNER JOIN t_user u ON o.user_id = u.id"),
+                map("op", "group", "by", "dept", "items", "orders",
+                        "agg", map("total", "SUM(amount)", "n", "COUNT(*)"),
+                        "into", map("dept", "${dept}", "total", "${total}", "n", "${n}",
+                                "orders", map("op", "map", "of", "orders",
+                                        "into", map("who", "${name}", "amount", "${amount}")))),
+                map("op", "keyBy", "key", "dept")));
+
+        Map<String, Object> doc = (Map<String, Object>) out;
+        assertEquals(Arrays.asList("A组", "B组"), Arrays.asList(doc.keySet().toArray()));
+
+        Map<String, Object> groupA = (Map<String, Object>) doc.get("A组");
+        assertEquals(3L, ((Number) groupA.get("n")).longValue());
+        assertEquals(350.75d, ((Number) groupA.get("total")).doubleValue(), 0.001d);
+        List<Map<String, Object>> ordersA = (List<Map<String, Object>>) groupA.get("orders");
+        assertEquals(3, ordersA.size());
+        assertEquals("老张", ordersA.get(0).get("who"));
+        // DECIMAL 走完全程还是 DECIMAL, 没有被模板拼成字符串
+        assertEquals(0, new BigDecimal("100.50").compareTo((BigDecimal) ordersA.get(0).get("amount")));
+        // user_id=9 那单在内存 INNER JOIN 时就掉了, 不会凭空多出明细
+        assertEquals(1, ((List<?>) ((Map<String, Object>) doc.get("B组")).get("orders")).size());
+    }
+
+    @Test
+    public void shapeReportsAnUnknownTableNameInsteadOfEmptyResult() {
+        try {
+            loaded().shape(map("op", "from", "table", "t_missing"));
+            fail("表名写错要当场报错");
+        } catch (ObjException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("t_order"));
+        }
+    }
+
+    private static Map<String, Object> map(Object... kv) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            map.put(String.valueOf(kv[i]), kv[i + 1]);
+        }
+        return map;
     }
 
     private static Map<String, Object> byKey(List<Map<String, Object>> rows, String key, Object value) {

@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 与旧的静态工具类不同，它是实例级容器——多应用、多租户、测试沙箱可各持一份，
  * {@link #close()} 时池随之释放；{@link #rebind} 支持凭证或地址变更后的热替换。
  * <p>
- * 定义的 {@code datasourceType} 决定方言（mysql / postgres / h2），
+ * 定义的 {@code jdbcUrl} 或 {@code datasourceType} 决定方言（mysql / postgres / h2）：
+ * 给了完整地址就直接用它连，只给了 host/port/库时按方言拼装。
  * 凭证由部署方注入，注册表只在内存中持有。
  *
  * @author zifang
@@ -62,7 +63,7 @@ public class DataSourceRegistry implements AutoCloseable {
             closeQuietly(entry.dataSource);
             throw new BusinessException(BaseStatusCode.FAIL, "已存在同名数据源: " + code);
         }
-        log.info("数据源已注册 [{}] type={} url={}", code, entry.dialect.id(), entry.dialect.buildUrl(def));
+        log.info("数据源已注册 [{}] type={} url={}", code, entry.dialect.id(), entry.url);
         return entry.dataSource;
     }
 
@@ -162,8 +163,9 @@ public class DataSourceRegistry implements AutoCloseable {
     }
 
     private Entry open(DataSourceDTO def, String code, PoolSpec spec) {
-        Dialect dialect = Dialects.resolve(def.getDatasourceType());
-        String url = dialect.buildUrl(def);
+        String provided = trimToNull(def.getJdbcUrl());
+        Dialect dialect = provided == null ? Dialects.resolve(def.getDatasourceType()) : Dialects.forJdbcUrl(provided);
+        String url = provided == null ? dialect.buildUrl(def) : provided;
         DruidDataSource pool = buildPool(dialect, def, url, spec == null ? poolSpec : spec);
         try (Connection conn = pool.getConnection();
              Statement st = conn.createStatement()) {
@@ -173,7 +175,15 @@ public class DataSourceRegistry implements AutoCloseable {
             throw new BusinessException(BaseStatusCode.FAIL,
                     "数据源连接失败 [" + code + "] " + url + " - " + e.getMessage());
         }
-        return new Entry(def, dialect, pool);
+        return new Entry(def, dialect, url, pool);
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static String requireCode(DataSourceDTO def) {
@@ -227,11 +237,14 @@ public class DataSourceRegistry implements AutoCloseable {
 
         private final Dialect dialect;
 
+        private final String url;
+
         private final DataSource dataSource;
 
-        private Entry(DataSourceDTO def, Dialect dialect, DataSource dataSource) {
+        private Entry(DataSourceDTO def, Dialect dialect, String url, DataSource dataSource) {
             this.def = def;
             this.dialect = dialect;
+            this.url = url;
             this.dataSource = dataSource;
         }
     }

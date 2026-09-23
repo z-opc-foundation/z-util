@@ -12,12 +12,13 @@
 
     <artifactId>z-util-expr</artifactId>
     <packaging>pom</packaging>
-    <name>z-util :: expr (expression engine aggregator: EL/Groovy/JS/Lua/SQL)</name>
-    <description>脚本表达式执行分支：JS、SQL、Groovy、Lua、EL</description>
+    <name>z-util :: expr (expression engine aggregator: EL/Groovy/JS/Lua/SQL/Obj)</name>
+    <description>脚本表达式执行分支：JS、SQL、Groovy、Lua、EL，以及把二维表整形为任意结构的对象语言 OBJ</description>
 
     <modules>
         <module>z-util-expr-js</module>
         <module>z-util-expr-sql</module>
+        <module>z-util-expr-obj</module>
         <module>z-util-expr-groovy</module>
         <module>z-util-expr-lua</module>
         <module>z-util-expr-el</module>
