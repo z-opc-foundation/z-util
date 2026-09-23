@@ -28,6 +28,10 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <!-- 本模块就是注解处理器自身：process-resources 会先把
+                         META-INF/services/javax.annotation.processing.Processor 复制进 target/classes,
+                         javac 从 classpath 发现它时类尚未编译, clean 后必然报 Provider not found -->
+                    <proc>none</proc>
                 </configuration>
             </plugin>
         </plugins>
