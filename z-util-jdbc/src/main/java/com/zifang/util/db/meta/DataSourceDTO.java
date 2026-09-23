@@ -223,11 +223,11 @@ public class DataSourceDTO {
 
     @Override
     /**
-     * toString方法。
+     * toString方法。密码固定打码，避免随日志与异常外泄。
      * @return String类型返回值
      */
     public String toString() {
-        return "DataSourceDTO{id=" + id + ", datasourceCode=" + datasourceCode + ", datasourceName=" + datasourceName + ", datasourceUrl=" + datasourceUrl + ", portNumber=" + portNumber + ", schemaMark=" + schemaMark + ", userName=" + userName + ", pw=" + pw + ", descriptions=" + descriptions + ", datasourceType=" + datasourceType + "}";
+        return "DataSourceDTO{id=" + id + ", datasourceCode=" + datasourceCode + ", datasourceName=" + datasourceName + ", datasourceUrl=" + datasourceUrl + ", portNumber=" + portNumber + ", schemaMark=" + schemaMark + ", userName=" + userName + ", pw=" + (pw == null ? null : "******") + ", descriptions=" + descriptions + ", datasourceType=" + datasourceType + "}";
     }
 
     @Override

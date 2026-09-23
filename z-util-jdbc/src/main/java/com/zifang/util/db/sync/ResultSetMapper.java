@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public final class ResultSetMapper {
     }
 
     /**
-     * 将整个 ResultSet 解析为 {@code List<Map<String, Object>>}，列名由
+     * 将整个 ResultSet 解析为 {@code List<Map<String, Object>>}，行内保留结果集列序，列名由
      * {@link ResultSetMetaData#getColumnLabel()} 取得（优先取 alias，其次取列名）。
      */
     public static List<Map<String, Object>> toMapList(ResultSet rs) throws SQLException {
@@ -38,7 +38,7 @@ public final class ResultSetMapper {
         ResultSetMetaData meta = rs.getMetaData();
         int columnCount = meta.getColumnCount();
         while (rs.next()) {
-            Map<String, Object> row = new HashMap<>(columnCount * 2);
+            Map<String, Object> row = new LinkedHashMap<>(columnCount * 2);
             for (int i = 1; i <= columnCount; i++) {
                 String name = meta.getColumnLabel(i);
                 if (name == null || name.isEmpty()) {

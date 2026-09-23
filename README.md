@@ -49,7 +49,7 @@
 
 | 模块 | 说明 | 包路径 |
 |------|------|--------|
-| [z-util-jdbc](#z-util-jdbc) | 极简 ORM 框架（自研 MyBatis 替代） | `com.zifang.util.db.*` |
+| [z-util-jdbc](#z-util-jdbc) | 数据源注册 + 多方言动态查询 + 内存表处理 + 极简 ORM | `com.zifang.util.db.*` |
 | [z-util-dsl](#z-util-dsl) | 自研 DSL 解析框架 | `com.zifang.util.dsl.*` |
 | [z-util-parser](#z-util-parser) | 多格式解析器（JSON/XML/YAML/CSV/TOML） | `com.zifang.util.parser.*` |
 | [z-util-expr](#z-util-expr) | 表达式引擎（EL/Groovy/JS/Lua/SQL） | `com.zifang.util.expr.*` |
@@ -156,21 +156,56 @@ curl -I https://repo1.maven.org/maven2/io/github/yuku123/z-util-core/1.0.9/z-uti
 
 ### z-util-jdbc
 
-自研极简 ORM 框架，对标 MyBatis / Spring Data：
+自研极简 ORM 框架（对标 MyBatis / Spring Data），并承载平台的数据源与动态查询能力：
 
 ```java
 // 注解方式
 @Select("SELECT * FROM user WHERE id = :id")
 User findById(@Param("id") long id);
 
-// SQL 构造
-String sql = new SqlBuilder().select("*").from("user").where("id = ?", id).build();
+// 数据源注册（MySQL / PostgreSQL / H2，Druid 连接池 + 探活后发布）
+DataSourceRegistry registry = new DataSourceRegistry();
+DataSourceDTO def = new DataSourceDTO();
+def.setDatasourceCode("report");
+def.setDatasourceType("mysql");
+def.setDatasourceUrl("127.0.0.1");
+def.setPortNumber(3306);
+def.setSchemaMark("report_db");
+def.setUserName("readonly");
+def.setPw("******");
+registry.register(def);
+
+// 动态查询：结构化条件 → 参数化 SQL，无需实体类
+DynamicQuery dq = new DynamicQuery(registry.require("report"), Dialects.resolve("mysql"));
+List<Map<String, Object>> rows = dq.list(
+        Query.select("id", "amount").from("t_order")
+             .where(Criteria.eq("status", "PAID"))
+             .where(Criteria.in("channel", "app", "web"))
+             .orderBy("id", false).page(1, 20));
+
+// 任意 SQL 模板：命名参数按出现顺序绑定为 ?
+SqlSpec spec = SqlTemplate.of("SELECT * FROM t_order WHERE biz_date = ${day}")
+        .bind(Collections.singletonMap("day", Date.valueOf("2026-09-23")));
+
+// 取进内存后交给内存 SQL 引擎：join / group by / 聚合 / 索引，不必再打回数据库
+InMemoryTables mem = new InMemoryTables(dq)
+        .load("t_order", Query.select().from("t_order"))
+        .load("t_user", Query.select("id", "name", "dept").from("t_user"))
+        .index("t_order", "user_id");
+List<Map<String, Object>> byDept = mem.sql(
+        "SELECT u.dept, COUNT(*) AS cnt, SUM(o.amount) AS total"
+                + " FROM t_order o INNER JOIN t_user u ON o.user_id = u.id GROUP BY u.dept");
+Table paid = mem.table("t_order").where("status", "PAID").sort("amount", false);
 ```
 
 **核心能力**：
-- 数据源管理：`DataSourceContext` / `DataSourceManager`
+- 数据源管理：`DataSourceRegistry`（多源注册/换绑/注销，探活通过才发布）/ `DataSourceContext` / `PoolSpec`（连接池与保活策略）
+- 方言抽象：`Dialect` + `MySqlDialect` / `PostgresDialect` / `H2Dialect`，`Dialects` 按标识、JDBC URL 或连接自动识别；覆盖建串、标识符引用、分页、计数包装
+- 动态查询：`Query` / `Criteria` / `QueryCompiler`（条件树编译，标识符白名单 + 值全部 `?` 绑定）、`SqlTemplate`（`${name}` 命名参数，跳过字面量与注释）、`DynamicQuery`（执行 + 分页 + 元数据读取）
+- 内存处理：`InMemoryTables` 把 JDBC 取出的行注册到 `z-util-expr-sql` 的 `VirtualTableEngine`，之后的 join / group by / 聚合 / 表达式函数与链式算子（`where` `sort` `addColumn` `groupBy` `aggregate`）都在内存完成（引擎暂不支持窗口函数）；`DynamicQuery.maxRows(n)` 控制进入内存的量级
 - 注解驱动：`@Select` / `@Insert` / `@Update` / `@Delete`
 - 事务支持：`@Transactional` + `TransactionManager`
+- 分页插件：`MyBatisPageInterceptor` + `PageDialect`（含 Oracle ROWNUM / 标准 FETCH）
 - 代码生成：`JpaStratege` / `MybaitsStratige`
 
 ### z-util-parser

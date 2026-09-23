@@ -51,6 +51,12 @@
             <artifactId>z-util-proxy</artifactId>
         </dependency>
 
+        <!-- InMemoryTables: 取数后的内存 join/聚合/函数交给内存 SQL 引擎 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-expr-sql</artifactId>
+        </dependency>
+
         <!-- OrderCreationIT 需要 distribute（NanoId, SegmentIdGenerator, UuidV7） -->
         <dependency>
             <groupId>io.github.yuku123</groupId>

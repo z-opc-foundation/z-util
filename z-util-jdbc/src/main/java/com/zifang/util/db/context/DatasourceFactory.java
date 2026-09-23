@@ -25,7 +25,7 @@ import javax.sql.DataSource;
  * </ul>
  *
  * @author zifang
- * @see DataSourceManager
+ * @see DataSourceRegistry
  * @see javax.sql.DataSource
  */
 public interface DatasourceFactory {
