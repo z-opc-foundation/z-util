@@ -627,6 +627,55 @@ public class CollectionUtil {
     }
 
     /**
+     * intersection方法。取两个集合的交集，元素顺序与去重均以 source 为准。
+     * 与 JDK {@code Collection#retainAll} 的区别是不修改入参。
+     *
+     * @param source 交集基准集合，为 null 或空时返回空列表
+     * @param other  参与求交的集合，为 null 或空时返回空列表
+     * @param <T>    元素类型
+     * @return 交集组成的新列表
+     */
+    public static <T> List<T> intersection(Collection<T> source, Collection<T> other) {
+        List<T> result = new ArrayList<>();
+        if (isEmpty(source) || isEmpty(other)) {
+            return result;
+        }
+        Set<T> counters = other instanceof Set ? (Set<T>) other : new HashSet<>(other);
+        Set<T> emitted = new HashSet<>();
+        for (T item : source) {
+            if (counters.contains(item) && emitted.add(item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * merge方法。把单个元素追加到列表末尾并整体去重，不修改入参列表。
+     * 常用于候选人、标签等"追加即去重"的场景；null 元素会被忽略。
+     *
+     * @param list 原始列表，为 null 时按空列表处理
+     * @param item 待追加的元素，为 null 时忽略
+     * @param <T>  元素类型
+     * @return 去重后的新列表，顺序为先 list 后 item
+     */
+    public static <T> List<T> merge(Collection<T> list, T item) {
+        List<T> result = new ArrayList<>();
+        Set<T> seen = new HashSet<>();
+        if (list != null) {
+            for (T element : list) {
+                if (element != null && seen.add(element)) {
+                    result.add(element);
+                }
+            }
+        }
+        if (item != null && seen.add(item)) {
+            result.add(item);
+        }
+        return result;
+    }
+
+    /**
      * page方法。对列表做内存分页，返回第 pageNum 页（页码从 1 开始）的 pageSize 条元素。
      * 页码越界、集合为空或每页条数非法时返回空列表；返回结果为新列表，修改不影响原集合。
      *

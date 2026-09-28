@@ -55,7 +55,7 @@ public final class RsaUtil {
      * @throws Exception
      */
     public static byte[] decryptBASE64(String key) throws Exception {
-        return Base64Utils.decrypt(key);
+        return Base64Utils.decodeLenient(key);
     }
 
     /**
@@ -66,7 +66,7 @@ public final class RsaUtil {
      * @throws Exception
      */
     public static String encryptBASE64(byte[] key) throws Exception {
-        return Base64Utils.encrypt(key);
+        return Base64Utils.encode(key);
     }
 
 

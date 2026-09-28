@@ -3,6 +3,7 @@ package com.zifang.util.core.encrypt;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,21 @@ public final class AesUtil {
      * CBC 模式变换（AES/CBC/PKCS5Padding）
      */
     private static final String CBC_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+
+    /**
+     * GCM 模式变换（AES/GCM/NoPadding），认证加密：既加密又防篡改
+     */
+    private static final String GCM_TRANSFORMATION = "AES/GCM/NoPadding";
+
+    /**
+     * GCM 推荐 IV 长度（96bit）
+     */
+    private static final int GCM_IV_LENGTH = 12;
+
+    /**
+     * GCM 认证标签位数
+     */
+    private static final int GCM_TAG_LENGTH = 128;
 
     /**
      * 密钥派生随机源算法
@@ -186,6 +202,103 @@ public final class AesUtil {
      */
     public static String decryptCbcFromBase64(String cipherText, byte[] key, byte[] iv) {
         return new String(decryptCbc(Base64.getDecoder().decode(cipherText), key, iv), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * encryptGcm方法。
+     * AES-GCM 认证加密，随机 IV 前置在密文里，格式为 [IV 12B][ciphertext][tag 16B]。
+     * 与 z-util-serialize 的 AesGcmEncryptor 同格式，密文可互相解开。
+     *
+     * @param data 明文，为 null 时抛 IllegalArgumentException
+     * @param key  密钥，长度须为 16/24/32 字节
+     * @return 带 IV 前缀的密文
+     */
+    public static byte[] encryptGcm(byte[] data, byte[] key) {
+        if (data == null) {
+            throw new IllegalArgumentException("data must not be null");
+        }
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        new SecureRandom().nextBytes(iv);
+        byte[] encrypted = doGcm(Cipher.ENCRYPT_MODE, data, key, iv);
+        byte[] result = new byte[iv.length + encrypted.length];
+        System.arraycopy(iv, 0, result, 0, iv.length);
+        System.arraycopy(encrypted, 0, result, iv.length, encrypted.length);
+        return result;
+    }
+
+    /**
+     * decryptGcm方法。
+     * 解开 {@link #encryptGcm(byte[], byte[])} 格式的密文；密文被篡改时抛异常。
+     *
+     * @param cipherData [IV 12B][ciphertext][tag 16B] 格式的密文
+     * @param key        密钥
+     * @return 明文
+     */
+    public static byte[] decryptGcm(byte[] cipherData, byte[] key) {
+        if (cipherData == null) {
+            throw new IllegalArgumentException("cipherData must not be null");
+        }
+        if (cipherData.length <= GCM_IV_LENGTH) {
+            throw new IllegalArgumentException("ciphertext too short: " + cipherData.length);
+        }
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        byte[] encrypted = new byte[cipherData.length - GCM_IV_LENGTH];
+        System.arraycopy(cipherData, 0, iv, 0, GCM_IV_LENGTH);
+        System.arraycopy(cipherData, GCM_IV_LENGTH, encrypted, 0, encrypted.length);
+        return doGcm(Cipher.DECRYPT_MODE, encrypted, key, iv);
+    }
+
+    /**
+     * encryptGcmToBase64方法。
+     * 明文按 UTF-8 取字节做 AES-GCM 加密，结果标准 Base64 编码。
+     *
+     * @param plainText 明文
+     * @param key       密钥
+     * @return Base64 密文
+     */
+    public static String encryptGcmToBase64(String plainText, byte[] key) {
+        if (plainText == null) {
+            return null;
+        }
+        return Base64.getEncoder().encodeToString(
+                encryptGcm(plainText.getBytes(StandardCharsets.UTF_8), key));
+    }
+
+    /**
+     * decryptGcmFromBase64方法。
+     * 解开 {@link #encryptGcmToBase64(String, byte[])} 的结果。
+     *
+     * @param cipherText Base64 密文
+     * @param key        密钥
+     * @return 明文字符串
+     */
+    public static String decryptGcmFromBase64(String cipherText, byte[] key) {
+        if (cipherText == null || cipherText.isEmpty()) {
+            return cipherText;
+        }
+        return new String(decryptGcm(Base64.getDecoder().decode(cipherText), key),
+                StandardCharsets.UTF_8);
+    }
+
+    /**
+     * doGcm方法。
+     * GCM 模式加解密共用实现。
+     */
+    private static byte[] doGcm(int cipherMode, byte[] data, byte[] key, byte[] iv) {
+        if (key == null || iv == null) {
+            throw new IllegalArgumentException("key and iv must not be null");
+        }
+        if (key.length != 16 && key.length != 24 && key.length != 32) {
+            throw new IllegalArgumentException("key length must be 16, 24 or 32 bytes");
+        }
+        try {
+            Cipher cipher = Cipher.getInstance(GCM_TRANSFORMATION);
+            cipher.init(cipherMode, new SecretKeySpec(key, ALGORITHM),
+                    new GCMParameterSpec(GCM_TAG_LENGTH, iv));
+            return cipher.doFinal(data);
+        } catch (Exception e) {
+            throw new RuntimeException("AES gcm cipher error", e);
+        }
     }
 
     /**

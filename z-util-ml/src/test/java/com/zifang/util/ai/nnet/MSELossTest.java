@@ -88,8 +88,8 @@ public class MSELossTest {
 
         double loss = mseLoss.compute(predictions, targets);
 
-        // Each error = -2.0, squared = 4.0, mean = 4.0
-        assertEquals(4.0, loss, 0.0001);
+        // Errors are -2, -4, -6; squares 4, 16, 36; mean = 56 / 3
+        assertEquals(18.666666666666668, loss, 0.0001);
     }
 
     @Test

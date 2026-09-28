@@ -107,10 +107,10 @@ public class NeuralNetwork {
     /**
      * 获取神经网络的所有层
      *
-     * @return 层列表
+     * @return 层列表的拷贝，修改返回值不会影响网络结构
      */
     public List<Layer> getLayers() {
-        return layers;
+        return new ArrayList<>(layers);
     }
 
     /**

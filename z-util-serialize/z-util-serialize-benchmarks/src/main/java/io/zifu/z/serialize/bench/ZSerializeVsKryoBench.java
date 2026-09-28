@@ -3,9 +3,6 @@ package io.zifu.z.serialize.bench;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import io.zifu.z.serialize.annotation.FieldType;
-import io.zifu.z.serialize.annotation.ZField;
-import io.zifu.z.serialize.annotation.ZMessage;
 import io.zifu.z.serialize.core.ZSerializer;
 import io.zifu.z.serialize.core.ZDeserializer;
 
@@ -16,24 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ZSerializeVsKryoBench {
-
-    @ZMessage(id = 100, name = "bench.User")
-    public static class User {
-        @ZField(id = 1, type = FieldType.VARINT) public long id;
-        @ZField(id = 2, type = FieldType.LENGTH_DELIMITED) public String name;
-        @ZField(id = 3, type = FieldType.VARINT) public int age;
-        @ZField(id = 4, type = FieldType.VARINT) public boolean active;
-        @ZField(id = 5, type = FieldType.FIXED64) public double balance;
-        public User() {}
-    }
-
-    @ZMessage(id = 101, name = "bench.Order")
-    public static class Order {
-        @ZField(id = 1, type = FieldType.VARINT) public long orderId;
-        @ZField(id = 2, type = FieldType.LENGTH_DELIMITED) public String sku;
-        @ZField(id = 3, type = FieldType.VARINT) public List<Integer> itemIds;
-        public Order() { itemIds = new ArrayList<>(); }
-    }
 
     private static final int WARMUP = 10_000;
     private static final int ITERATIONS = 200_000;

@@ -255,29 +255,40 @@ public class VirtualTableIndexTest {
 
     @Test
     public void testJoinPerformanceWithIndex() {
-        // 不使用索引的 JOIN
-        long startNoIndex = System.nanoTime();
-        engine.query(
-                "SELECT u.name, o.product " +
+        String sql = "SELECT u.name, o.product " +
                 "FROM users u INNER JOIN orders o ON u.id = o.user_id " +
-                "WHERE u.id = 42");
-        long elapsedNoIndex = System.nanoTime() - startNoIndex;
+                "WHERE u.id = 42";
 
-        // 使用索引的 JOIN
+        long elapsedNoIndex = timedBest(sql);
         engine.createIndex("users", "id");
         engine.createIndex("orders", "user_id");
-        long startWithIndex = System.nanoTime();
-        engine.query(
-                "SELECT u.name, o.product " +
-                "FROM users u INNER JOIN orders o ON u.id = o.user_id " +
-                "WHERE u.id = 42");
-        long elapsedWithIndex = System.nanoTime() - startWithIndex;
+        long elapsedWithIndex = timedBest(sql);
 
         System.out.println("JOIN no index: " + elapsedNoIndex / 1_000_000.0 + "ms");
         System.out.println("JOIN with index: " + elapsedWithIndex / 1_000_000.0 + "ms");
 
-        // 索引 JOIN 应该更快
-        assertTrue("Indexed JOIN should be faster", elapsedWithIndex <= elapsedNoIndex * 2);
+        // 索引 JOIN 不应该比全表扫描明显更慢
+        assertTrue("Indexed JOIN should not be slower", elapsedWithIndex <= elapsedNoIndex * 2);
+    }
+
+    /**
+     * 单次 nanoTime 采样会被 JIT 编译和 GC 停顿支配，同一份代码换个位置测就能翻结果。
+     * 先跑若干轮让热点稳定，再取多轮里的最小值作为耗时。
+     */
+    private long timedBest(String sql) {
+        for (int i = 0; i < 20; i++) {
+            engine.query(sql);
+        }
+        long best = Long.MAX_VALUE;
+        for (int i = 0; i < 5; i++) {
+            long start = System.nanoTime();
+            engine.query(sql);
+            long elapsed = System.nanoTime() - start;
+            if (elapsed < best) {
+                best = elapsed;
+            }
+        }
+        return best;
     }
 
     // ==================== 边界情况 ====================

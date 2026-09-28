@@ -946,4 +946,46 @@ public class CollectionUtilTest {
             // 预期
         }
     }
+
+    /**
+     * testIntersection方法：交集以 source 顺序为准并去重，不修改入参。
+     */
+    @Test
+    public void testIntersection() {
+        List<String> source = new ArrayList<>(Arrays.asList("c", "a", "b", "a"));
+        List<String> other = new ArrayList<>(Arrays.asList("a", "b", "d"));
+        List<String> result = CollectionUtil.intersection(source, other);
+        assertEquals(Arrays.asList("a", "b"), result);
+        assertEquals(4, source.size());
+
+        List<String> setBacked = new ArrayList<>(Arrays.asList("x", "y", "z"));
+        assertEquals(Collections.singletonList("y"),
+                CollectionUtil.intersection(setBacked, new HashSet<>(Arrays.asList("y"))));
+    }
+
+    /**
+     * testIntersectionWithEmptyAndNull方法：任一侧为空或 null 时返回空列表。
+     */
+    @Test
+    public void testIntersectionWithEmptyAndNull() {
+        assertTrue(CollectionUtil.intersection(null, Arrays.asList("a")).isEmpty());
+        assertTrue(CollectionUtil.intersection(Arrays.asList("a"), null).isEmpty());
+        assertTrue(CollectionUtil.intersection(new ArrayList<String>(), new ArrayList<String>()).isEmpty());
+    }
+
+    /**
+     * testMerge方法：追加元素并整体去重，null 元素忽略，不修改入参。
+     */
+    @Test
+    public void testMerge() {
+        List<String> list = new ArrayList<>(Arrays.asList("a", "b", "a"));
+        List<String> merged = CollectionUtil.merge(list, "c");
+        assertEquals(Arrays.asList("a", "b", "c"), merged);
+        assertEquals(3, list.size());
+
+        assertEquals(Arrays.asList("a", "b"), CollectionUtil.merge(list, "a"));
+        assertEquals(Arrays.asList("a", "b"), CollectionUtil.merge(list, null));
+        assertEquals(Collections.singletonList("only"), CollectionUtil.merge(null, "only"));
+        assertTrue(CollectionUtil.merge((List<String>) null, null).isEmpty());
+    }
 }

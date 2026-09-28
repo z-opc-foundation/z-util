@@ -1,121 +1,142 @@
 package com.zifang.util.core.encrypt;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
- * BASE64加解密工具类
+ * Base64 编解码工具（JDK {@link Base64} 封装）。
+ * <p>
+ * {@link com.zifang.util.core.lang.StringUtil#base64Encode(String)} 只做字符串往返，
+ * 本类面向密钥、盐值、密文等二进制字节数组，并补充 URL-safe 与容错解码。
  */
-class Base64Utils {
+public final class Base64Utils {
 
-    private static char[] base64EncodeChars = new char[]{'A', 'B', 'C', 'D',
-            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-            'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
-            'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
-            '4', '5', '6', '7', '8', '9', '+', '/'};
-
-    private static byte[] base64DecodeChars = new byte[]{-1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59,
-            60, 61, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-            10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1,
-            -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
-            38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1,
-            -1, -1};
-
-    /**
-     * BASE64加密
-     *
-     * @param data
-     * @return
-     * @author zifang chenssy
-     * @date : 2016年5月20日 下午5:10:18
-     */
-    protected static String encrypt(byte[] data) {
-        StringBuffer sb = new StringBuffer();
-        int len = data.length;
-        int i = 0;
-        int b1, b2, b3;
-        while (i < len) {
-            b1 = data[i++] & 0xff;
-            if (i == len) {
-                sb.append(base64EncodeChars[b1 >>> 2]);
-                sb.append(base64EncodeChars[(b1 & 0x3) << 4]);
-                sb.append("==");
-                break;
-            }
-            b2 = data[i++] & 0xff;
-            if (i == len) {
-                sb.append(base64EncodeChars[b1 >>> 2]);
-                sb.append(base64EncodeChars[((b1 & 0x03) << 4)
-                        | ((b2 & 0xf0) >>> 4)]);
-                sb.append(base64EncodeChars[(b2 & 0x0f) << 2]);
-                sb.append("=");
-                break;
-            }
-            b3 = data[i++] & 0xff;
-            sb.append(base64EncodeChars[b1 >>> 2]);
-            sb.append(base64EncodeChars[((b1 & 0x03) << 4)
-                    | ((b2 & 0xf0) >>> 4)]);
-            sb.append(base64EncodeChars[((b2 & 0x0f) << 2)
-                    | ((b3 & 0xc0) >>> 6)]);
-            sb.append(base64EncodeChars[b3 & 0x3f]);
-        }
-        return sb.toString();
+    private Base64Utils() {
     }
 
     /**
-     * Base64 解密
+     * 标准编码，不插入换行。
      *
-     * @param str
-     * @return
-     * @throws UnsupportedEncodingException
-     * @author zifang chenssy
-     * @date : 2016年5月20日 下午5:11:51
+     * @param data 待编码字节，为 null 时返回 null
+     * @return Base64 字符串
      */
-    protected static byte[] decrypt(String str) throws Exception {
-        StringBuffer sb = new StringBuffer();
-        byte[] data = str.getBytes(StandardCharsets.US_ASCII);
-        int len = data.length;
-        int i = 0;
-        int b1, b2, b3, b4;
-        while (i < len) {
-
-            do {
-                b1 = base64DecodeChars[data[i++]];
-            } while (i < len && b1 == -1);
-            if (b1 == -1)
-                break;
-
-            do {
-                b2 = base64DecodeChars[data[i++]];
-            } while (i < len && b2 == -1);
-            if (b2 == -1)
-                break;
-            sb.append((char) ((b1 << 2) | ((b2 & 0x30) >>> 4)));
-
-            do {
-                b3 = data[i++];
-                if (b3 == 61)
-                    return sb.toString().getBytes("iso8859-1");
-                b3 = base64DecodeChars[b3];
-            } while (i < len && b3 == -1);
-            if (b3 == -1)
-                break;
-            sb.append((char) (((b2 & 0x0f) << 4) | ((b3 & 0x3c) >>> 2)));
-
-            do {
-                b4 = data[i++];
-                if (b4 == 61)
-                    return sb.toString().getBytes("iso8859-1");
-                b4 = base64DecodeChars[b4];
-            } while (i < len && b4 == -1);
-            if (b4 == -1)
-                break;
-            sb.append((char) (((b3 & 0x03) << 6) | b4));
+    public static String encode(byte[] data) {
+        if (data == null) {
+            return null;
         }
-        return sb.toString().getBytes("iso8859-1");
+        return Base64.getEncoder().encodeToString(data);
+    }
+
+    /**
+     * 标准解码。
+     *
+     * @param text Base64 字符串，为 null 或空时返回空数组
+     * @return 解码后的字节
+     * @throws IllegalArgumentException 含非法字符时抛出，容错场景改用 {@link #decodeLenient(String)}
+     */
+    public static byte[] decode(String text) {
+        if (text == null || text.isEmpty()) {
+            return new byte[0];
+        }
+        return Base64.getDecoder().decode(text);
+    }
+
+    /**
+     * URL-safe 编码，不带 {@code =} 填充（用于出现在路径或查询串中的场景）。
+     *
+     * @param data 待编码字节，为 null 时返回 null
+     * @return URL-safe Base64 字符串
+     */
+    public static String encodeUrlSafe(byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
+    }
+
+    /**
+     * URL-safe 解码，兼容带或不带 {@code =} 填充。
+     *
+     * @param text URL-safe Base64 字符串，为 null 或空时返回空数组
+     * @return 解码后的字节
+     */
+    public static byte[] decodeUrlSafe(String text) {
+        if (text == null || text.isEmpty()) {
+            return new byte[0];
+        }
+        return Base64.getUrlDecoder().decode(text + padding(text));
+    }
+
+    /**
+     * 字符串按 UTF-8 取字节后标准编码。
+     *
+     * @param text 待编码字符串，为 null 时返回 null
+     * @return Base64 字符串
+     */
+    public static String encodeString(String text) {
+        if (text == null) {
+            return null;
+        }
+        return encode(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 标准解码后按 UTF-8 还原字符串。
+     *
+     * @param text Base64 字符串，为 null 或空时返回原值
+     * @return 还原后的字符串
+     */
+    public static String decodeToString(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return new String(decode(text), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 容错解码：剔除所有空白与换行（兼容折行存储的密钥、DB 里带 {@code \n} 的值），
+     * 并把 URL-safe 字母表归一为标准字母表。
+     * <p>
+     * 不做"丢弃任意非法字符"的猜测式清洗——PEM 的 {@code -----BEGIN ...-----}  armor 行
+     * 需由调用方先行剥除；armor 由合法字母表字符组成，未剥除时不会被识别，只会静默解出错误字节。
+     *
+     * @param text Base64 字符串，为 null 或空时返回空数组
+     * @return 解码后的字节
+     * @throws IllegalArgumentException 去空白后仍含字母表之外的字符时抛出
+     */
+    public static byte[] decodeLenient(String text) {
+        if (text == null || text.isEmpty()) {
+            return new byte[0];
+        }
+        StringBuilder cleaned = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (!Character.isWhitespace(c)) {
+                cleaned.append(c);
+            }
+        }
+        String value = cleaned.toString();
+        if (value.indexOf('-') >= 0 || value.indexOf('_') >= 0) {
+            return Base64.getUrlDecoder().decode(value + padding(value));
+        }
+        return Base64.getDecoder().decode(value + padding(value));
+    }
+
+    /**
+     * 补齐 {@code =} 填充至 4 字节分组；已带填充时返回空串。
+     */
+    private static String padding(String value) {
+        if (value.indexOf('=') >= 0) {
+            return "";
+        }
+        int mod = value.length() % 4;
+        if (mod == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = mod; i < 4; i++) {
+            sb.append('=');
+        }
+        return sb.toString();
     }
 }

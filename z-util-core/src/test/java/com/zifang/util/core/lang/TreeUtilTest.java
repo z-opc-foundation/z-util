@@ -2,7 +2,9 @@ package com.zifang.util.core.lang;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -237,5 +239,114 @@ public class TreeUtilTest {
         assertTrue(TreeUtil.assemblyTree(new ArrayList<Region>(), r -> r.code, r -> r.parentCode,
                 (r, subs) -> {
                 }, null).isEmpty());
+    }
+
+    private static final Function<Region, List<Region>> SUBS = r -> r.subs;
+
+    /**
+     * testFlattenPreOrder方法：深度优先前序摊平，子节点按声明顺序展开。
+     */
+    @Test
+    public void testFlattenPreOrder() {
+        Region east = new Region("EAST", null);
+        Region js = new Region("JS", "EAST");
+        Region az = new Region("AZ", "EAST");
+        Region nj = new Region("NJ", "JS");
+        east.subs = Arrays.asList(js, az);
+        js.subs = Collections.singletonList(nj);
+
+        List<String> codes = new ArrayList<>();
+        for (Region node : TreeUtil.flatten(Collections.singletonList(east), SUBS)) {
+            codes.add(node.code);
+        }
+        assertEquals(Arrays.asList("EAST", "JS", "NJ", "AZ"), codes);
+    }
+
+    /**
+     * testFlattenMultipleRootsKeepsOrder方法：多根按传入顺序展开，且不修改入参。
+     */
+    @Test
+    public void testFlattenMultipleRootsKeepsOrder() {
+        Region a = new Region("A", null);
+        Region b = new Region("B", null);
+        Region a1 = new Region("A1", "A");
+        a.subs = Collections.singletonList(a1);
+        List<Region> roots = Arrays.asList(a, b);
+
+        List<Region> flat = TreeUtil.flatten(roots, SUBS);
+        assertEquals(3, flat.size());
+        assertEquals("A", flat.get(0).code);
+        assertEquals("A1", flat.get(1).code);
+        assertEquals("B", flat.get(2).code);
+        assertEquals(2, roots.size());
+    }
+
+    /**
+     * testCollectLeaves方法：叶子定义为 childrenGetter 返回 null 或空集合。
+     */
+    @Test
+    public void testCollectLeaves() {
+        Region east = new Region("EAST", null);
+        Region js = new Region("JS", "EAST");
+        Region az = new Region("AZ", "EAST");
+        Region nj = new Region("NJ", "JS");
+        Region emptyBranch = new Region("EMPTY", "JS");
+        east.subs = Arrays.asList(js, az);
+        js.subs = Arrays.asList(nj, emptyBranch);
+        nj.subs = new ArrayList<>();
+
+        List<String> leaves = new ArrayList<>();
+        for (Region leaf : TreeUtil.collectLeaves(Collections.singletonList(east), SUBS)) {
+            leaves.add(leaf.code);
+        }
+        assertEquals(Arrays.asList("NJ", "EMPTY", "AZ"), leaves);
+    }
+
+    /**
+     * testFlattenHandlesCycle方法：自环与互环只访问一次，不死循环。
+     */
+    @Test
+    public void testFlattenHandlesCycle() {
+        Region self = new Region("SELF", null);
+        self.subs = Collections.singletonList(self);
+        assertEquals(1, TreeUtil.flatten(Collections.singletonList(self), SUBS).size());
+
+        Region x = new Region("X", null);
+        Region y = new Region("Y", "X");
+        x.subs = Collections.singletonList(y);
+        y.subs = Collections.singletonList(x);
+        List<Region> flat = TreeUtil.flatten(Collections.singletonList(x), SUBS);
+        assertEquals(2, flat.size());
+        assertEquals("X", flat.get(0).code);
+        assertEquals("Y", flat.get(1).code);
+    }
+
+    /**
+     * testFlattenSharedNodeVisitedOnce方法：菱形引用中共享节点只输出一次。
+     */
+    @Test
+    public void testFlattenSharedNodeVisitedOnce() {
+        Region root = new Region("ROOT", null);
+        Region left = new Region("L", "ROOT");
+        Region right = new Region("R", "ROOT");
+        Region shared = new Region("S", "L");
+        root.subs = Arrays.asList(left, right);
+        left.subs = Collections.singletonList(shared);
+        right.subs = Collections.singletonList(shared);
+        assertEquals(4, TreeUtil.flatten(Collections.singletonList(root), SUBS).size());
+    }
+
+    /**
+     * testFlattenNullAndEmpty方法：null 根集合、null childrenGetter、null 子元素都不抛异常。
+     */
+    @Test
+    public void testFlattenNullAndEmpty() {
+        assertTrue(TreeUtil.flatten(null, SUBS).isEmpty());
+        assertTrue(TreeUtil.flatten(new ArrayList<Region>(), SUBS).isEmpty());
+        assertTrue(TreeUtil.flatten(Collections.singletonList(new Region("N", null)), null).isEmpty());
+        assertTrue(TreeUtil.collectLeaves(null, SUBS).isEmpty());
+        Region root = new Region("ROOT", null);
+        root.subs = Arrays.asList(new Region("C", "ROOT"), null);
+        assertEquals(2, TreeUtil.flatten(Collections.singletonList(root), SUBS).size());
     }
 }

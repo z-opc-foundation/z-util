@@ -1,10 +1,14 @@
 package com.zifang.util.core.lang;
 
 import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,6 +145,81 @@ public class TreeUtil {
             fillChildrenFunctional(root, parentMap, idGetter, childrenSetter, visitedIds);
         }
         return new ArrayList<>(roots);
+    }
+
+    /**
+     * flatten方法。
+     * 深度优先（前序）摊平树为列表，父子关系由 childrenGetter 提供。
+     * 使用显式栈遍历，深层树不会栈溢出；按节点引用去重，因此环状或菱形引用结构中
+     * 每个节点只出现一次（重复到达的节点被跳过）。
+     * roots 中的 null 元素、childrenGetter 返回 null 或含 null 的子集合都会被跳过。
+     *
+     * @param roots         根节点集合，为 null 或空时返回空列表
+     * @param childrenGetter Function类型参数，获取某节点的直接子节点集合
+     * @param <T>           节点类型
+     * @return static List类型返回值，前序遍历结果的新列表
+     */
+    public static <T> List<T> flatten(Collection<T> roots, Function<? super T, ? extends Collection<T>> childrenGetter) {
+        List<T> result = new ArrayList<>();
+        if (roots == null || roots.isEmpty() || childrenGetter == null) {
+            return result;
+        }
+        Set<T> visited = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+        Deque<T> stack = new ArrayDeque<>();
+        List<T> rootList = new ArrayList<>(roots);
+        for (int i = rootList.size() - 1; i >= 0; i--) {
+            T root = rootList.get(i);
+            if (root != null) {
+                stack.push(root);
+            }
+        }
+        while (!stack.isEmpty()) {
+            T node = stack.pop();
+            if (!visited.add(node)) {
+                continue;
+            }
+            result.add(node);
+            List<T> children = toChildList(childrenGetter.apply(node));
+            for (int i = children.size() - 1; i >= 0; i--) {
+                T child = children.get(i);
+                if (child != null) {
+                    stack.push(child);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * collectLeaves方法。
+     * 收集树中的叶子节点（childrenGetter 返回 null 或空集合的节点），保持前序遍历顺序。
+     * 去重与环防护语义与 {@link #flatten(Collection, Function)} 一致。
+     *
+     * @param roots         根节点集合，为 null 或空时返回空列表
+     * @param childrenGetter Function类型参数，获取某节点的直接子节点集合
+     * @param <T>           节点类型
+     * @return static List类型返回值，叶子节点组成的新列表
+     */
+    public static <T> List<T> collectLeaves(Collection<T> roots, Function<? super T, ? extends Collection<T>> childrenGetter) {
+        List<T> leaves = new ArrayList<>();
+        for (T node : flatten(roots, childrenGetter)) {
+            Collection<T> children = childrenGetter.apply(node);
+            if (children == null || children.isEmpty()) {
+                leaves.add(node);
+            }
+        }
+        return leaves;
+    }
+
+    /**
+     * toChildList方法。
+     * 将子节点集合安全转为列表，null 与空集合统一返回空列表。
+     */
+    private static <T> List<T> toChildList(Collection<T> children) {
+        if (children == null || children.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return children instanceof List ? (List<T>) children : new ArrayList<>(children);
     }
 
     /**
