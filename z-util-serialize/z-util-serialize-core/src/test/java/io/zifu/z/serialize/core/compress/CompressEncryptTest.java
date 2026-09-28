@@ -33,11 +33,23 @@ public class CompressEncryptTest {
         public BigMessage() {}
     }
 
+    /**
+     * JDK 8 等价的字符串重复（Java 11 的 {@code String.repeat(int)} 在 JDK 8 上不存在）。
+     * 结果与 {@code s.repeat(times)} 逐字节一致。
+     */
+    private static String repeat(String s, int times) {
+        StringBuilder sb = new StringBuilder(s.length() * times);
+        for (int i = 0; i < times; i++) {
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
     @Test
     public void testGzipCompressDecompress() throws IOException {
         BigMessage msg = new BigMessage();
         msg.id = 1L;
-        msg.payload = "Hello World! ".repeat(100);  // 重复字符串以获得压缩效果
+        msg.payload = repeat("Hello World! ", 100);  // 重复字符串以获得压缩效果
         msg.count = 42;
 
         CodecConfig config = CodecConfig.builder()
@@ -95,7 +107,7 @@ public class CompressEncryptTest {
     public void testCompressAndEncrypt() throws IOException {
         BigMessage msg = new BigMessage();
         msg.id = 3L;
-        msg.payload = "Compressed + Encrypted data! ".repeat(50);
+        msg.payload = repeat("Compressed + Encrypted data! ", 50);
         msg.count = 99;
 
         SecretKey key = AesGcmEncryptor.generateKey();
