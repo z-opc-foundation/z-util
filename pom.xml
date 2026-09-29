@@ -4,6 +4,22 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- ============================================================== -->
+    <!-- 消费入口统一走 z-boot-parent（1.0.19 起全组织口径）：                 -->
+    <!-- 继承第三方地板 z-boot-dependencies + import 兄弟仓 z-boot-fleet，   -->
+    <!-- 并下发 Java 8 的 pluginManagement。                                -->
+    <!-- 迁前这里**没有** <parent>（自己就是一棵树的根），版本口径全靠下面     -->
+    <!-- <properties> + <dependencyManagement> 那张 29 格的表。迁后表里       -->
+    <!-- 与父链同值的键删掉，其余全部保留 —— 保留的理由逐条写在原地。          -->
+    <!-- relativePath 必须留空：parent 不在磁盘上，在 repo1。                -->
+    <!-- ============================================================== -->
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot-parent</artifactId>
+        <version>1.0.19</version>
+        <relativePath/>
+    </parent>
+
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-util</artifactId>
     <packaging>pom</packaging>
@@ -53,40 +69,55 @@
 
     <properties>
         <revision>1.0.13</revision>
-        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <!-- project.build.sourceEncoding / project.reporting.outputEncoding 这两个键删掉了：
+             z-boot-parent 供的都是 UTF-8，与本仓原来写的 utf-8 同一字符集（Java 的 Charset 名不区分大小写），
+             编译编码另有 <encoding>utf-8</encoding> 字面量兜着 ⇒ 删键零漂移（已用 tree 复跑验过）。
+             compile.version 必须留着：父链供的是 maven.compiler.source/target，**没有** compile.version 这个键，
+             而下面的 maven-compiler-plugin 和 central profile 的 maven-javadoc-plugin 都在引用它
+             —— 正是 z-boot README「消费模型」第 6 条那个 ${compile.version} 悬空坑的同一形状。 -->
         <compile.version>8</compile.version>
 
         <!-- ==================== 第三方依赖版本集中管理 ==================== -->
+        <!-- ⚠ 下面每一格都是**量出来**的分歧，不是"忘了删"：判据见各处注释。 -->
+        <!-- 地板 log4j2 是 2.25.4，本仓 2.26.1；且地板只直接管 api/core，slf4j2-impl 它压根不管。 -->
         <log4j.version>2.26.1</log4j.version>
+        <!-- 地板（经 spring-boot-dependencies import）供 slf4j-api 1.7.36，本仓要 2.0.16：
+             log4j-slf4j2-impl 2.26.1 只对 SLF4J 2.x 的 ServiceLoader 绑定机制有效。 -->
         <slf4j.version>2.0.16</slf4j.version>
+        <!-- 地板 import 的 junit-bom 是 5.9.3，本仓 5.11.4。 -->
         <junit.version>5.11.4</junit.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <validation.version>2.0.1.Final</validation.version>
         <javax.mail.version>1.6.2</javax.mail.version>
+        <!-- 地板（spring-boot-dependencies）供 javax.servlet-api 4.0.1，本仓刻意留 3.1.0。 -->
         <servlet.version>3.1.0</servlet.version>
         <jaxb.version>2.3.1</jaxb.version>
         <jaxb.impl.version>2.3.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
+        <!-- 地板 druid 1.2.23，本仓 1.2.24。 -->
         <druid.version>1.2.24</druid.version>
+        <!-- 地板 guava 32.0.0-jre，本仓 33.6.0-jre。 -->
         <guava.version>33.6.0-jre</guava.version>
         <cglib.version>3.3.0</cglib.version>
-        <gson.version>2.14.0</gson.version>
+        <!-- gson.version 这一格删掉了：迁前它**谁也没挂** —— 全仓 47 个 pom 里没有一条 gson 依赖，
+             0 个 java 文件 import com.google.gson，纯粹是属性表里的死账（不在本次"版本口径"的账上，
+             删它不改任何解析结果）。 -->
+        <!-- 地板 jackson 2.18.6（并经 jackson-bom import 整族），本仓 2.18.9。 -->
         <jackson.version>2.18.9</jackson.version>
-        <okhttp.version>4.12.0</okhttp.version>
-        <!-- 2026-09-28「同坐标单版本」：4.1.137.Final → 4.1.138.Final，与 z-boot-dependencies 1.0.18 的
-             netty-bom 同一口径（4.1.138 含 CVE 修复，4.1.x 内二进制兼容）。 -->
-        <netty.version>4.1.138.Final</netty.version>
+        <!-- okhttp.version / netty.version / protobuf-java.version 三格删掉了：
+             地板面值 4.12.0 / 4.1.138.Final / 3.25.5 与本仓迁前**逐格相同** ⇒ 键与对应的
+             <dependencyManagement> 条目一起删，改由父链下发（迁移后 tree 里这几族版本一件没动）。 -->
         <antlr.version>4.13.2</antlr.version>
         <jsoup.version>1.23.1</jsoup.version>
+        <!-- 地板 javassist 3.24.1-GA，本仓 3.32.0-GA（高版本默认开启 module 支持，Java 17+ 兼容）。 -->
         <javassist.version>3.32.0-GA</javassist.version>
         <jol.version>0.17</jol.version>
+        <!-- 地板 javaparser 3.23.1，本仓 3.28.2。 -->
         <javaparser.version>3.28.2</javaparser.version>
         <pdfbox.version>3.0.8</pdfbox.version>
         <poi.version>5.5.1</poi.version>
         <github-api.version>1.330</github-api.version>
-        <protobuf-java.version>3.25.5</protobuf-java.version>
 
         <!-- Central Portal 上传凭证（由环境变量 CENTRAL_USERNAME / CENTRAL_TOKEN 注入） -->
         <centralPortalUrl>https://central.sonatype.com</centralPortalUrl>
@@ -210,6 +241,156 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- ↓↓↓ 「消费模型」步骤 4：自家 reactor 的 jar 模块**逐个**钉在本仓 DM 里。
+                 上面那 16 条只覆盖了 reactor 的一部分（dsl / http / ml / devops / source / ch / cli /
+                 validation / ioc / office / media / workflow / visualization / 8 个 parser-* /
+                 5 个 expr-* / serialize-benchmarks / serialize-it 共 27 格是缺的，子模块一直靠
+                 自己在 <dependency> 上写 ${revision} 顶着）。
+                 这一格不是装饰：继承来的 fleet 里 z-util 那一格钉的是 repo1 的 **1.0.13**，
+                 而 DM 会改写**传递依赖**的版本 —— 本仓 revision 一旦抬到 1.0.14 而 fleet 还停在
+                 1.0.13，树里的 z-util-* 就会被反向压成旧字节码（z-cache 实测把 1.3.5 打进过 1.3.6 的包）。
+                 面值写法刻意用 `${revision}` 而不是 z-cache 那侧的 `${project.version}`：
+                 本仓 flatten 是 `resolveCiFriendliesOnly`（见下面 build/plugins 的注释），它只展开
+                 revision/sha1/changelist，**不会**展开 `${project.version}` ⇒ 后者会原样发进中央 pom，
+                 消费方按**它们自己的**版本去解析（z-boot README 记着同一形状的实测 404）。
+                 ⚠ z-util-zex 刻意不列：它在默认 reactor 之外（sandbox profile），中央上从来没有这个坐标，
+                 钉进发布态 umbrella 等于对外广告一个 repo1 上不存在的件。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-office</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-media</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-dsl</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-workflow</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-visualization</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-http</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-ml</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-devops</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-source</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-ch</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-cli</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-validation</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-ioc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-benchmarks</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-serialize-it</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-el</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-groovy</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-js</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-expr-lua</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-csv</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-ini</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-json</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-properties</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-proto</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-toml</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-xml</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-parser-yaml</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-slf4j2-impl</artifactId>
@@ -320,25 +501,13 @@
                 <version>${jackson.version}</version>
             </dependency>
 
-            <!-- OkHttp HTTP 客户端 -->
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>${okhttp.version}</version>
-            </dependency>
+            <!-- okhttp / okhttp-sse 的 managed 条目删掉：地板 z-boot-dependencies 按坐标直接钉
+                 com.squareup.okhttp3:okhttp / :okhttp-sse = ${okhttp.version}=4.12.0，与本仓迁前同一格，
+                 改由父链下发（tree 里 okhttp 两件迁移前后都是 4.12.0）。 -->
 
-            <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp-sse</artifactId>
-                <version>${okhttp.version}</version>
-            </dependency>
-
-            <!-- Netty 网络框架 -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
+            <!-- Netty：netty-all 的 managed 条目删掉，地板 import 的 io.netty:netty-bom
+                 （${netty.version}=4.1.138.Final，与本仓迁前那一格逐字相同，含 2026-09-28
+                 「同坐标单版本」那次 4.1.137→4.1.138 的 CVE 对齐）整族下发。 -->
 
             <!-- JAXB API：提供 javax.xml.bind 相关注解 -->
             <dependency>
@@ -450,12 +619,179 @@
                 <version>${github-api.version}</version>
             </dependency>
 
-            <!-- 强制升级 transitive protobuf-java（mysql-connector-j 拉入旧版） -->
+            <!-- protobuf-java 的 managed 条目删掉：地板按坐标直接钉 com.google.protobuf:protobuf-java
+                 = 3.25.5，与本仓迁前那一格相同。原来这条是给 mysql-connector-j 拉入的旧版做
+                 「强制升级 transitive」用的，父链下发同样按坐标改写传递版本，作用一字没少。 -->
+
+            <!-- ============================================================ -->
+            <!-- 传递依赖连贯性锚点（迁入 z-boot-parent 时**量出来**的 25 格）   -->
+            <!-- 迁后第一遍 tree 实测漂了 27 个坐标，全部是"本仓没钉、由上游 pom 自己带"的传递件：
+                 继承来的 DM 会改写**传递依赖**的版本，而地板对这些格的口径比带它们的那几个上游库
+                 自己声明的更旧（objenesis 3.3→2.6、kotlin-stdlib 1.8.21→1.6.21、
+                 commons-compress 1.28.0→1.26.0、commons-collections4 4.5.0→4.4、asm 9.7→9.2、
+                 javaparser-core 3.28.2→3.23.1 …），并把 junit 整族压到 junit-bom 的 5.9.3 ——
+                 那意味着聚合件 junit-jupiter 还是 5.11.4、它的 api/engine 却成 5.9.3，测试台混版本。
+                 这 25 条**不是版本属性表**（CEO 要拆的是那张表）：它们不声明"本仓用什么"，
+                 只是把每个坐标钉回"带它的那个上游库自己要求的版本"，一条对一条实测漂移，
+                 并且刻意写字面量、不再新增 property。
+                 判据：写完复跑 tree，除下面明确认账的 4 行外漂移为 0。
+                 ⚠ 必须逐条写**直接**条目：地板的 junit-bom/jackson-bom/spring-boot-dependencies
+                 是 import 进来的，而"继承来的直接 DM"压过"本仓 import 的 BOM"
+                 （z-boot README 消费模型第 5 条实测的形状，这里用的是同一个机制的反方向）。
+                 ============================================================ -->
+            <!-- javaparser：本仓 DM 直钉 symbol-solver-core 3.28.2，它带的 core 被地板压成 3.23.1
+                 ⇒ 同族两套版本；core 必须跟着 3.28.2（z-util-proxy / z-util-source 都在用它） -->
             <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf-java.version}</version>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-core</artifactId>
+                <version>${javaparser.version}</version>
             </dependency>
+            <!-- guava 33.6.0-jre 自带的两个纯注解件 -->
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.47.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.55.1</version>
+            </dependency>
+            <!-- okhttp 4.12.0 声明 okio 3.6.0（地板要 3.9.0）；kotlin-stdlib 是 okhttp 的运行期 -->
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio</artifactId>
+                <version>3.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio-jvm</artifactId>
+                <version>3.6.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-common</artifactId>
+                <version>1.9.10</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-jdk7</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
+                <version>1.8.21</version>
+            </dependency>
+            <!-- kryo 5.5.0 要求 objenesis 3.x；地板的 2.6 是 Objenesis 1.x/2.x 时代的口径 -->
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>3.3</version>
+            </dependency>
+            <!-- z-util-proxy 直钉 asm 9.7；其余 4 个模块经 javaparser 传递拿到的 asm 被地板压成 9.2 -->
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>9.7</version>
+            </dependency>
+            <!-- poi 5.5.1 / pdfbox 3.0.8 自己声明的 commons-*：地板一律更旧 -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.28.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.5.0</version>
+            </dependency>
+            <!-- ⚠ 迁前这三格 commons-* 在本仓内部就是**分叉**的：devops 经 jgit/github-api 拿
+                 commons-io 2.16.1、commons-codec 1.11、commons-logging 1.2；office 经 poi/pdfbox 拿
+                 2.21.0 / 1.20.0 / 1.4.0。一条全局 DM 只能表达一个值 ⇒ 取**较高**那一格：
+                 谁都不被降到自己上游库声明之下；代价是 devops 侧这三行往上漂 ——
+                 这是明确认账的改动（commons-io 2.16.1→2.21.0、commons-codec 1.11→1.20.0、
+                 commons-logging 1.2→1.4.0），不是漂移。 -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.21.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>1.20.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.4.0</version>
+            </dependency>
+            <!-- httpclient/httpcore：地板（经 spring-boot-dependencies import）把它们抬到
+                 4.5.14 / 4.4.16，而**那条受管条目自带 commons-logging 通配 exclusion** ⇒ 实测
+                 z-util-devops 树里 commons-logging 整根消失（jcl-over-slf4j 也没人补），
+                 httpclient 运行期就是 NoClassDefFoundError: org/apache/commons/logging/LogFactory。
+                 按坐标写直接条目把面值顶回迁前那一格，同时把那条 exclusion 一起顶掉（就近整条覆盖）。 -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.13</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.4.13</version>
+            </dependency>
+            <!-- JUnit 家族：本仓 DM 原先只直钉 junit-jupiter / junit-vintage-engine 两件 5.11.4，
+                 api/engine/params/platform-commons/platform-engine/opentest4j 全靠它们的 pom 带；
+                 地板 import 的 junit-bom 是 5.9.3 ⇒ 不补这 6 条就是"聚合件 5.11.4 + 平台 1.9.3"
+                 的混版本测试台（38 个模块全中）。 -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>1.11.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-engine</artifactId>
+                <version>1.11.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opentest4j</groupId>
+                <artifactId>opentest4j</artifactId>
+                <version>1.3.0</version>
+            </dependency>
+            <!-- junit:junit 4.13.2（经 vintage engine）声明 hamcrest-core 1.3；地板压成 2.2 并
+                 额外带进 org.hamcrest:hamcrest —— 1.3 才是迁前 38 个模块树里的那一件。 -->
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>1.3</version>
+            </dependency>
+            <!-- 明确**不**钉的一格（这一行漂移是认过账的）：
+                 com.fasterxml.jackson.module:jackson-module-jaxb-annotations 2.12.2 → 2.18.9。
+                 迁前它是 2.12.2，而本仓 jackson-databind/core/annotations 全在 2.18.9 —— 那才是错的组合；
+                 地板的 jackson-bom 按本仓自己的 ${jackson.version} 插值，把它抬进同族 ⇒ 接受。 -->
 
 
         </dependencies>
@@ -503,6 +839,18 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>1.7.3</version>
+                <!-- 「消费模型」步骤 7 的判据是**本仓中央上现在是什么形状**，不是全组织统一成 0：
+                     repo1 实测 z-util:1.0.13 发布的是 `resolveCiFriendliesOnly` 的产物（656 行、
+                     `<parent>` 计数 0、`com.zifang` 计数 0、带完整 <dependencyManagement> 与
+                     <properties>、含 42 处 ${} 引用但**全部由自家 properties/profile 解析**）；
+                     叶子件 z-util-core:1.0.13 则是 88 行、`<parent>` 计数 1（→ io.github.yuku123:z-util:1.0.13）、
+                     0 处 ${}。⇒ 按「本来就发带 <parent> 的扁平 pom 保持它自己的 flattenMode 不动」那一档处理：
+                     模式与版本都**不改**（尤其不换成 oss —— oss 会把 <dependencyManagement> 整个删掉，
+                     z-util 这棵 umbrella 对外供的就是这张表，换了就是换交付物）。
+                     代价说清楚：根 pom 发布件的 `<parent>` 计数因此从 0 变成 1（→ z-boot-parent:1.0.19），
+                     这条链子在 repo1 上读得动（已 ranged GET 200 复核），并由 repo1-only 那遍复跑兜住。
+                     也正因为不换成 oss，上面自家模块的 DM 面值必须写 `${revision}` 不能写
+                     `${project.version}`（本插件只展开 revision/sha1/changelist）。 -->
                 <configuration>
                     <updatePomFile>true</updatePomFile>
                     <flattenMode>resolveCiFriendliesOnly</flattenMode>
