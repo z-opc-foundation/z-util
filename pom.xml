@@ -16,7 +16,7 @@
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-boot-parent</artifactId>
-        <version>1.0.19</version>
+        <version>1.0.21</version>
         <relativePath/>
     </parent>
 
