@@ -8,7 +8,7 @@
 #   3) 用 ${env.CENTRAL_USERNAME} / ${env.CENTRAL_TOKEN} 占位，避免明文存密码
 #
 # 用法：
-#   ./install-settings.sh
+#   bash _doc/003_script/install-settings.sh
 #
 # 后续步骤（脚本会提示）：
 #   - 终端执行：export CENTRAL_USERNAME=...
