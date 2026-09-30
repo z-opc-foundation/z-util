@@ -287,8 +287,8 @@ bash _doc/003_script/install-settings.sh               # 把 server id=central �
   `1.0.13` 为 404）—— 说明 1.0.14 这一批是由组织的批量发布通道把聚合件也一起推上去的，脚本那行排除参数只描述它自己那条路径。
 - `z-util-zex` 不在默认 reactor（只有 `-Psandbox` 才构建），实测中央 404：这是设计如此，它永远不该发布。
 
-完整流程与避坑清单见 [`_doc/001_arch/RELEASE_TO_MAVEN_CENTRAL.md`](_doc/001_arch/RELEASE_TO_MAVEN_CENTRAL.md)
-与 [`_doc/001_arch/发布指引.md`](_doc/001_arch/发布指引.md)。
+完整流程与避坑清单见 [`_doc/006_release/RELEASE_TO_MAVEN_CENTRAL.md`](_doc/006_release/RELEASE_TO_MAVEN_CENTRAL.md)
+与 [`_doc/006_release/发布指引.md`](_doc/006_release/发布指引.md)。
 
 ---
 
@@ -339,14 +339,14 @@ _Maintained by the z-opc-foundation organization._
   - [`pivot.md`](_doc/001_arch/pivot.md) — `engine.service.pivot` 的 `pivot` / `unpivot` 参数说明
   - [`resource.md`](_doc/001_arch/resource.md) — `engine.service.resourceHandler`：本地文件 / MySQL / 集群 / HDFS 读写与表映射
   - [`target.md`](_doc/001_arch/target.md) — `engine.service.target`：churn 的 target 生成
-  - [`RELEASE_TO_MAVEN_CENTRAL.md`](_doc/001_arch/RELEASE_TO_MAVEN_CENTRAL.md) — 本仓发布到 Central 的操作手册
-  - [`发布指引.md`](_doc/001_arch/发布指引.md) — 通用（任何多模块 Java 仓）Central 发布指引 + AI 避坑清单
-- [`_doc/002_deploy/`](_doc/002_deploy/) — 目前为空目录（本仓是库，没有部署资产；空目录未被 git 跟踪，clone 后可能不存在）
+  - [`RELEASE_TO_MAVEN_CENTRAL.md`](_doc/006_release/RELEASE_TO_MAVEN_CENTRAL.md) — 本仓发布到 Central 的操作手册
+  - [`发布指引.md`](_doc/006_release/发布指引.md) — 通用（任何多模块 Java 仓）Central 发布指引 + AI 避坑清单
+- `_doc/002_deploy/` — 目前为空目录（本仓是库，没有部署资产；空目录未被 git 跟踪，clone 后可能不存在）
 - [`_doc/003_script/`](_doc/003_script/) — 脚本：
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 发布入口（`gpg-init` / `publish` / `verify` / `readme` / `help`；须在仓库根目录上下文运行，凭据取 `.env`）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh) — 把 `<server id="central">` 写进 `~/.m2/settings.xml`
   - `11.1.sh` / `11.3.sh` / `11.4.sh` / `11.7.sh` / `11.8.sh` / `12.1.sh` / `12.4.sh` / `12.7.sh` / `13.1.sh` / [`loopDir.sh`](_doc/003_script/loopDir.sh) — Shell 学习笔记示例（多命令、echo、变量、算术、退出码、if、数值比较、case、循环、递归遍历目录），**不是运维脚本**，与构建无关
-- [`_doc/004_skill/`](_doc/004_skill/) — AI skill 定义：
-  - [`CLAUDE.md`](_doc/004_skill/CLAUDE.md) — 给 AI 协作的构建/模块约定（其版本号段落已过时，以本 README 与 POM 为准）
+- `_doc/004_skill/` — AI skill 定义：
+  - [`CLAUDE.md`](CLAUDE.md) — 给 AI 协作的构建/模块约定（其版本号段落已过时，以本 README 与 POM 为准）
 
 各文档详细说明见各子目录。

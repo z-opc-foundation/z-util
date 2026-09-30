@@ -41,7 +41,9 @@ print_help() {
 }
 
 # ---------- 切到 z-util 根目录 ----------
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
 [[ -f pom.xml ]] || die "请在 z-util 仓库根目录运行此脚本"
 
 # ---------- 加载 .env ----------
