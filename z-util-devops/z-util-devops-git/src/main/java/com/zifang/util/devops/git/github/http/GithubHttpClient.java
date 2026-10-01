@@ -111,6 +111,37 @@ public class GithubHttpClient {
         }
     }
 
+    /**
+     * PATCH 一个 JSON 体，返回响应对象。
+     */
+    public JsonObject patchJson(String path, String jsonBody) throws IOException {
+        HttpUrl url = baseUrl.newBuilder().addPathSegments(stripLeadingSlash(path)).build();
+        Request req = new Request.Builder()
+                .url(url)
+                .patch(RequestBody.create(jsonBody == null ? "{}" : jsonBody, JSON))
+                .build();
+        try (Response resp = http.newCall(req).execute()) {
+            String body = readBody(resp);
+            ensure2xx(resp, path, "PATCH", body);
+            if (body.isEmpty()) {
+                return new JsonObject();
+            }
+            return JsonUtil.fromJson(body, JsonObject.class);
+        }
+    }
+
+    /**
+     * DELETE。响应体被丢弃；非 2xx 一律抛 {@link GithubHttpException}。
+     */
+    public void delete(String path) throws IOException {
+        HttpUrl url = baseUrl.newBuilder().addPathSegments(stripLeadingSlash(path)).build();
+        Request req = new Request.Builder().url(url).delete().build();
+        try (Response resp = http.newCall(req).execute()) {
+            String body = readBody(resp);
+            ensure2xx(resp, path, "DELETE", body);
+        }
+    }
+
     private static String readBody(Response resp) throws IOException {
         return resp.body() == null ? "" : resp.body().string();
     }

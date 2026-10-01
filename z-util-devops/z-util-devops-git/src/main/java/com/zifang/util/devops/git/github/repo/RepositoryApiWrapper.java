@@ -3,6 +3,8 @@ package com.zifang.util.devops.git.github.repo;
 import com.zifang.util.devops.git.github.http.GithubHttpClient;
 import com.zifang.util.devops.git.github.model.Branch;
 import com.zifang.util.devops.git.github.model.Repository;
+import com.zifang.util.devops.git.github.model.User;
+import com.zifang.util.json.JsonUtil;
 import com.zifang.util.json.model.JsonArray;
 import com.zifang.util.json.model.JsonObject;
 
@@ -13,9 +15,8 @@ import java.util.List;
 /**
  * GitHub Repository API 包装。
  *
- * <p>v0 切片：仅 {@link #get(String, String)} 与 {@link #listBranches()} 真跑 okhttp REST，
- * 其余方法抛 {@link UnsupportedOperationException}，续接清单见
- * {@code _doc/001_arch/github-api-migration.md} 的 §repo 表格。
+ * <p>v0 切片 → 全量收口：11 个方法全部实跑 okhttp REST。续接进度见
+ * {@code _doc/001_arch/github-api-migration.md} §repo。
  */
 public class RepositoryApiWrapper {
 
@@ -39,9 +40,9 @@ public class RepositoryApiWrapper {
         return this;
     }
 
-    // ==================== 实跑 v0 ====================
+    // ==================== Get / Branches ====================
 
-    /** GET /repos/{owner}/{repo} → Repository POJO。 */
+    /** GET /repos/{owner}/{repo} */
     public Repository get(String owner, String repo) throws IOException {
         JsonObject body = client.getJsonObject("/repos/" + owner + "/" + repo);
         return Repository.fromJson(body);
@@ -51,7 +52,7 @@ public class RepositoryApiWrapper {
         return get(this.owner, this.repo);
     }
 
-    /** GET /repos/{owner}/{repo}/branches → 分支名列表。 */
+    /** GET /repos/{owner}/{repo}/branches */
     public List<String> listBranches() throws IOException {
         JsonArray arr = client.getJsonArray("/repos/" + this.owner + "/" + this.repo + "/branches");
         List<String> names = new ArrayList<>(arr.size());
@@ -61,79 +62,129 @@ public class RepositoryApiWrapper {
         return names;
     }
 
-    // ==================== TODO：见迁移 doc §repo ====================
+    // ==================== CRUD ====================
 
+    /** POST /user/repos */
     public Repository create(String name, String description, boolean isPrivate) throws IOException {
-        throw notImpl("repo.create");
+        JsonObject body = new JsonObject();
+        body.put("name", name);
+        body.put("description", description);
+        body.put("private", isPrivate);
+        return Repository.fromJson(client.postJson("/user/repos", body.toString()));
     }
 
+    /** POST /orgs/{org}/repos */
     public Repository createOrgRepo(String org, String name, String description, boolean isPrivate) throws IOException {
-        throw notImpl("repo.createOrgRepo");
+        JsonObject body = new JsonObject();
+        body.put("name", name);
+        body.put("description", description);
+        body.put("private", isPrivate);
+        return Repository.fromJson(client.postJson("/orgs/" + org + "/repos", body.toString()));
     }
 
+    /** DELETE /repos/{owner}/{repo} */
     public void delete(String owner, String repo) throws IOException {
-        throw notImpl("repo.delete");
+        client.delete("/repos/" + owner + "/" + repo);
     }
 
     public void delete() throws IOException {
-        throw notImpl("repo.delete");
+        delete(this.owner, this.repo);
     }
 
-    public String getDescription() throws IOException {
-        throw notImpl("repo.getDescription");
+    // ==================== User Repos ====================
+
+    /** GET /users/{username}/repos?per_page=100 */
+    public List<Repository> listUserRepos(String username) throws IOException {
+        JsonArray arr = client.getJsonArray("/users/" + username + "/repos?per_page=100");
+        return toRepos(arr);
     }
 
-    public String getDefaultBranch() throws IOException {
-        throw notImpl("repo.getDefaultBranch");
+    /** GET /user/repos?per_page=100 */
+    public List<Repository> listMyRepos() throws IOException {
+        JsonArray arr = client.getJsonArray("/user/repos?per_page=100");
+        return toRepos(arr);
     }
 
-    public String getLanguage() throws IOException {
-        throw notImpl("repo.getLanguage");
-    }
+    // ==================== Fork / Stargazers ====================
 
-    public int getStargazersCount() throws IOException {
-        throw notImpl("repo.getStargazersCount");
-    }
-
-    public int getForksCount() throws IOException {
-        throw notImpl("repo.getForksCount");
-    }
-
-    public List<String> listUserRepos(String username) throws IOException {
-        throw notImpl("repo.listUserRepos");
-    }
-
-    public List<String> listMyRepos() throws IOException {
-        throw notImpl("repo.listMyRepos");
-    }
-
+    /** POST /repos/{owner}/{repo}/forks */
     public Repository fork() throws IOException {
-        throw notImpl("repo.fork");
+        return Repository.fromJson(client.postJson(
+                "/repos/" + this.owner + "/" + this.repo + "/forks", "{}"));
     }
 
-    public List<String> listForks() throws IOException {
-        throw notImpl("repo.listForks");
+    /** GET /repos/{owner}/{repo}/forks */
+    public List<Repository> listForks() throws IOException {
+        JsonArray arr = client.getJsonArray(
+                "/repos/" + this.owner + "/" + this.repo + "/forks");
+        return toRepos(arr);
     }
 
-    public List<String> listStargazers() throws IOException {
-        throw notImpl("repo.listStargazers");
+    /** GET /repos/{owner}/{repo}/stargazers */
+    public List<User> listStargazers() throws IOException {
+        JsonArray arr = client.getJsonArray(
+                "/repos/" + this.owner + "/" + this.repo + "/stargazers");
+        List<User> users = new ArrayList<>(arr.size());
+        for (int i = 0; i < arr.size(); i++) {
+            users.add(User.fromJson(arr.getJsonObject(i)));
+        }
+        return users;
     }
 
-    public List<String> search(String keyword) throws IOException {
-        throw notImpl("repo.search");
+    // ==================== Search ====================
+
+    /** GET /search/repositories?q=... */
+    public List<Repository> search(String keyword) throws IOException {
+        return search(keyword, null);
     }
 
-    public List<String> search(String keyword, String language) throws IOException {
-        throw notImpl("repo.search(lang)");
+    /** GET /search/repositories?q=...+language:... */
+    public List<Repository> search(String keyword, String language) throws IOException {
+        String q = keyword == null ? "" : keyword;
+        if (language != null && !language.isEmpty()) {
+            q = q + "+language:" + language;
+        }
+        JsonObject body = client.getJsonObject(
+                "/search/repositories?q=" + q + "&per_page=100");
+        JsonArray items = body.getJsonArray("items");
+        return toRepos(items);
     }
 
-    /** v0 兼容：原 {@code info()} 走 {@code Repository POJO}。 */
+    // ==================== Info / Description 等便利 getter ====================
+
+    /** v0 兼容：原 {@code info()} 等价于 {@code get()}。 */
     public Repository info() throws IOException {
         return get();
     }
 
-    private static UnsupportedOperationException notImpl(String key) {
-        return new UnsupportedOperationException(
-                "RepositoryApiWrapper." + key + " 未迁移实现，详见 _doc/001_arch/github-api-migration.md");
+    public String getDescription() throws IOException {
+        return get().getDescription();
+    }
+
+    public String getDefaultBranch() throws IOException {
+        return get().getDefaultBranch();
+    }
+
+    public String getLanguage() throws IOException {
+        return get().getLanguage();
+    }
+
+    public int getStargazersCount() throws IOException {
+        return get().getStargazersCount();
+    }
+
+    public int getForksCount() throws IOException {
+        return get().getForksCount();
+    }
+
+    private static List<Repository> toRepos(JsonArray arr) {
+        if (arr == null) {
+            return new ArrayList<>();
+        }
+        List<Repository> out = new ArrayList<>(arr.size());
+        for (int i = 0; i < arr.size(); i++) {
+            out.add(Repository.fromJson(arr.getJsonObject(i)));
+        }
+        return out;
     }
 }
