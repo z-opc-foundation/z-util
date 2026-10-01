@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public abstract class CFJavaFileManager extends ForwardingJavaFileManager {
+public class CFJavaFileManager extends ForwardingJavaFileManager {
     private static final Logger log = LoggerFactory.getLogger(CFJavaFileManager.class);
     /**
      * 保存编译后Class文件的对象
