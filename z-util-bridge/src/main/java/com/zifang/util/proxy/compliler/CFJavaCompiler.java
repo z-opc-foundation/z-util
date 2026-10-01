@@ -73,6 +73,10 @@ public class CFJavaCompiler {
                 error.append(compilePrint(diagnostic));
             }
             log.error("编译失败. \noutWriter:{} \ndiagnostics info:{}", outWriter.toString(), error.toString());
+            // 直接刷 System.err 便于诊断 surefire 静默环境
+            System.err.println("[CFJavaCompiler] outWriter: " + outWriter);
+            System.err.println("[CFJavaCompiler] diagnostics: " + error);
+            System.err.println("[CFJavaCompiler] classpath: " + classpath);
         }
 
         return new HashMap<>(0);

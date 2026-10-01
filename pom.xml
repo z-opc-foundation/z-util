@@ -144,10 +144,12 @@
         <module>z-util-source</module>
         <module>z-util-distribute</module>
         <module>z-util-proxy</module>
+        <module>z-util-pattern</module>
         <module>z-util-ch</module>
         <module>z-util-cli</module>
         <module>z-util-validation</module>
         <module>z-util-cache</module>
+        <module>z-util-bridge</module>
         <module>z-util-ioc</module>
         <module>z-util-aop</module>
         <module>z-util-serialize</module>

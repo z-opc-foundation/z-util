@@ -33,14 +33,17 @@
         </dependency>
 
         <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm</artifactId>
-            <version>9.7</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
+        </dependency>
+
+        <!-- z-util-bridge（2026-10-01 拆出）：class-as-runtime-product 能力
+             （CFJavaCompiler + SourceProxyFactory + EntryWeaver + AspectToHookAdapter 等）单独成模块，
+             避免 reactor 形成 proxy→core→aop→proxy 循环；proxy 主域不直接用 asm，依赖在 bridge。 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-bridge</artifactId>
+            <version>${revision}</version>
         </dependency>
 
         <!-- javax.annotation-api 已删（2026-10-01）：src 对 javax.annotation 零引用；

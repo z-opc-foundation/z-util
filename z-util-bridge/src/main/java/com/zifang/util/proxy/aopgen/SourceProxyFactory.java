@@ -64,6 +64,7 @@ public class SourceProxyFactory {
 
         StringBuilder sb = new StringBuilder();
         sb.append(pkg);
+        sb.append("import com.zifang.util.proxy.aopgen.MethodHook;\n\n");
         sb.append("public class ").append(simple).append(" extends ").append(targetClass.getCanonicalName()).append(" {\n\n");
         sb.append("    private final MethodHook hook;\n\n");
         sb.append("    public ").append(simple).append("(MethodHook hook) {\n");
