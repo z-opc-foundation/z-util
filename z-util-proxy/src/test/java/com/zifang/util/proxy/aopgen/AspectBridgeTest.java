@@ -32,4 +32,20 @@ public class AspectBridgeTest {
         assertEquals(Arrays.asList("echo=echo:hi", "len=3", "run=null"), aspect.afterLog);
         assertEquals(0, aspect.afterExceptionLog.size());
     }
+
+    @Test
+    public void bridgePropagatesExceptionAndFiresAfterException() {
+        CountingAspect aspect = new CountingAspect();
+        EchoService proxy = SourceProxyFactory.proxy(new EchoService(), new AspectToHookAdapter(aspect, new EchoService()));
+        try {
+            proxy.explode();
+            throw new AssertionError("期望 explode 抛 IllegalStateException");
+        } catch (IllegalStateException expected) {
+            assertEquals("boom", expected.getMessage());
+        }
+        // 异常路径：before + afterException 触发，after 不触发
+        assertEquals(java.util.Arrays.asList("explode"), aspect.beforeLog);
+        assertEquals(0, aspect.afterLog.size());
+        assertEquals(java.util.Arrays.asList("explode:boom"), aspect.afterExceptionLog);
+    }
 }

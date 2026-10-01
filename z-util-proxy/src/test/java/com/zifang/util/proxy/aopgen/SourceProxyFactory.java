@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 源码级代理工厂：拿现成类当参考，生成子类源码并在每个可覆写方法前后织入
- * {@link MethodHook} 调用，内存编译后用自定义 ClassLoader 定义并实例化。
+ * {@link MethodHook} 调用，异常路径走 {@link MethodHook#afterException(String, Throwable)}。
+ * 内存编译后用自定义 ClassLoader 定义并实例化。
  * <p>
  * 链路 = 解析目标类 → 源码制造 → 字节码 → 加载执行（制造字节码能力的一等用户）。
  * <p>
@@ -100,15 +101,19 @@ public class SourceProxyFactory {
         sb.append("    public ").append(ret.getCanonicalName()).append(" ").append(m.getName())
                 .append("(").append(params).append(") {\n");
         sb.append("        hook.before(\"").append(m.getName()).append("\", new Object[]{").append(args).append("});\n");
+        sb.append("        try {\n");
         if (ret == void.class) {
-            sb.append("        super.").append(m.getName()).append("(").append(args).append(");\n");
-            sb.append("        hook.after(\"").append(m.getName()).append("\", null);\n");
+            sb.append("            super.").append(m.getName()).append("(").append(args).append(");\n");
+            sb.append("            hook.after(\"").append(m.getName()).append("\", null);\n");
         } else {
-            sb.append("        ").append(ret.getCanonicalName()).append(" r = super.").append(m.getName())
-                    .append("(").append(args).append(");\n");
-            sb.append("        hook.after(\"").append(m.getName()).append("\", r);\n");
-            sb.append("        return r;\n");
+            sb.append("            ").append(ret.getCanonicalName()).append(" r = super.").append(m.getName()).append("(").append(args).append(");\n");
+            sb.append("            hook.after(\"").append(m.getName()).append("\", r);\n");
+            sb.append("            return r;\n");
         }
+        sb.append("        } catch (Throwable t) {\n");
+        sb.append("            hook.afterException(\"").append(m.getName()).append("\", t);\n");
+        sb.append("            throw t;\n");
+        sb.append("        }\n");
         sb.append("    }\n\n");
     }
 

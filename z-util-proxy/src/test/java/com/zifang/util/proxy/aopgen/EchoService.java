@@ -26,4 +26,8 @@ public class EchoService {
     public static String stat() {
         return "stat";
     }
+
+    public String explode() {
+        throw new IllegalStateException("boom");
+    }
 }

@@ -37,6 +37,14 @@ public class AspectToHookAdapter implements MethodHook {
         aspect.after(target, m, args, result);
     }
 
+    @Override
+    public void afterException(String method, Throwable t) {
+        Method m = resolve(method, currentArgs);
+        Object[] args = currentArgs;
+        this.currentArgs = null;
+        aspect.afterException(target, m, args, t);
+    }
+
     private Method resolve(String name, Object[] args) {
         int arity = args == null ? 0 : args.length;
         for (Method candidate : target.getClass().getDeclaredMethods()) {
