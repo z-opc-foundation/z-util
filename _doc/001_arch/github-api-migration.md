@@ -109,10 +109,10 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 
 | 方法 | HTTP | 勾 |
 |------|------|------|
-| `listWorkflows()` | `GET /repos/{owner}/{repo}/actions/workflows` | [ ] |
-| `listWorkflowRuns(workflowId)` | `GET /repos/{owner}/{repo}/actions/workflows/{id}/runs` | [ ] |
-| `listArtifacts(runId)` | `GET /repos/{owner}/{repo}/actions/runs/{id}/artifacts` | [ ] |
-| `listJobs(runId)` | `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs` | [ ] |
+| `listWorkflows()` | `GET /repos/{owner}/{repo}/actions/workflows` | [x] |
+| `listWorkflowRuns(workflowId)` | `GET /repos/{owner}/{repo}/actions/workflows/{id}/runs` | [x] |
+| `listArtifacts(runId)` | `GET /repos/{owner}/{repo}/actions/runs/{id}/artifacts` | [x] |
+| `listJobs(runId)` | `GET /repos/{owner}/{repo}/actions/runs/{id}/jobs` | [x] |
 
 ---
 
