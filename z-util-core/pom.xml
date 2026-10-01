@@ -77,10 +77,40 @@
             <artifactId>javax.mail</artifactId>
         </dependency>
 
-        <!-- LogContext / LoggableAdvise 依赖（trace + aop 内部模块） -->
+        <!--
+            z-util-bc (2026-10-02)：整合 aop + proxy + bridge 三个旧模块。
+            core 只取高层 AOP API（TraceContext / LoggableAdvise）。
+            字节码底层（class 文件模型、ASM 编织、内存编译）不暴露给 core。
+        -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-aop</artifactId>
+            <artifactId>z-util-bc</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!--
+            ReflectUtil 的反射元数据缓存（Class→Constructor[]/Field[]/Method[]）
+            用 z-util-pattern-cache（GoF Cache pattern）的 CacheBuilder。无界 LRU，
+            Class 数量受 JVM 65535 上限制约，内存可控。
+            cache 2026-10-02 降级到 z-util-pattern 子模块。
+        -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-pattern-cache</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- reflect 子包需要 ILeaf/ILeafFetch/LeafHelper/IFactory: 2026-10-01 pattern 拆分后 core
+             不再有这些类, 显式声明 pattern 子件. -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-pattern-composite</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-pattern-factory</artifactId>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
 </project>

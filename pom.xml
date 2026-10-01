@@ -148,8 +148,7 @@
         <module>z-util-ch</module>
         <module>z-util-cli</module>
         <module>z-util-validation</module>
-        <module>z-util-cache</module>
-        <!-- z-util-bc (2026-10-02)：整合 aop + proxy + bridge 的字节码工具集 -->
+        <!-- z-util-cache 已合并到 z-util-pattern 子模块下 (2026-10-02) -->
         <module>z-util-bc</module>
         <!-- z-util-bridge 已合并到 z-util-bc (2026-10-02) -->
         <module>z-util-ioc</module>
@@ -207,14 +206,10 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-cache</artifactId>
+                <artifactId>z-util-pattern-cache</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-aop</artifactId>
-                <version>${revision}</version>
-            </dependency>
+            <!-- z-util-aop 已合并到 z-util-bc (2026-10-02) -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-jdbc</artifactId>

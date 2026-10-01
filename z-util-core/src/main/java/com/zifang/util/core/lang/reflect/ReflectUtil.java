@@ -1,7 +1,8 @@
 package com.zifang.util.core.lang.reflect;
 
+import com.zifang.util.core.pattern.cache.Cache;
+import com.zifang.util.core.pattern.cache.CacheBuilder;
 import com.zifang.util.core.lang.ArraysUtil;
-import com.zifang.util.core.pattern.cache.WeakHashMapCache;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -15,17 +16,20 @@ public class ReflectUtil {
     /**
      * 构造对象缓存
      */
-    private static final WeakHashMapCache<Class<?>, Constructor<?>[]> CONSTRUCTORS_CACHE = new WeakHashMapCache<>();
+    private static final Cache<Class<?>, Constructor<?>[]> CONSTRUCTORS_CACHE =
+            CacheBuilder.<Class<?>, Constructor<?>[]>newBuilder().name("reflect-constructors").maximumSize(-1).build();
 
     /**
      * 字段缓存
      */
-    private static final WeakHashMapCache<Class<?>, Field[]> FIELDS_CACHE = new WeakHashMapCache<>();
+    private static final Cache<Class<?>, Field[]> FIELDS_CACHE =
+            CacheBuilder.<Class<?>, Field[]>newBuilder().name("reflect-fields").maximumSize(-1).build();
 
     /**
      * 方法缓存
      */
-    private static final WeakHashMapCache<Class<?>, Method[]> METHODS_CACHE = new WeakHashMapCache<>();
+    private static final Cache<Class<?>, Method[]> METHODS_CACHE =
+            CacheBuilder.<Class<?>, Method[]>newBuilder().name("reflect-methods").maximumSize(-1).build();
 
     /**
      * 查找类中的指定参数的构造方法，如果找到构造方法，会自动设置可访问为true
@@ -74,7 +78,8 @@ public class ReflectUtil {
         }
 
         constructors = getConstructorsDirectly(beanClass);
-        return (Constructor<T>[]) CONSTRUCTORS_CACHE.put(beanClass, constructors);
+        CONSTRUCTORS_CACHE.put(beanClass, constructors);
+        return (Constructor<T>[]) constructors;
     }
 
     /**
@@ -136,7 +141,8 @@ public class ReflectUtil {
         }
 
         allFields = getFieldsDirectly(beanClass, true);
-        return FIELDS_CACHE.put(beanClass, allFields);
+        FIELDS_CACHE.put(beanClass, allFields);
+        return allFields;
     }
 
     /**
