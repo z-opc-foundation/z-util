@@ -1,6 +1,6 @@
 package com.zifang.util.http.server;
 
-import com.zifang.util.proxy.ProxyUtil;
+import com.zifang.util.bc.proxy.ProxyUtil;
 
 /**
  * HTTP服务端代理

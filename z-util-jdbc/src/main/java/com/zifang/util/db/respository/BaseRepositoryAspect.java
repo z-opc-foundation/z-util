@@ -1,7 +1,7 @@
 package com.zifang.util.db.respository;
 
 
-import com.zifang.util.proxy.aspects.Aspect;
+import com.zifang.util.bc.aspects.Aspect;
 
 import java.lang.reflect.Method;
 

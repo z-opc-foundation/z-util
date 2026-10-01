@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: bc (bytecode tools: JDK/CGLIB dynamic proxy + self-made class file model + ASM weave + in-memory compile + AOP factory)</name>
+
+    <artifactId>z-util-bc</artifactId>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <!--
+            z-util-bc = aop + proxy + bridge 三个旧模块的整合 (2026-10-02)：
+            - JDK/CGLIB 动态代理 + @Intercept/ProxyFactory/Advise 高层 AOP API
+            - 自研 class 文件模型（11+ 属性） + 反编译 + try/catch 控制流
+            - ASM 编织 (ChildFirstClassLoader/EntryWeaver/WeaveRecorder)
+            - 内存编译 (CFJavaCompiler/BytesJavaFileObject/MapClassLoader)
+            - AOP 代理工厂 (SourceProxyFactory/MethodHook/AspectToHookAdapter)
+
+            内部包结构：
+              com.zifang.util.bc.aop         ← 原 z-util-aop 高层 API
+              com.zifang.util.bc.proxy       ← 原 z-util-proxy.proxy
+              com.zifang.util.bc.bytecode     ← 原 z-util-proxy.bytecode
+              com.zifang.util.bc.weave       ← 原 z-util-bridge.weave
+              com.zifang.util.bc.compile     ← 原 z-util-bridge.compliler
+              com.zifang.util.bc.aopgen      ← 原 z-util-bridge.aopgen
+              com.zifang.util.bc.aspects     ← 原 z-util-bridge.aspects
+
+            core 可以依赖 bc 的 aop 高层 API（TraceContext/LoggableAdvise）；
+            pattern 不依赖 bc（pattern 是设计模式抽象，不应耦合字节码工具）。
+        -->
+
+        <!--
+            z-util-core：ProxyUtil 需要 ClassLoaderUtil.getContextClassLoader()。
+            字节码工具用 core 的 lang util 是合理的（bc 是工具，core 是更底层 lang）。
+        -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.7</version>
+        </dependency>
+
+        <!-- cglib 用于 CglibProxyFactory；排掉 asm 避免版本冲突，bc 内部统一用 asm:9.7 -->
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            ct 包测试用 javaparser 反向生成 java 源码；与 proxy 旧 pom 一致声明为 test。
+        -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- jol-core：jol 包测试用 OpenJDK jol 分析对象布局 -->
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- cglib 在 JDK 17+ 需要 add opens 才能 defineClass -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

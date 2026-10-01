@@ -19,13 +19,11 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
         </dependency>
+        <!-- z-util-bc (2026-10-02)：整合 aop + proxy + bridge，提供 AOP API 与 ProxyUtil -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-proxy</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-aop</artifactId>
+            <artifactId>z-util-bc</artifactId>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

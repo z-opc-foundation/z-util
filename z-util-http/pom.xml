@@ -52,9 +52,11 @@
         </dependency>
 
         <!-- 内部依赖 -->
+        <!-- z-util-bc (2026-10-02)：HttpServerProxy 用 bc.proxy.ProxyUtil -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-proxy</artifactId>
+            <artifactId>z-util-bc</artifactId>
+            <version>${revision}</version>
         </dependency>
 
         <!-- 基础工具（DedaoC 等 dedao 抓取 demo 测试需要 FileUtil） -->

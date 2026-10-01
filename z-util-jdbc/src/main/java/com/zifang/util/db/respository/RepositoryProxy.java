@@ -1,7 +1,7 @@
 package com.zifang.util.db.respository;
 
 
-import com.zifang.util.proxy.ProxyUtil;
+import com.zifang.util.bc.proxy.ProxyUtil;
 
 /**
  * 仓储代理工厂，用于创建Repository接口的动态代理实例

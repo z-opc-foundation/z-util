@@ -1,7 +1,7 @@
 package com.zifang.util.ioc.aop;
 
-import com.zifang.util.aop.Advise;
-import com.zifang.util.aop.ProxyFactory;
+import com.zifang.util.bc.aop.Advise;
+import com.zifang.util.bc.aop.ProxyFactory;
 import com.zifang.util.ioc.Injector;
 import com.zifang.util.ioc.exception.ProvisionException;
 import com.zifang.util.ioc.metadata.BeanDefinition;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
  * Bean 后处理器：检测 BeanDefinition 是否匹配 AOP 拦截规则，
  * 若匹配则使用 z-util-aop 的 {@link ProxyFactory} 生成代理。
  *
- * <p>代理策略：对每个匹配的方法，{@link com.zifang.util.aop.Intercept} 注解将在运行时由
+ * <p>代理策略：对每个匹配的方法，{@link com.zifang.util.bc.aop.Intercept} 注解将在运行时由
  * ProxyFactory 读取；此处采用一种动态注册方式——通过临时生成 wrapper 类或直接在调用前将
  * advise 链应用到 {@code @Intercept} 注解上。
  *
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
  * <ol>
  *   <li>本实现采取「运行时附加代理」策略：保留原 Bean 实例，通过
  *       {@link ProxyFactory#wrap(Object)} 创建代理并把 advise 链写入代理。</li>
- *   <li>由于 {@link com.zifang.util.aop.Intercept} 是方法级注解，本实现额外提供一个
+ *   <li>由于 {@link com.zifang.util.bc.aop.Intercept} 是方法级注解，本实现额外提供一个
  *       动态 {@code AdviseChainWrapper} —— 任何匹配的方法都会先被 advise 链包裹。</li>
  * </ol>
  */
@@ -98,7 +98,7 @@ public class AopProxyPostProcessor {
     /**
      * 使用自定义 InvocationHandler 包装原始 Bean。
      * <p>
-     * 由于 {@link com.zifang.util.aop.Intercept} 是注解（静态方法上），
+     * 由于 {@link com.zifang.util.bc.aop.Intercept} 是注解（静态方法上），
      * 而 AOP 规则是动态的，本实现直接基于 JDK Proxy 自定义 InvocationHandler，
      * 在调用时按方法签名查找匹配规则。
      */

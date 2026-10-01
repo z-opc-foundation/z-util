@@ -1,7 +1,7 @@
 package com.zifang.util.db.transaction;
 
 import com.zifang.util.db.define.Transactional;
-import com.zifang.util.proxy.aspects.Aspect;
+import com.zifang.util.bc.aspects.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

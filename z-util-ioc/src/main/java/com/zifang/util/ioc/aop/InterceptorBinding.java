@@ -1,6 +1,6 @@
 package com.zifang.util.ioc.aop;
 
-import com.zifang.util.aop.Advise;
+import com.zifang.util.bc.aop.Advise;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -143,15 +143,17 @@
         <module>z-util-devops</module>
         <module>z-util-source</module>
         <module>z-util-distribute</module>
-        <module>z-util-proxy</module>
+        <!-- z-util-proxy 已合并到 z-util-bc (2026-10-02) -->
         <module>z-util-pattern</module>
         <module>z-util-ch</module>
         <module>z-util-cli</module>
         <module>z-util-validation</module>
         <module>z-util-cache</module>
-        <module>z-util-bridge</module>
+        <!-- z-util-bc (2026-10-02)：整合 aop + proxy + bridge 的字节码工具集 -->
+        <module>z-util-bc</module>
+        <!-- z-util-bridge 已合并到 z-util-bc (2026-10-02) -->
         <module>z-util-ioc</module>
-        <module>z-util-aop</module>
+        <!-- z-util-aop 已删除（2026-10-02 合并到 z-util-bc） -->
         <module>z-util-serialize</module>
         <module>z-util-all</module>
     </modules>
