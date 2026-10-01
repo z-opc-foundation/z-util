@@ -56,10 +56,10 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 | 方法 | HTTP | 勾 |
 |------|------|------|
 | `getCurrentUser()` | `GET /user` | [x] |
-| `get(login)` | `GET /users/{login}` | [ ] |
-| `listEmails()` | `GET /user/emails` | [ ] |
-| `listFollowers(login)` | `GET /users/{login}/followers` | [ ] |
-| `listFollowing(login)` | `GET /users/{login}/following` | [ ] |
+| `get(login)` | `GET /users/{login}` | [x] |
+| `listEmails()` | `GET /user/emails` | [x] |
+| `listFollowers(login)` | `GET /users/{login}/followers` | [x] |
+| `listFollowing(login)` | `GET /users/{login}/following` | [x] |
 
 ### §issue — `IssueApiWrapper`
 
