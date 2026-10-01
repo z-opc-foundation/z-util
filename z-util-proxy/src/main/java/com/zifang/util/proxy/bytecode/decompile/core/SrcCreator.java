@@ -3,8 +3,10 @@ package com.zifang.util.proxy.bytecode.decompile.core;
 import com.zifang.util.proxy.bytecode.model.ClassFile;
 import com.zifang.util.proxy.bytecode.model.attribute.AbstractAttribute;
 import com.zifang.util.proxy.bytecode.model.attribute.Code;
+import com.zifang.util.proxy.bytecode.model.attribute.ExceptionsAttribute;
 import com.zifang.util.proxy.bytecode.model.attribute.LineNumberTable;
 import com.zifang.util.proxy.bytecode.model.attribute.LocalVariableTable;
+import com.zifang.util.proxy.bytecode.model.attribute.SignatureAttribute;
 import com.zifang.util.proxy.bytecode.model.constantpool.*;
 import com.zifang.util.proxy.bytecode.model.field.FieldInfo;
 import com.zifang.util.proxy.bytecode.model.method.MethodInfo;
@@ -108,8 +110,15 @@ public class SrcCreator {
         int descIndex = fieldInfo.getDescriptorIndex().value - 1;
         String descriptor = getUtf8String(poolList, descIndex);
 
-        // 字段类型
-        String fieldType = ParamsConvertor.paramsConvertorFieldType(descriptor);
+        // 字段类型：如有 Signature 属性且含泛型，按 SignatureRenderer 渲染（descriptor 仅作简单名依据）
+        SignatureAttribute signatureAttr = findAttribute(SignatureAttribute.class, fieldInfo.getAttributes());
+        String fieldType;
+        if (signatureAttr != null && signatureAttr.getSignatureText() != null) {
+            fieldType = SignatureRenderer.renderFieldType(signatureAttr.getSignatureText(),
+                    ParamsConvertor.paramsConvertorFieldType(descriptor));
+        } else {
+            fieldType = ParamsConvertor.paramsConvertorFieldType(descriptor);
+        }
 
         return "\t" + accessFlag + fieldType + " " + fieldName + ";\n";
     }
@@ -137,11 +146,15 @@ public class SrcCreator {
             methodName = thisClassSimple;
         }
 
-        // 方法签名
-        String methodSignature = jointMethodReturnNameParams(methodName, descriptor);
+        // 方法签名（抛异常）
+        SignatureAttribute signatureAttr = findAttribute(SignatureAttribute.class, methodInfo.getAttributes());
+        ExceptionsAttribute exceptionsAttr = findAttribute(ExceptionsAttribute.class, methodInfo.getAttributes());
+        String methodSignature = jointMethodReturnNameParams(methodName, descriptor,
+                signatureAttr == null ? null : signatureAttr.getSignatureText(),
+                exceptionsAttr == null ? Collections.emptyList() : exceptionsAttr.getExceptionClassNames());
 
-        // 异常
-        String exceptions = throwExceptionsJudge(methodInfo, classFile);
+        // 异常在抛 1.6 以下独立写，现在合并在签名里
+        String exceptions = "";
 
         // 判断是否是抽象或 native 方法
         short accessValue = methodInfo.getAccessFlags().value;
@@ -881,14 +894,6 @@ public class SrcCreator {
     }
 
     /**
-     * 判断异常
-     */
-    private static String throwExceptionsJudge(MethodInfo methodInfo, ClassFile classFile) {
-        // TODO: 实现异常处理
-        return "";
-    }
-
-    /**
      * 拼接方法返回类型、方法名和参数
      */
     private static String jointMethodReturnNameParams(String methodName, String descriptor) {
@@ -908,6 +913,91 @@ public class SrcCreator {
         String convertedReturn = ParamsConvertor.paramsConvertorFieldType(returnType);
 
         return convertedReturn + " " + methodName + "(" + convertedParams + ")";
+    }
+
+    /**
+     * 拼接方法返回类型、方法名和参数（带 Signature/Exceptions）。
+     * <p>
+     * signature 形如 {@code (paramsDescriptors)returnDescriptor}，每个分段可选含泛型。
+     * exceptionNames 来自 ExceptionsAttribute，外部形式（点分）已就绪。
+     */
+    private static String jointMethodReturnNameParams(String methodName, String descriptor,
+                                                       String signature, List<String> exceptionNames) {
+        int parenOpen = descriptor.indexOf('(');
+        int parenClose = descriptor.indexOf(')');
+        if (parenOpen == -1 || parenClose == -1) {
+            return methodName + "()";
+        }
+
+        String descriptorParams = descriptor.substring(parenOpen + 1, parenClose);
+        String returnDesc = descriptor.substring(parenClose + 1);
+        String sigParams = "";
+        String sigReturn = null;
+        if (signature != null) {
+            int sp = signature.indexOf('(');
+            int sq = signature.indexOf(')');
+            if (sp >= 0 && sq > sp) {
+                sigParams = signature.substring(sp + 1, sq);
+                sigReturn = signature.substring(sq + 1);
+            }
+        }
+
+        String convertedReturn = sigReturn == null
+                ? ParamsConvertor.paramsConvertorFieldType(returnDesc)
+                : SignatureRenderer.renderReturnType(returnDesc, sigReturn);
+
+        String convertedParams;
+        if (sigParams.isEmpty()) {
+            convertedParams = ParamsConvertor.paramsConvertorMethodParams(descriptorParams);
+        } else {
+            List<String> sigParts = splitTopLevelDescriptors(sigParams);
+            List<String> descParts = splitTopLevelDescriptors(descriptorParams);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < descParts.size(); i++) {
+                if (sb.length() > 0) {
+                    sb.append(", ");
+                }
+                String sigForOne = i < sigParts.size() ? sigParts.get(i) : null;
+                sb.append(SignatureRenderer.renderReturnType(descParts.get(i), sigForOne));
+            }
+            convertedParams = sb.toString();
+        }
+
+        String signatureLine = convertedReturn + " " + methodName + "(" + convertedParams + ")";
+        if (!exceptionNames.isEmpty()) {
+            signatureLine += " throws " + String.join(", ", exceptionNames);
+        }
+        return signatureLine;
+    }
+
+    private static List<String> splitTopLevelDescriptors(String s) {
+        List<String> out = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '<') {
+                depth++;
+            } else if (c == '>') {
+                depth--;
+            } else if (c == ';' && depth == 0) {
+                out.add(s.substring(start, i + 1));
+                start = i + 1;
+            }
+        }
+        return out;
+    }
+
+    private static <T extends AbstractAttribute> T findAttribute(Class<T> type, List<AbstractAttribute> attrs) {
+        if (attrs == null) {
+            return null;
+        }
+        for (AbstractAttribute a : attrs) {
+            if (type.isInstance(a)) {
+                return type.cast(a);
+            }
+        }
+        return null;
     }
 
     /**

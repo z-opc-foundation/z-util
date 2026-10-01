@@ -38,7 +38,7 @@ public class SrcCreatorFixtureTest {
         assertTrue("应包含 long 字段: " + src, src.contains("public long big;"));
         assertTrue("应包含 double 字段: " + src, src.contains("public double dbl;"));
         assertTrue("应包含 boolean 字段: " + src, src.contains("public boolean flag;"));
-        assertTrue("应包含 List 字段: " + src, src.contains("public List list;"));
+        assertTrue("应包含泛型 List<String> 字段: " + src, src.contains("public List<String> list;"));
     }
 
     @Test

@@ -51,7 +51,10 @@ public class AttributeFactory {
                 break;
             case "Exceptions":
                 //方法表--方法抛出的异常列表
-                break;
+                ExceptionsAttribute exceptionsAttribute = new ExceptionsAttribute(attributeNameIndex, attributeLength);
+                exceptionsAttribute.read(inputStream);
+                exceptionsAttribute.resolve(poolList);
+                return exceptionsAttribute;
             case "EnclosingMethod":
                 //类文件--当一个类为局部类或匿名内部类时才拥有这个属性
                 break;
@@ -72,7 +75,11 @@ public class AttributeFactory {
                 //Code属性--供新的类型检查器检查和处理目标方法的局部变量和操作数栈所需要的的类型是否匹配
                 break;
             case "Signature":
-                break;
+                // 类/方法/字段——泛型签名字符串，单独用 Code 同款做法把池引用 resolve 成文本
+                SignatureAttribute signatureAttribute = new SignatureAttribute(attributeNameIndex, attributeLength);
+                signatureAttribute.read(inputStream);
+                signatureAttribute.resolve(poolList);
+                return signatureAttribute;
             case "SourceFile":
                 //类文件--记录源文件名称
                 break;
