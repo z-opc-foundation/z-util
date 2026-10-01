@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util-devops</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: devops :: nexus (Nexus REST component manager, OkHttp based)</name>
+
+    <artifactId>z-util-devops-nexus</artifactId>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-parser-json</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- OkHttp：Nexus REST 访问（替换 unirest-java，见依赖瘦身记录） -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+    </dependencies>
+
+</project>

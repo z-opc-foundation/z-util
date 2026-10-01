@@ -55,7 +55,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-math` | jar | NumPy/Pandas 风格数据结构 | `numpy.Numpy`（`zeros` 等）/`NdArray`/`Linalg`/`random`；`pandas.Pandas`（`DataFrame(...)`/`Series(...)` 工厂）/`DataFrame`/`Series`/`matrix.Linalg`/`io.CSVReader`/`CSVWriter`/`interpolate`/`discretize` |
 | `z-util-ml` | jar | 机器学习（教学/练手性质，98 个主源文件） | `nn.Sequential`/`Dense`/`Conv2d`/`LSTM`/`TransformerEncoder`；`loss.CrossEntropyLoss`、`nnet.MSELoss`；`optim.SGD`/`Adam`/`Adagrad`；`tree.DecisionTree`/`RandomForest`/`XGBoost`；`clustering.KMeans`/`DBSCAN`/`GMM`；`decomposition.PCA`/`tSNE`/`UMAP`；`rl.QLearning`；`ga`/`ensemble`/`association`/`anomaly` |
 | `z-util-monitor` | jar | JVM / 线程池 / OS / 网络监控 + 指标导出 | `JvmMonitor`/`OsMonitor`/`NetMonitor`/`ThreadMonitor`、`ExecutorManager`/`FixedMonitorableExecutor`、`MetricsRegistry`/`MetricsCollector`/`MetricsSnapshot`、`HtmlExporter`/`JsonExporter`、`AlarmService`/`LogAlarmService`/`ThreadPoolOvertimeAlarmPolicy` |
-| `z-util-devops` | jar | Docker + Git（JGit/Shell）+ GitHub API + Nexus | `docker.DockerClient`/`DockerCommandClient` + `docker.dto.*`；`git.operations.GitClient` + `jgit.JGitExecutor`/`shell.ShellExecutor`；`git.github.GithubApiWrapper` 与 `Repository`/`PullRequest`/`Issue`/`Release`/`Action`/`Organization`/`User` ApiWrapper；`nexus.NexusComponentManager`；`common.GavInfo` |
+| `z-util-devops` | **pom 聚合** | DevOps 三件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST | 见下表 |
 | `z-util-source` | jar | class 字节码解析/生成 + 源码生成 + 运行时编译 | `parser.ByteCodeParser(Impl)`、`generator.ByteCodeGenerator(Impl)`、`analyser.AnalysisContext`/`ClassInfo`/`AnnotationInfo`、`compiler.CharSequenceJavaFileObject` |
 | `z-util-distribute` | jar | 分布式 ID：Snowflake / Segment / NanoId / UUID v7 | `sequence.SnowflakeIdWorker`（`(workerId, datacenterId)` → `nextId()`）、`Sequence`、`SegmentIdGenerator`、`NanoId`（`new NanoId(size, alphabet).next()`）、`UuidV7.next()`/`fromMillis`/`toUuid`、`SystemClock` |
 | `z-util-proxy` | jar | JDK/CGLIB 动态代理 + 自研 class 文件字节码模型 | `CglibProxyFactory`/`CglibInterceptor`、`a.model.*`（`AbstractConstantPool`/`AttributeFactory`/`AccessFlagConvertor`）、`ByteCodeResolver`、内置反编译 demo（`a.decompile.*`） |
@@ -104,6 +104,16 @@ InMemoryTables mem = new InMemoryTables(dynamicQuery)
         .index("t_order", "user_id");
 Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(source).shape(spec) 等价
 ```
+
+### `z-util-devops` 的 3 个子模块（2026-10-01 由单 jar 拆分；三包实测零互耦，按需引用）
+
+| 子模块 | 内容 |
+|--------|------|
+| `z-util-devops-git` | `git.operations.GitClient` + `jgit.JGitExecutor`/`shell.ShellExecutor`；`git.github.GithubApiWrapper` 与 `Repository`/`PullRequest`/`Issue`/`Release`/`Action`/`Organization`/`User` ApiWrapper（依赖 core + parser-json + jgit + github-api） |
+| `z-util-devops-docker` | `docker.DockerClient`/`DockerCommandClient` + `docker.dto.*`（依赖 core + parser-json；不带 okhttp） |
+| `z-util-devops-nexus` | `nexus.NexusComponentManager`（依赖 parser-json + okhttp） |
+
+原 `z-util-devops` 聚合 jar 的消费者注意：它现在是 **pom 聚合件，不再产出 jar**——请按需改引上面三个子件（与 `z-util-parser` 家族同一用法）。
 
 ### `z-util-serialize` 的 6 个子模块
 

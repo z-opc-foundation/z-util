@@ -297,6 +297,21 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-devops-git</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-devops-docker</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-devops-nexus</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-source</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -735,7 +750,7 @@
             </dependency>
             <!-- httpclient/httpcore：地板（经 spring-boot-dependencies import）把它们抬到
                  4.5.14 / 4.4.16，而**那条受管条目自带 commons-logging 通配 exclusion** ⇒ 实测
-                 z-util-devops 树里 commons-logging 整根消失（jcl-over-slf4j 也没人补），
+                 z-util-devops-git 树（jgit 传递引入）里 commons-logging 整根消失（jcl-over-slf4j 也没人补），
                  httpclient 运行期就是 NoClassDefFoundError: org/apache/commons/logging/LogFactory。
                  按坐标写直接条目把面值顶回迁前那一格，同时把那条 exclusion 一起顶掉（就近整条覆盖）。 -->
             <dependency>
