@@ -1,6 +1,6 @@
 package com.zifang.util.ioc.aop;
 
-import com.zifang.util.bc.aop.Advise;
+import com.zifang.util.aop.Advise;
 import com.zifang.util.ioc.binder.AbstractModule;
 
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.List;
  *
  * <h3>已知限制：</h3>
  * <ul>
- *   <li>仅支持接口代理（依赖 {@link com.zifang.util.bc.aop.ProxyFactory}）。</li>
+ *   <li>仅支持接口代理（依赖 {@link com.zifang.util.aop.ProxyFactory}）。</li>
  *   <li>若 Bean 类型未实现任何接口，则跳过代理（不抛错）。</li>
  * </ul>
  */

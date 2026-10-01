@@ -26,10 +26,10 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!-- z-util-bc (2026-10-02)：CacheInterceptor 用 bc.aspects.Aspect -->
+        <!-- z-util-aop (2026-10-02)：CacheInterceptor 用 aop.aspects.Aspect -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
+            <artifactId>z-util-aop</artifactId>
             <version>${revision}</version>
         </dependency>
 

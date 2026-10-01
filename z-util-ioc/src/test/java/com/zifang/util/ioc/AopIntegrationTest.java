@@ -1,6 +1,6 @@
 package com.zifang.util.ioc;
 
-import com.zifang.util.bc.aop.Advise;
+import com.zifang.util.aop.Advise;
 import com.zifang.util.ioc.aop.AopModule;
 import com.zifang.util.ioc.aop.ClassMatcher;
 import com.zifang.util.ioc.binder.AbstractModule;

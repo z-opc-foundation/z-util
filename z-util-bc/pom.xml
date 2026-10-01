@@ -10,42 +10,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: bc (bytecode tools: JDK/CGLIB dynamic proxy + self-made class file model + ASM weave + in-memory compile + AOP factory)</name>
+    <name>z-util :: bc (bytecode tools: self-made class file model + ASM weave + in-memory compile)</name>
 
     <artifactId>z-util-bc</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
         <!--
-            z-util-bc = aop + proxy + bridge 三个旧模块的整合 (2026-10-02)：
-            - JDK/CGLIB 动态代理 + @Intercept/ProxyFactory/Advise 高层 AOP API
+            z-util-bc = 字节码工具集（2026-10-02 二次拆分后）：
             - 自研 class 文件模型（11+ 属性） + 反编译 + try/catch 控制流
             - ASM 编织 (ChildFirstClassLoader/EntryWeaver/WeaveRecorder)
             - 内存编译 (CFJavaCompiler/BytesJavaFileObject/MapClassLoader)
-            - AOP 代理工厂 (SourceProxyFactory/MethodHook/AspectToHookAdapter)
 
-            内部包结构：
-              com.zifang.util.bc.aop         ← 原 z-util-aop 高层 API
-              com.zifang.util.bc.proxy       ← 原 z-util-proxy.proxy
-              com.zifang.util.bc.bytecode     ← 原 z-util-proxy.bytecode
-              com.zifang.util.bc.weave       ← 原 z-util-bridge.weave
-              com.zifang.util.bc.compile     ← 原 z-util-bridge.compliler
-              com.zifang.util.bc.aopgen      ← 原 z-util-bridge.aopgen
-              com.zifang.util.bc.aspects     ← 原 z-util-bridge.aspects
+            原 aop/proxy/aspects/aopgen/interceptor 五包已拆往 z-util-aop
+            （com.zifang.util.aop.*，切面框架，底层经 aopgen → compile 单向下沉引用本模块）。
 
-            core 可以依赖 bc 的 aop 高层 API（TraceContext/LoggableAdvise）；
             pattern 不依赖 bc（pattern 是设计模式抽象，不应耦合字节码工具）。
         -->
-
-        <!--
-            z-util-core：ProxyUtil 需要 ClassLoaderUtil.getContextClassLoader()。
-            字节码工具用 core 的 lang util 是合理的（bc 是工具，core 是更底层 lang）。
-        -->
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-core</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -55,18 +36,6 @@
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <version>9.7</version>
-        </dependency>
-
-        <!-- cglib 用于 CglibProxyFactory；排掉 asm 避免版本冲突，bc 内部统一用 asm:9.7 -->
-        <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.ow2.asm</groupId>
-                    <artifactId>asm</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- 测试 -->

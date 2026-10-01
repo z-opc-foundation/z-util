@@ -52,9 +52,10 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- z-util-aop (2026-10-02)：JdbcAspect 用 aop.aspects.Aspect，事务代理用 aop.proxy.ProxyUtil -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
+            <artifactId>z-util-aop</artifactId>
             <version>${revision}</version>
         </dependency>
 

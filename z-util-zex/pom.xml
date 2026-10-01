@@ -26,12 +26,8 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <!-- z-util-bc 依赖已删（2026-10-02）：main+test 零 import，搬运残留 -->
 
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
-            <version>${revision}</version>
-        </dependency>
 
         <!-- 本模块 main 的 CtClass/ClassLayout 示例在用 javassist 与 jol-core；
              2026-10-01 起 z-util-proxy 把这两件降成 test 作用域，按上面"只保留真正被

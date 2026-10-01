@@ -1,24 +1,15 @@
-package com.zifang.util.db.respository;
+package com.zifang.util.aop.aspects;
 
-
-import com.zifang.util.aop.aspects.Aspect;
-
+import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
- * 仓储切面基类，提供方法执行前后的拦截能力
+ * 简单切面类，不做任何操作<br>
+ * 可以继承此类实现自己需要的方法即可
  */
-public class BaseRepositoryAspect implements Aspect {
+public class SimpleAspect implements Aspect, Serializable {
+    private static final long serialVersionUID = 1L;
 
-
-    /**
-     * 方法执行前拦截
-     *
-     * @param target 目标对象
-     * @param method 被调用的方法
-     * @param args   方法参数
-     * @return true继续执行，false阻止执行
-     */
     @Override
     /**
      * before方法。
@@ -28,18 +19,19 @@ public class BaseRepositoryAspect implements Aspect {
      * @return boolean类型返回值
      */
     public boolean before(Object target, Method method, Object[] args) {
-        return false;
+        //继承此类后实现此方法
+        return true;
     }
 
+
     /**
-     * 方法执行后拦截
-     *
-     * @param target    目标对象
-     * @param method    被调用的方法
-     * @param args      方法参数
-     * @param returnVal 返回值
-     * @return true正常返回，false阻止返回
+     * 目标方法执行后的操作
      */
+    public boolean after(Object target, Method method, Object[] args) {
+        //继承此类后实现此方法
+        return after(target, method, args, null);
+    }
+
     @Override
     /**
      * after方法。
@@ -50,18 +42,10 @@ public class BaseRepositoryAspect implements Aspect {
      * @return boolean类型返回值
      */
     public boolean after(Object target, Method method, Object[] args, Object returnVal) {
-        return false;
+        //继承此类后实现此方法
+        return true;
     }
 
-    /**
-     * 方法抛出异常时拦截
-     *
-     * @param target 目标对象
-     * @param method 被调用的方法
-     * @param args   方法参数
-     * @param e      抛出的异常
-     * @return true处理后继续抛出，false阻止抛出
-     */
     @Override
     /**
      * afterException方法。
@@ -72,6 +56,8 @@ public class BaseRepositoryAspect implements Aspect {
      * @return boolean类型返回值
      */
     public boolean afterException(Object target, Method method, Object[] args, Throwable e) {
-        return false;
+        //继承此类后实现此方法
+        return true;
     }
+
 }

@@ -19,10 +19,10 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
         </dependency>
-        <!-- z-util-bc (2026-10-02)：整合 aop + proxy + bridge，提供 AOP API 与 ProxyUtil -->
+        <!-- z-util-aop (2026-10-02)：AopModule 用 aop API（Advise/ProxyFactory）做 bindInterceptor -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
+            <artifactId>z-util-aop</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>

@@ -1,6 +1,5 @@
 package com.zifang.util.bc.weave;
 
-import com.zifang.util.bc.aopgen.EchoService;
 import org.junit.Before;
 import org.junit.Test;
 

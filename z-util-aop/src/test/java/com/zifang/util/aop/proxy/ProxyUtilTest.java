@@ -1,24 +1,37 @@
-package com.zifang.util.db.respository;
-
+package com.zifang.util.aop.proxy;
 
 import com.zifang.util.aop.aspects.Aspect;
+import org.junit.Test;
 
 import java.lang.reflect.Method;
 
+
 /**
- * 仓储切面基类，提供方法执行前后的拦截能力
+ * ProxyUtilTest类。
  */
-public class BaseRepositoryAspect implements Aspect {
+public class ProxyUtilTest {
 
-
+    @Test
     /**
-     * 方法执行前拦截
-     *
-     * @param target 目标对象
-     * @param method 被调用的方法
-     * @param args   方法参数
-     * @return true继续执行，false阻止执行
+     * proxy方法。
      */
+    public void proxy() {
+        A a = ProxyUtil.proxy(new A(), new CustomerAspect());
+        a.ex();
+    }
+}
+
+class A {
+    /**
+     * ex方法。
+     */
+    public void ex() {
+        System.out.println("this is ex");
+    }
+}
+
+class CustomerAspect implements Aspect {
+
     @Override
     /**
      * before方法。
@@ -28,18 +41,10 @@ public class BaseRepositoryAspect implements Aspect {
      * @return boolean类型返回值
      */
     public boolean before(Object target, Method method, Object[] args) {
-        return false;
+        System.out.println("before");
+        return true;
     }
 
-    /**
-     * 方法执行后拦截
-     *
-     * @param target    目标对象
-     * @param method    被调用的方法
-     * @param args      方法参数
-     * @param returnVal 返回值
-     * @return true正常返回，false阻止返回
-     */
     @Override
     /**
      * after方法。
@@ -53,15 +58,6 @@ public class BaseRepositoryAspect implements Aspect {
         return false;
     }
 
-    /**
-     * 方法抛出异常时拦截
-     *
-     * @param target 目标对象
-     * @param method 被调用的方法
-     * @param args   方法参数
-     * @param e      抛出的异常
-     * @return true处理后继续抛出，false阻止抛出
-     */
     @Override
     /**
      * afterException方法。

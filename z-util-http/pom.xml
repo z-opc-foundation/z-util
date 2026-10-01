@@ -52,10 +52,10 @@
         </dependency>
 
         <!-- 内部依赖 -->
-        <!-- z-util-bc (2026-10-02)：HttpServerProxy 用 bc.proxy.ProxyUtil -->
+        <!-- z-util-aop (2026-10-02)：HttpServerProxy 用 aop.proxy.ProxyUtil -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
+            <artifactId>z-util-aop</artifactId>
             <version>${revision}</version>
         </dependency>
 
