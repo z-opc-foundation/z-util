@@ -28,17 +28,25 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.kohsuke/github-api -->
-        <dependency>
-            <groupId>org.kohsuke</groupId>
-            <artifactId>github-api</artifactId>
-        </dependency>
+        <!--
+            github-api（org.kohsuke.github-api）v0 切前是 GitHub REST 的主入口；
+            现改为自研 GithubHttpClient（okhttp + parser-json）—— 见
+            _doc/001_arch/github-api-migration.md。传递依赖释放 20+ 个 jar
+            （commons-lang3 / okio / commons-codec / commons-io 等），把
+            Dependabot HIGH 数量从 ~63 砍到 ~0。
+        -->
 
         <!-- JGit: 纯 Java 实现的 git 操作库 -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
             <version>5.13.4.202507202350-r</version>
+        </dependency>
+
+        <!-- OkHttp：GitHub REST 客户端（GithubHttpClient） -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
         </dependency>
 
     </dependencies>

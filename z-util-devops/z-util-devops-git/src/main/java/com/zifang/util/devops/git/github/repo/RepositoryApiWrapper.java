@@ -1,383 +1,139 @@
 package com.zifang.util.devops.git.github.repo;
 
-import org.kohsuke.github.GHBranch;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHRepositorySearchBuilder;
-import org.kohsuke.github.GitHub;
+import com.zifang.util.devops.git.github.http.GithubHttpClient;
+import com.zifang.util.devops.git.github.model.Branch;
+import com.zifang.util.devops.git.github.model.Repository;
+import com.zifang.util.json.model.JsonArray;
+import com.zifang.util.json.model.JsonObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * GitHub Repository API 封装
- * <p>
- * 提供GitHub仓库（Repository）相关操作的封装，
- * 包括仓库创建、删除、查询、分支管理、Fork、Star等操作。
+ * GitHub Repository API 包装。
  *
- * @author zifang
- * @version 1.0.0
+ * <p>v0 切片：仅 {@link #get(String, String)} 与 {@link #listBranches()} 真跑 okhttp REST，
+ * 其余方法抛 {@link UnsupportedOperationException}，续接清单见
+ * {@code _doc/001_arch/github-api-migration.md} 的 §repo 表格。
  */
 public class RepositoryApiWrapper {
 
-    private final GitHub github;
+    private final GithubHttpClient client;
     private String owner;
     private String repo;
 
-    /**
-     * RepositoryApiWrapper方法。
-     * * @param github GitHub类型参数
-     */
-    public RepositoryApiWrapper(GitHub github) {
-        this.github = github;
+    public RepositoryApiWrapper(GithubHttpClient client) {
+        this.client = client;
     }
 
-    /**
-     * RepositoryApiWrapper方法。
-     * * @param github GitHub类型参数
-     *
-     * @param owner String类型参数
-     * @param repo  String类型参数
-     */
-    public RepositoryApiWrapper(GitHub github, String owner, String repo) {
-        this.github = github;
+    public RepositoryApiWrapper(GithubHttpClient client, String owner, String repo) {
+        this.client = client;
         this.owner = owner;
         this.repo = repo;
     }
 
-    /**
-     * withRepo方法。
-     * * @param owner String类型参数
-     *
-     * @param repo String类型参数
-     * @return RepositoryApiWrapper类型返回值
-     */
     public RepositoryApiWrapper withRepo(String owner, String repo) {
         this.owner = owner;
         this.repo = repo;
         return this;
     }
 
-    private String fullName() {
-        return owner + "/" + repo;
+    // ==================== 实跑 v0 ====================
+
+    /** GET /repos/{owner}/{repo} → Repository POJO。 */
+    public Repository get(String owner, String repo) throws IOException {
+        JsonObject body = client.getJsonObject("/repos/" + owner + "/" + repo);
+        return Repository.fromJson(body);
     }
 
-    private GHRepository getRepo() throws IOException {
-        return github.getRepository(fullName());
+    public Repository get() throws IOException {
+        return get(this.owner, this.repo);
     }
 
-    // ==================== CRUD ====================
-
-    /**
-     * 创建仓库
-     */
-    public GHRepository create(String name, String description, boolean isPrivate) throws IOException {
-        return github.createRepository(name)
-                .description(description)
-                .private_(isPrivate)
-                .create();
-    }
-
-    /**
-     * 创建组织仓库
-     */
-    public GHRepository createOrgRepo(String org, String name, String description, boolean isPrivate) throws IOException {
-        return github.createRepository(name)
-                .description(description)
-                .private_(isPrivate)
-                .owner(org)
-                .create();
-    }
-
-    /**
-     * 获取仓库
-     */
-    public GHRepository get(String owner, String repo) throws IOException {
-        return github.getRepository(owner + "/" + repo);
-    }
-
-    /**
-     * get方法。
-     *
-     * @return GHRepository类型返回值
-     */
-    public GHRepository get() throws IOException {
-        return getRepo();
-    }
-
-    /**
-     * 删除仓库（慎用）
-     */
-    public void delete(String owner, String repo) throws IOException {
-        github.getRepository(owner + "/" + repo).delete();
-    }
-
-    /**
-     * delete方法。
-     */
-    public void delete() throws IOException {
-        getRepo().delete();
-    }
-
-    // ==================== Repository Info ====================
-
-    /**
-     * 获取仓库基本信息
-     */
-    public RepositoryInfo info() throws IOException {
-        return RepositoryInfo.from(getRepo());
-    }
-
-    /**
-     * getDescription方法。
-     *
-     * @return String类型返回值
-     */
-    public String getDescription() throws IOException {
-        return getRepo().getDescription();
-    }
-
-    /**
-     * getDefaultBranch方法。
-     *
-     * @return String类型返回值
-     */
-    public String getDefaultBranch() throws IOException {
-        return getRepo().getDefaultBranch();
-    }
-
-    /**
-     * getLanguage方法。
-     *
-     * @return String类型返回值
-     */
-    public String getLanguage() throws IOException {
-        return getRepo().getLanguage();
-    }
-
-    /**
-     * getStargazersCount方法。
-     *
-     * @return int类型返回值
-     */
-    public int getStargazersCount() throws IOException {
-        return getRepo().getStargazersCount();
-    }
-
-    /**
-     * getForksCount方法。
-     *
-     * @return int类型返回值
-     */
-    public int getForksCount() throws IOException {
-        return getRepo().getForksCount();
-    }
-
-    // ==================== Branch ====================
-
-    /**
-     * 获取分支列表
-     */
+    /** GET /repos/{owner}/{repo}/branches → 分支名列表。 */
     public List<String> listBranches() throws IOException {
-        Map<String, GHBranch> branches = getRepo().getBranches();
-        return new ArrayList<>(branches.keySet());
+        JsonArray arr = client.getJsonArray("/repos/" + this.owner + "/" + this.repo + "/branches");
+        List<String> names = new ArrayList<>(arr.size());
+        for (int i = 0; i < arr.size(); i++) {
+            names.add(Branch.fromJson(arr.getJsonObject(i)).getName());
+        }
+        return names;
     }
 
-    /**
-     * 获取分支详情
-     */
-    public GHBranch getBranch(String branch) throws IOException {
-        return getRepo().getBranch(branch);
+    // ==================== TODO：见迁移 doc §repo ====================
+
+    public Repository create(String name, String description, boolean isPrivate) throws IOException {
+        throw notImpl("repo.create");
     }
 
-    // ==================== Search ====================
-
-    /**
-     * 搜索仓库
-     */
-    public List<GHRepository> search(String keyword) throws IOException {
-        return search(keyword, null);
+    public Repository createOrgRepo(String org, String name, String description, boolean isPrivate) throws IOException {
+        throw notImpl("repo.createOrgRepo");
     }
 
-    /**
-     * 搜索仓库（带语言过滤）
-     */
-    public List<GHRepository> search(String keyword, String language) throws IOException {
-        GHRepositorySearchBuilder builder = github.searchRepositories().q(keyword);
-        if (language != null) {
-            builder.language(language);
-        }
-        List<GHRepository> list = new ArrayList<>();
-        for (GHRepository r : builder.list()) {
-            list.add(r);
-        }
-        return list;
+    public void delete(String owner, String repo) throws IOException {
+        throw notImpl("repo.delete");
     }
 
-    // ==================== User Repos ====================
-
-    /**
-     * 列出指定用户的仓库
-     */
-    public List<GHRepository> listUserRepos(String username) throws IOException {
-        List<GHRepository> list = new ArrayList<>();
-        for (GHRepository r : github.getUser(username).listRepositories(100)) {
-            list.add(r);
-        }
-        return list;
+    public void delete() throws IOException {
+        throw notImpl("repo.delete");
     }
 
-    /**
-     * 列出当前认证用户的仓库
-     */
-    public List<GHRepository> listMyRepos() throws IOException {
-        List<GHRepository> list = new ArrayList<>();
-        for (GHRepository r : github.getMyself().listRepositories(100)) {
-            list.add(r);
-        }
-        return list;
+    public String getDescription() throws IOException {
+        throw notImpl("repo.getDescription");
     }
 
-    // ==================== Fork ====================
-
-    /**
-     * Fork 仓库
-     */
-    public GHRepository fork() throws IOException {
-        return getRepo().fork();
+    public String getDefaultBranch() throws IOException {
+        throw notImpl("repo.getDefaultBranch");
     }
 
-    /**
-     * 列出仓库的 Fork
-     */
-    public List<GHRepository> listForks() throws IOException {
-        List<GHRepository> list = new ArrayList<>();
-        for (GHRepository r : getRepo().listForks()) {
-            list.add(r);
-        }
-        return list;
+    public String getLanguage() throws IOException {
+        throw notImpl("repo.getLanguage");
     }
 
-    // ==================== Star ====================
-
-    /**
-     * 列出 Stargazers
-     */
-    public List<org.kohsuke.github.GHUser> listStargazers() throws IOException {
-        List<org.kohsuke.github.GHUser> list = new ArrayList<>();
-        for (org.kohsuke.github.GHUser u : getRepo().listStargazers()) {
-            list.add(u);
-        }
-        return list;
+    public int getStargazersCount() throws IOException {
+        throw notImpl("repo.getStargazersCount");
     }
 
-    // ==================== DTO ====================
+    public int getForksCount() throws IOException {
+        throw notImpl("repo.getForksCount");
+    }
 
-    /**
-     * 仓库信息 DTO
-     * <p>
-     * 用于封装仓库的基本信息，包括全名、描述、默认分支、语言、星标数等
-     */
-    public static class RepositoryInfo {
-        private String fullName;
-        private String description;
-        private String defaultBranch;
-        private String language;
-        private int stargazersCount;
-        private int forksCount;
-        private boolean isPrivate;
-        private String htmlUrl;
+    public List<String> listUserRepos(String username) throws IOException {
+        throw notImpl("repo.listUserRepos");
+    }
 
-        /**
-         * 从 GHRepository 对象构建 RepositoryInfo
-         *
-         * @param r 仓库对象
-         * @return RepositoryInfo 实例
-         */
-        public static RepositoryInfo from(GHRepository r) {
-            RepositoryInfo info = new RepositoryInfo();
-            info.fullName = r.getFullName();
-            info.description = r.getDescription();
-            info.defaultBranch = r.getDefaultBranch();
-            info.language = r.getLanguage();
-            info.stargazersCount = r.getStargazersCount();
-            info.forksCount = r.getForksCount();
-            info.isPrivate = r.isPrivate();
-            info.htmlUrl = r.getHtmlUrl().toString();
-            return info;
-        }
+    public List<String> listMyRepos() throws IOException {
+        throw notImpl("repo.listMyRepos");
+    }
 
-        /**
-         * getFullName方法。
-         *
-         * @return String类型返回值
-         */
-        public String getFullName() {
-            return fullName;
-        }
+    public Repository fork() throws IOException {
+        throw notImpl("repo.fork");
+    }
 
-        /**
-         * getDescription方法。
-         *
-         * @return String类型返回值
-         */
-        public String getDescription() {
-            return description;
-        }
+    public List<String> listForks() throws IOException {
+        throw notImpl("repo.listForks");
+    }
 
-        /**
-         * getDefaultBranch方法。
-         *
-         * @return String类型返回值
-         */
-        public String getDefaultBranch() {
-            return defaultBranch;
-        }
+    public List<String> listStargazers() throws IOException {
+        throw notImpl("repo.listStargazers");
+    }
 
-        /**
-         * getLanguage方法。
-         *
-         * @return String类型返回值
-         */
-        public String getLanguage() {
-            return language;
-        }
+    public List<String> search(String keyword) throws IOException {
+        throw notImpl("repo.search");
+    }
 
-        /**
-         * getStargazersCount方法。
-         *
-         * @return int类型返回值
-         */
-        public int getStargazersCount() {
-            return stargazersCount;
-        }
+    public List<String> search(String keyword, String language) throws IOException {
+        throw notImpl("repo.search(lang)");
+    }
 
-        /**
-         * getForksCount方法。
-         *
-         * @return int类型返回值
-         */
-        public int getForksCount() {
-            return forksCount;
-        }
+    /** v0 兼容：原 {@code info()} 走 {@code Repository POJO}。 */
+    public Repository info() throws IOException {
+        return get();
+    }
 
-        /**
-         * isPrivate方法。
-         *
-         * @return boolean类型返回值
-         */
-        public boolean isPrivate() {
-            return isPrivate;
-        }
-
-        /**
-         * getHtmlUrl方法。
-         *
-         * @return String类型返回值
-         */
-        public String getHtmlUrl() {
-            return htmlUrl;
-        }
+    private static UnsupportedOperationException notImpl(String key) {
+        return new UnsupportedOperationException(
+                "RepositoryApiWrapper." + key + " 未迁移实现，详见 _doc/001_arch/github-api-migration.md");
     }
 }
