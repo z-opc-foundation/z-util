@@ -131,6 +131,25 @@ public class GithubHttpClient {
     }
 
     /**
+     * PUT 一个 JSON 体，返回响应对象。用于 PR merge 等幂等写。
+     */
+    public JsonObject putJson(String path, String jsonBody) throws IOException {
+        HttpUrl url = baseUrl.newBuilder().addPathSegments(stripLeadingSlash(path)).build();
+        Request req = new Request.Builder()
+                .url(url)
+                .put(RequestBody.create(jsonBody == null ? "{}" : jsonBody, JSON))
+                .build();
+        try (Response resp = http.newCall(req).execute()) {
+            String body = readBody(resp);
+            ensure2xx(resp, path, "PUT", body);
+            if (body.isEmpty()) {
+                return new JsonObject();
+            }
+            return JsonUtil.fromJson(body, JsonObject.class);
+        }
+    }
+
+    /**
      * DELETE。响应体被丢弃；非 2xx 一律抛 {@link GithubHttpException}。
      */
     public void delete(String path) throws IOException {

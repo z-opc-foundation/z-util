@@ -77,14 +77,14 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 
 | 方法 | HTTP | 勾 |
 |------|------|------|
-| `list(state)` | `GET /repos/{owner}/{repo}/pulls?state=...` | [ ] |
-| `get(number)` | `GET /repos/{owner}/{repo}/pulls/{number}` | [ ] |
-| `create(title, head, base)` | `POST /repos/{owner}/{repo}/pulls` | [ ] |
-| `merge(number, msg)` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` | [ ] |
-| `close(number)` | `PATCH` with `state: closed` | [ ] |
-| `listReviews(number)` | `GET /repos/{owner}/{repo}/pulls/{number}/reviews` | [ ] |
-| `submitReview(number, body, state)` | `POST .../reviews` | [ ] |
-| `listFiles(number)` | `GET /repos/{owner}/{repo}/pulls/{number}/files` | [ ] |
+| `list(state)` | `GET /repos/{owner}/{repo}/pulls?state=...` | [x] |
+| `get(number)` | `GET /repos/{owner}/{repo}/pulls/{number}` | [x] |
+| `create(title, head, base)` | `POST /repos/{owner}/{repo}/pulls` | [x] |
+| `merge(number, msg)` | `PUT /repos/{owner}/{repo}/pulls/{number}/merge` | [x] |
+| `close(number)` | `PATCH` with `state: closed` | [x] |
+| `listReviews(number)` | `GET /repos/{owner}/{repo}/pulls/{number}/reviews` | [x] |
+| `submitReview(number, body, state)` | `POST .../reviews` | [x] |
+| `listFiles(number)` | `GET /repos/{owner}/{repo}/pulls/{number}/files` | [x] |
 
 ### §release — `ReleaseApiWrapper`
 
