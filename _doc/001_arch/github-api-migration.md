@@ -90,11 +90,11 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 
 | 方法 | HTTP | 勾 |
 |------|------|------|
-| `list()` | `GET /repos/{owner}/{repo}/releases` | [ ] |
-| `getLatest()` | `GET /repos/{owner}/{repo}/releases/latest` | [ ] |
-| `getByTag(tag)` | `GET /repos/{owner}/{repo}/releases/tags/{tag}` | [ ] |
-| `create(tag, name, body)` | `POST /repos/{owner}/{repo}/releases` | [ ] |
-| `delete(id)` | `DELETE /repos/{owner}/{repo}/releases/{id}` | [ ] |
+| `list()` | `GET /repos/{owner}/{repo}/releases` | [x] |
+| `getLatest()` | `GET /repos/{owner}/{repo}/releases/latest` | [x] |
+| `getByTag(tag)` | `GET /repos/{owner}/{repo}/releases/tags/{tag}` | [x] |
+| `create(tag, name, body)` | `POST /repos/{owner}/{repo}/releases` | [x] |
+| `delete(id)` | `DELETE /repos/{owner}/{repo}/releases/{id}` | [x] |
 
 ### §org — `OrganizationApiWrapper`
 
