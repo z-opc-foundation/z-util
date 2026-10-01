@@ -76,6 +76,34 @@ public class ByteCodeResolver {
     }
 
     /**
+     * 从 JVM 已加载的 Class 直接解析其字节码
+     * <p>
+     * 通过类自身的 ClassLoader 按相对资源路径读取 .class（bootstrap 类经 jrt 可见）。
+     *
+     * @param clazz 已加载的类
+     * @return 解析后的ClassFile对象
+     */
+    public static ClassFile parseFromClass(Class<?> clazz) {
+        if (clazz == null) {
+            throw new RuntimeException("clazz 不能为 null");
+        }
+        if (clazz.isPrimitive() || clazz.isArray()) {
+            throw new RuntimeException("不支持基本类型与数组: " + clazz.getName());
+        }
+        String resource = clazz.getSimpleName() + ".class";
+        try (InputStream is = clazz.getResourceAsStream(resource)) {
+            if (is == null) {
+                throw new RuntimeException("类字节码资源未找到: " + clazz.getName() + " -> " + resource);
+            }
+            return new ByteCodeResolver(is).parse();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("解析类字节码失败: " + clazz.getName(), e);
+        }
+    }
+
+    /**
      * 主方法，用于命令行测试
      */
     public static void main(String[] args) {
@@ -190,6 +218,9 @@ public class ByteCodeResolver {
             if (tag.value == AbstractConstantPool.CONSTANT_LONG_INFO
                     || tag.value == AbstractConstantPool.CONSTANT_DOUBLE_INFO) {
                 i++;
+                // 占位保持"列表下标 == 常量池索引-1"不变式，否则后续所有按索引取池的
+                // 读取（类名/字段名/方法名/属性名）在 long/double 之后整体漂移
+                poolList.add(null);
             }
         }
 

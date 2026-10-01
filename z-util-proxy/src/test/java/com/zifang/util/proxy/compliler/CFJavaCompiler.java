@@ -28,6 +28,16 @@ public class CFJavaCompiler {
      * @return static Map<String, BytesJavaFileObject>类型返回值
      */
     public static Map<String, BytesJavaFileObject> compile(String className, String javaCode) throws Exception {
+        return compile(className, javaCode, System.getProperty("java.class.path"));
+    }
+
+    /**
+     * 将javaCode 编译成为类，显式指定编译类路径
+     * <p>
+     * surefire 等反射启动器下 java.class.path 只有 booter jar，编译引用工程内类型时
+     * 需要按锚点类 codeSource 拼出的真实类路径。
+     */
+    public static Map<String, BytesJavaFileObject> compile(String className, String javaCode, String classpath) throws Exception {
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
@@ -43,7 +53,7 @@ public class CFJavaCompiler {
         options.add("-encoding");
         options.add("UTF-8");
         options.add("-classpath");
-        options.add(System.getProperty("java.class.path"));
+        options.add(classpath);
 
 
         StringWriter outWriter = new StringWriter();
