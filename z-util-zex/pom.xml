@@ -21,9 +21,27 @@
             需要时再单独添加，避免无谓的依赖膨胀。
         -->
 
+        <!-- slf4j-api 自报家门（2026-10-01）：main 3 个文件在用，不再靠 aop 代发（版本由根 DM 下发）。 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-proxy</artifactId>
+        </dependency>
+
+        <!-- 本模块 main 的 CtClass/ClassLayout 示例在用 javassist 与 jol-core；
+             2026-10-01 起 z-util-proxy 把这两件降成 test 作用域，按上面"只保留真正被
+             import 的依赖"的规矩改为在这里显式声明（版本由父 DM 下发）。 -->
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.yuku123</groupId>
@@ -31,16 +49,13 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- Disruptor（z-util-zex.disrupt 实战示例） -->
+        <!-- Disruptor（z-util-zex.disrupt 实战示例）。3.4.4 是 3.x 末班（Java 8 兼容；
+             4.x 起要 Java 11）。此前无任何版本口径，-P sandbox 一编译就报 version missing
+             —— 沙盒不在默认 reactor，一直没人踩到（2026-10-01 实测补钉）。 -->
         <dependency>
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
+            <version>3.4.4</version>
         </dependency>
     </dependencies>
 </project>

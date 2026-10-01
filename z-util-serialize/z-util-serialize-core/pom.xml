@@ -15,10 +15,5 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-serialize-schema</artifactId>
         </dependency>
-        <!-- Test -->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-        </dependency>
     </dependencies>
 </project>

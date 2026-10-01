@@ -15,11 +15,6 @@
     <artifactId>z-util-media</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
 
         <!--日志-->
         <dependency>

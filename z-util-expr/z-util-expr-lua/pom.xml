@@ -20,10 +20,5 @@
             <artifactId>luaj-jse</artifactId>
             <version>3.0.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

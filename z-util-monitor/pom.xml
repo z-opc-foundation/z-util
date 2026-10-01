@@ -15,11 +15,12 @@
     <artifactId>z-util-monitor</artifactId>
 
     <dependencies>
+        <!-- slf4j-api 自报家门（2026-10-01）：main 5 个文件在用，不再靠 aop 代发（版本由根 DM 下发）。 -->
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
+
 
         <dependency>
             <groupId>io.github.yuku123</groupId>

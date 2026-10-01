@@ -43,10 +43,8 @@
             <artifactId>z-util-core</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
+        <!-- javax.annotation-api 已删（2026-10-01）：src 对 javax.annotation 零引用；
+             @PostConstruct 等注解的唯一使用方 z-util-ioc 自己已显式声明。 -->
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -54,32 +52,30 @@
         </dependency>
 
         <!--测试-->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
 
+        <!-- javassist / jol-core 均为 test 作用域（2026-10-01 量过）：src/main 对两者零 import
+             （自研 class file 模型替代了 javassist 的位置），只有 test 下的实验类在用；
+             挂 compile 纯属把实验件漏进消费方传递树。沙盒模块 z-util-zex 的 main 在用
+             这两件，已改为在它自己的 pom 里显式声明，不再靠本模块的 compile 传递。 -->
         <dependency>
             <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!--https://juejin.im/post/5edae70551882543194ed3e1-->
         <dependency>
             <groupId>org.openjdk.jol</groupId>
             <artifactId>jol-core</artifactId>
+            <scope>test</scope>
         </dependency>
 
+        <!-- javaparser 降为 test 作用域（2026-10-01 量过）：src/main 零 import、仅 test 下
+             5 个实验类在用；main 域真正吃 javaparser 的是 z-util-source（它自己已显式声明）。 -->
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-symbol-solver-core</artifactId>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.antlr/antlr4-runtime -->
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

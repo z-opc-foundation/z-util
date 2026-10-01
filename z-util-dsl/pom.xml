@@ -13,11 +13,4 @@
     <name>z-util :: dsl (self-made lexer/parser/AST framework with ANTLR g4 dynamic loading)</name>
     <artifactId>z-util-dsl</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 </project>

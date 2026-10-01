@@ -14,13 +14,6 @@
     <artifactId>z-util-expr-el</artifactId>
     <description>EL (Expression Language) evaluator compatible with JSP EL subset</description>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>

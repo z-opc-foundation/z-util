@@ -20,6 +20,12 @@
             <artifactId>z-util-core</artifactId>
         </dependency>
 
+        <!-- slf4j-api 自报家门（2026-10-01）：main 有 import，不再靠 aop 代发（版本由根 DM 下发）。 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-proxy</artifactId>
@@ -43,15 +49,7 @@
             <version>${revision}</version>
         </dependency>
 
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- jaxb-api 整条已删（2026-10-01）：src 对 javax.xml.bind 零引用（BPMN 模型没有走
+             JAXB 序列化）；谁真要用经 z-util-core 传递已有。 -->
     </dependencies>
 </project>

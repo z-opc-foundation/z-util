@@ -25,12 +25,10 @@
             <artifactId>z-util-serialize-codegen</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
+        <!-- junit:junit 直条已换（2026-10-01）：直挂 JUnit4 会让 surefire 去解析 surefire-junit4
+             provider——本机没缓存、离线/证书受限环境直接卡死。改用全仓既定的 vintage-engine 路线
+             （platform provider 各模块已缓存）：@Test/@Before 用例零改动，junit:junit 4.13.2
+             经 vintage 传递仍在。 -->
     </dependencies>
 
     <build>

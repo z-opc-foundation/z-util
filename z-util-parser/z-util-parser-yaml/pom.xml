@@ -24,16 +24,13 @@
             <artifactId>z-util-dsl</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- SnakeYAML: 旧版 facade 后端，保留但不作为核心解析器 -->
+        <!-- SnakeYAML: 旧版 facade 后端（2026-10-01 复核：main 的 YamlParser/SnakeYamlBackend
+             真实 import org.yaml.snakeyaml，不能删——上次删除靠增量编译蒙混过编译期，
+             surefire 运行期 NoClassDefFoundError 当场暴露）。 -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

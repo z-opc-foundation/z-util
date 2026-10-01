@@ -28,19 +28,8 @@
             <artifactId>kryo</artifactId>
             <version>5.5.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>1.37</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>1.37</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-        </dependency>
+        <!-- jmh-core / jmh-generator-annprocess 两条已删（2026-10-01）：ZSerializeVsKryoBench
+             是手搓 main() 计时（import 里没有一条 org.openjdk.jmh、无 @Benchmark 注解），
+             挂 JMH 连坐拖入 jopt-simple + commons-math3。将来真上 JMH 再按需加回。 -->
     </dependencies>
 </project>

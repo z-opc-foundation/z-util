@@ -27,11 +27,9 @@
             <artifactId>okhttp-sse</artifactId>
         </dependency>
 
-        <!-- Netty 通信框架 -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-        </dependency>
+        <!-- netty-all 整条已删（2026-10-01）：src 对 io.netty 零引用。模块名里的 "Netty IM
+             samples" 是 src/main/resources 下的教程 .java（下面 resources 排除规则根本不打包、
+             Maven 也不编译它们），为此挂整个 netty-all 纯属 IDE 观感。真要恢复 IM 示例再按需加回。 -->
 
         <!-- SLF4J 日志门面（HttpExecutor 用 LoggerFactory） -->
         <dependency>
@@ -63,13 +61,6 @@
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
-        </dependency>
-
-        <!-- 测试框架 -->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

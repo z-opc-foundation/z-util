@@ -20,16 +20,5 @@
             <artifactId>z-util-ml</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 测试：JUnit 5 全家桶（新测试用）+ Vintage Engine（让 JUnit 4 老测试在 JUnit 5 平台跑） -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

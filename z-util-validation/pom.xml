@@ -20,15 +20,7 @@
             <artifactId>z-util-core</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- validation-api (javax.validation) 整条已删（2026-10-01）：src 对 javax.validation
+             零引用 —— 本模块的约束注解是自研体系（@annotation-driven），与 Bean Validation 规范无关。 -->
     </dependencies>
 </project>

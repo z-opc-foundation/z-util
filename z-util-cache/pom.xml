@@ -33,12 +33,5 @@
             <artifactId>z-util-aop</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

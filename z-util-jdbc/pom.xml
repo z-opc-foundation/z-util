@@ -20,6 +20,12 @@
             <version>8.2.0</version>
             <optional>true</optional>
         </dependency>
+
+        <!-- slf4j-api 自报家门（2026-10-01）：main 9 个文件在用，不再靠 aop 代发（版本由根 DM 下发）。 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -70,21 +76,15 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-        </dependency>
+        <!-- antlr4-runtime 整条已删（2026-10-01）：src 对 org.antlr 零引用。顺带澄清：dsl 的
+             g4「动态加载」是纯自研文本解析（G4FileParser 连 antlr 类都不碰），antlr 在 reactor
+             内本来就没有任何载体。 -->
 
         <!-- Test: H2 in-memory database + JUnit 4 via Vintage Engine -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <version>2.2.224</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -19,12 +19,5 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
         </dependency>
-
-        <!-- 测试：JUnit 4 @Test 注解 + Vintage Engine 让老测试在 JUnit 5 平台运行 -->
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

@@ -22,11 +22,6 @@
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
 </project>
