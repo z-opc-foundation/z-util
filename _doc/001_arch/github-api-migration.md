@@ -65,13 +65,13 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 
 | 方法 | HTTP | 勾 |
 |------|------|------|
-| `list(state)` | `GET /repos/{owner}/{repo}/issues?state=...` | [ ] |
-| `get(number)` | `GET /repos/{owner}/{repo}/issues/{number}` | [ ] |
-| `create(title, body)` | `POST /repos/{owner}/{repo}/issues` | [ ] |
-| `update(number, title, body)` | `PATCH /repos/{owner}/{repo}/issues/{number}` | [ ] |
-| `close(number)` / `reopen(number)` | `PATCH` with `state: closed/open` | [ ] |
-| `listComments(number)` | `GET /repos/{owner}/{repo}/issues/{number}/comments` | [ ] |
-| `addComment(number, body)` | `POST /repos/{owner}/{repo}/issues/{number}/comments` | [ ] |
+| `list(state)` | `GET /repos/{owner}/{repo}/issues?state=...` | [x] |
+| `get(number)` | `GET /repos/{owner}/{repo}/issues/{number}` | [x] |
+| `create(title, body)` | `POST /repos/{owner}/{repo}/issues` | [x] |
+| `update(number, title, body)` | `PATCH /repos/{owner}/{repo}/issues/{number}` | [x] |
+| `close(number)` / `reopen(number)` | `PATCH` with `state: closed/open` | [x] |
+| `listComments(number)` | `GET /repos/{owner}/{repo}/issues/{number}/comments` | [x] |
+| `addComment(number, body)` | `POST /repos/{owner}/{repo}/issues/{number}/comments` | [x] |
 
 ### §pr — `PullRequestApiWrapper`
 
