@@ -18,5 +18,10 @@
 
         <!-- slf4j-api 整条已删（2026-10-01）：src 对 org.slf4j 零引用，
              日志面全走 z-util-core 下发的 log4j 桥（本模块连 core 都不依赖，纯无日志）。 -->
+
+        <!-- z-util-proxy 的类级别字节码代理（SourceProxyFactory / AspectToHookAdapter）
+             暂时未通过本 pom 引入：会让 reactor 形成 proxy→core→aop→proxy 循环。
+             当前状态：bridge 完整活在 z-util-proxy 模块内独立可调（见 BytecodeManufactureTest
+             / AspectBridgeTest），跨模块自 Agent 留给后续模块重组。 -->
     </dependencies>
 </project>
