@@ -1,7 +1,5 @@
 package com.zifang.util.core.pattern.composite.tree;
 
-import com.zifang.util.core.lang.tuples.Triplet;
-
 import java.util.*;
 
 /**
@@ -14,8 +12,11 @@ import java.util.*;
  * @param <C> 实际对象类型
  * @author zifang
  */
-public class LeafWrapper<A, B, C> extends Triplet<A, B, C> implements ILeaf {
+public class LeafWrapper<A, B, C> implements ILeaf {
 
+    private A a;
+    private B b;
+    private C c;
     private String name;
     private ILeaf parent;
     private List<ILeaf> subLeaves;
@@ -29,8 +30,22 @@ public class LeafWrapper<A, B, C> extends Triplet<A, B, C> implements ILeaf {
      * @param bean     C类型参数
      */
     public LeafWrapper(A currentId, B parentId, C bean) {
-        super(currentId, parentId, bean);
+        this.a = currentId;
+        this.b = parentId;
+        this.c = bean;
         this.name = bean != null ? bean.toString() : null;
+    }
+
+    public A getA() {
+        return a;
+    }
+
+    public B getB() {
+        return b;
+    }
+
+    public C getC() {
+        return c;
     }
 
     @Override

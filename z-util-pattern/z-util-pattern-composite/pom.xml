@@ -14,10 +14,8 @@
     <artifactId>z-util-pattern-composite</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-core</artifactId>
-        </dependency>
+        <!-- pattern-composite 零 z-util 内部依赖（2026-10-02）：LeafWrapper 改组合，
+             不再 extends core.lang.tuples.Triplet，pattern→core 反向边解除。 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

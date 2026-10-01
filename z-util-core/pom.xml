@@ -78,15 +78,11 @@
         </dependency>
 
         <!--
-            z-util-bc (2026-10-02)：整合 aop + proxy + bridge 三个旧模块。
-            core 只取高层 AOP API（TraceContext / LoggableAdvise）。
-            字节码底层（class 文件模型、ASM 编织、内存编译）不暴露给 core。
+            z-util-bc 依赖已删（2026-10-02）：src 对 com.zifang.util.bc 零 import，
+            原 z-util-aop 依赖本就是传递性过度声明。bc 内部用 core（ClassLoaderUtil），
+            若 core 反向依赖 bc 会形成 core↔bc reactor cycle。
+
         -->
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-bc</artifactId>
-            <version>${revision}</version>
-        </dependency>
 
         <!--
             ReflectUtil 的反射元数据缓存（Class→Constructor[]/Field[]/Method[]）
