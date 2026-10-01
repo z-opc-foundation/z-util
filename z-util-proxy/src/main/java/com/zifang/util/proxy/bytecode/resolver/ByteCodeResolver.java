@@ -2,6 +2,8 @@ package com.zifang.util.proxy.bytecode.resolver;
 
 import com.zifang.util.proxy.bytecode.model.ClassFile;
 import com.zifang.util.proxy.bytecode.model.constantpool.*;
+import com.zifang.util.proxy.bytecode.model.attribute.AbstractAttribute;
+import com.zifang.util.proxy.bytecode.model.attribute.AttributeFactory;
 import com.zifang.util.proxy.bytecode.model.field.FieldTable;
 import com.zifang.util.proxy.bytecode.model.inter.InterfaceIndex;
 import com.zifang.util.proxy.bytecode.model.method.MethodTable;
@@ -170,6 +172,10 @@ public class ByteCodeResolver {
             // 9. 解析方法表 methods
             parseMethods();
 
+            // 10. 解析类级属性表（InnerClasses / NestHost / NestMembers /
+            //     RuntimeVisibleAnnotations / BootstrapMethods / Signature 等）
+            parseClassAttributes();
+
             return classFile;
         } catch (Exception e) {
             throw new RuntimeException("字节码解析失败", e);
@@ -303,6 +309,20 @@ public class ByteCodeResolver {
             interfaceIndex.addIndex(U2.read(inputStream));
         }
         classFile.interfaceIndex = interfaceIndex;
+    }
+
+    /**
+     * 解析类级属性表（spec §4.1）：方法表之后是 attributes_count + attributes[]，
+     * 由 {@link AttributeFactory} 按 name 路由到具体属性模型（不认识的会按
+     * attribute_length 安全跳过）。
+     */
+    private void parseClassAttributes() {
+        U2 attributesCount = U2.read(inputStream);
+        List<AbstractConstantPool> poolList = classFile.poolInfo.getPoolList();
+        for (int i = 0; i < attributesCount.value; i++) {
+            AbstractAttribute attr = AttributeFactory.getAttributeTable(inputStream, poolList);
+            classFile.addAttribute(attr);
+        }
     }
 
     /**

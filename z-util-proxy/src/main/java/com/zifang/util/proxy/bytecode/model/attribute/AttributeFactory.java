@@ -58,9 +58,11 @@ public class AttributeFactory {
             case "EnclosingMethod":
                 //类文件--当一个类为局部类或匿名内部类时才拥有这个属性
                 break;
-            case "InnerClass":
+            case "InnerClasses":
                 //类文件--内部类列表
-                break;
+                InnerClassesAttribute innerClassesAttribute = new InnerClassesAttribute(attributeNameIndex, attributeLength);
+                innerClassesAttribute.read(inputStream);
+                return innerClassesAttribute;
             case "LineNumberTable":
                 //Code属性--java源码的行号与字节码指令的对应关系
                 LineNumberTable lineNumberTable = new LineNumberTable(attributeNameIndex, attributeLength);
@@ -73,7 +75,9 @@ public class AttributeFactory {
                 return localVariableTable;
             case "StackMapTable":
                 //Code属性--供新的类型检查器检查和处理目标方法的局部变量和操作数栈所需要的的类型是否匹配
-                break;
+                StackMapTableAttribute stackMapTableAttribute = new StackMapTableAttribute(attributeNameIndex, attributeLength);
+                stackMapTableAttribute.read(inputStream);
+                return stackMapTableAttribute;
             case "Signature":
                 // 类/方法/字段——泛型签名字符串，单独用 Code 同款做法把池引用 resolve 成文本
                 SignatureAttribute signatureAttribute = new SignatureAttribute(attributeNameIndex, attributeLength);
@@ -94,7 +98,9 @@ public class AttributeFactory {
                 break;
             case "RuntimeVisibleAnnotations":
                 //类,方法表,字段表--为动态注解提供支持,该属性用于指明哪些注解是运行时;
-                break;
+                RuntimeVisibleAnnotationsAttribute runtimeVisibleAnnotationsAttribute = new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength);
+                runtimeVisibleAnnotationsAttribute.read(inputStream);
+                return runtimeVisibleAnnotationsAttribute;
             case "RuntimeInvisibleAnnotations":
                 //类,方法表,字段表--为动态注解提供支持,用于标明哪些注解运行时是不可见的;
                 break;
@@ -109,7 +115,9 @@ public class AttributeFactory {
                 break;
             case "BootstrapMethods":
                 //类文件--用于保存invokedynamic指定 引用的引导方法限定符
-                break;
+                BootstrapMethodsAttribute bootstrapMethodsAttribute = new BootstrapMethodsAttribute(attributeNameIndex, attributeLength);
+                bootstrapMethodsAttribute.read(inputStream);
+                return bootstrapMethodsAttribute;
             case "RuntimeVisibleTypeAnnotations":
                 //类,方法表,属性表,Code属性--用于标明哪些类注解是运行时可见的
                 break;
@@ -130,10 +138,15 @@ public class AttributeFactory {
                 break;
             case "NestHost":
                 //类--用于支持嵌套类(java中的内部类)的反射和访问控制的API,一个内部类通过该属性得知自己的宿主类
-                break;
+                NestHostAttribute nestHostAttribute = new NestHostAttribute(attributeNameIndex, attributeLength);
+                nestHostAttribute.read(inputStream);
+                nestHostAttribute.resolve(poolList);
+                return nestHostAttribute;
             case "NestMembers":
                 //类--用于支持嵌套类(java中的内部类)的反射和访问控制的API,一个宿主类通过该属性得知自己有哪些内部类
-                break;
+                NestMembersAttribute nestMembersAttribute = new NestMembersAttribute(attributeNameIndex, attributeLength);
+                nestMembersAttribute.read(inputStream);
+                return nestMembersAttribute;
             }
         }
         // 未支持的属性必须消费掉内容字节，否则流错位（后续会把常量池条目错当属性名）

@@ -4,11 +4,16 @@ import com.zifang.util.proxy.bytecode.model.constantpool.AbstractConstantPool;
 import com.zifang.util.proxy.bytecode.model.constantpool.ClassInfo;
 import com.zifang.util.proxy.bytecode.model.constantpool.ConstantPoolInfo;
 import com.zifang.util.proxy.bytecode.model.constantpool.Utf8Info;
+import com.zifang.util.proxy.bytecode.model.attribute.AbstractAttribute;
 import com.zifang.util.proxy.bytecode.model.field.FieldTable;
 import com.zifang.util.proxy.bytecode.model.inter.InterfaceIndex;
 import com.zifang.util.proxy.bytecode.model.method.MethodTable;
 import com.zifang.util.proxy.bytecode.model.readtype.U2;
 import com.zifang.util.proxy.bytecode.model.readtype.U4;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * ClassFile结构
@@ -313,5 +318,24 @@ public class ClassFile {
      */
     public void setMethodInfo(MethodTable methodInfo) {
         this.methodInfo = methodInfo;
+    }
+
+    /**
+     * 类级属性表（InnerClasses / NestHost / NestMembers / RuntimeVisibleAnnotations /
+     * BootstrapMethods / Signature 等）。由 ByteCodeResolver.parse() 在方法表之后读出。
+     */
+    private final List<AbstractAttribute> attributes = new ArrayList<>();
+
+    public List<AbstractAttribute> getAttributes() {
+        return Collections.unmodifiableList(attributes);
+    }
+
+    /**
+     * 由 ByteCodeResolver 内部调用：往类级属性表追加一项。
+     */
+    public void addAttribute(AbstractAttribute a) {
+        if (a != null) {
+            attributes.add(a);
+        }
     }
 }
