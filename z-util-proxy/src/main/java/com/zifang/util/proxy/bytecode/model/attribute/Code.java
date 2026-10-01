@@ -138,6 +138,13 @@ public class Code extends AbstractAttribute {
     }
 
     /**
+     * 解析时用的常量池（用于方法体异常处理/属性引用等场景的二次解析）。
+     */
+    public List<AbstractConstantPool> getPoolList() {
+        return poolList;
+    }
+
+    /**
      * getAttributes方法。
      *
      * @return List<AbstractAttribute>类型返回值

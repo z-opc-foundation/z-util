@@ -11,6 +11,8 @@ import com.zifang.util.proxy.bytecode.model.constantpool.*;
 import com.zifang.util.proxy.bytecode.model.field.FieldInfo;
 import com.zifang.util.proxy.bytecode.model.method.MethodInfo;
 import com.zifang.util.proxy.bytecode.model.readtype.U1;
+import com.zifang.util.proxy.bytecode.model.readtype.U2;
+import com.zifang.util.proxy.bytecode.model.readtype.U4;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -188,6 +190,11 @@ public class SrcCreator {
 
             // 生成方法体
             String body = decompileMethodBody(codeAttr, classFile, thisClassSimple, localVars);
+
+            // 如果 exception_table 整段覆盖 0..codeLength（典型 try/catch/finally），
+            // 套一层 try { ... } catch (...) { ... }
+            body = wrapWithTryCatch(codeAttr, body);
+
             methodBody.append(body);
         }
 
@@ -998,6 +1005,68 @@ public class SrcCreator {
             }
         }
         return null;
+    }
+
+    /**
+     * 若 Code 的 exception_table 含从 pc=0 起的 try region，则把整个方法体包成
+     * {@code try { ... } catch (T e) { ... }}，catch 体放注释占位。
+     * <p>
+     * 简化策略：只要任一 entry startPc==0 就触发——不去逐 entry 切 PC 区间（jvm 实际的
+     * try/catch handler 字节码块往往只在区间尾部，几条规则不规律会让出来的源码语义
+     * 与 Java 源码不对等）。保守地把 catch 体留作注释比强行猜反而不友好。
+     */
+    private static String wrapWithTryCatch(Code codeAttr, String body) {
+        if (codeAttr == null || codeAttr.getExceptionTable().isEmpty()) {
+            return body;
+        }
+        boolean hasLeading = false;
+        LinkedHashMap<String, Boolean> seen = new LinkedHashMap<>();
+        for (Code.ExceptionInfo ei : codeAttr.getExceptionTable()) {
+            if (ei.getStartPc().value == 0) {
+                hasLeading = true;
+            }
+            int catchIdx = ei.getCatchPc().value;
+            String type;
+            if (catchIdx == 0) {
+                type = "java.lang.Throwable";
+            } else {
+                int i = catchIdx - 1;
+                if (i < 0 || i >= codeAttr.getPoolList().size()) {
+                    return body;
+                }
+                AbstractConstantPool p = codeAttr.getPoolList().get(i);
+                U2 nameIdx;
+                if (p instanceof ClassInfo) {
+                    nameIdx = ((ClassInfo) p).getNameIndex();
+                } else if (p instanceof ConstantClassInfo) {
+                    nameIdx = ((ConstantClassInfo) p).getStringIndex();
+                } else {
+                    return body;
+                }
+                int ni = nameIdx.value - 1;
+                if (ni < 0 || ni >= codeAttr.getPoolList().size()) {
+                    return body;
+                }
+                AbstractConstantPool utf = codeAttr.getPoolList().get(ni);
+                if (!(utf instanceof Utf8Info)) {
+                    return body;
+                }
+                type = ((Utf8Info) utf).getValue().replace('/', '.');
+            }
+            seen.putIfAbsent(type, Boolean.TRUE);
+        }
+        if (!hasLeading) {
+            return body;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("\t\ttry {\n");
+        sb.append(body);
+        for (String t : seen.keySet()) {
+            sb.append("\t\t} catch (").append(t).append(" e) {\n");
+            sb.append("\t\t\t// (handler body 由字节码决定，当前未展开)\n");
+            sb.append("\t\t}\n");
+        }
+        return sb.toString();
     }
 
     /**
