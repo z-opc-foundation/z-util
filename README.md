@@ -43,7 +43,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | 模块（`<module>` 顺序） | 类型 | 职责 | 关键入口（实测存在的类） |
 |------|------|------|------|
 | `z-util-core` | jar | 基础工具：集合/字符串/IO/并发/加密/JWT/限流/熔断/调度 | `StringUtil` `CollectionUtil` `BeanUtil` `ReflectUtil` `FileUtil` `ZipUtil` `JarUtil` `XmlUtil` `Assert` `StopWatch` `EventBus`；`jwt.Jwt`/`Claims`/`HmacSha256`；`encrypt.AesUtil`/`RsaUtil`/`MD5Utils`/`Base64Utils`/`HMAC`/`ApiSignUtil`/`Base62`；`ratelimit.SlidingWindowRateLimiter`/`TokenBucketRateLimiter`；`resilience.CircuitBreaker`/`Bulkhead`/`TimeLimiter`；`meta.page.PageResult`；`lang.concurrency.NameThreadFactory`；`pattern.*`（chain/command/composite/factory/state/pool/event/spi） |
-| `z-util-office` | jar | 基于 POI / PDFBox 的 Excel、PDF 工具 | `excel.ExcelUtils`（`readFirstSheet` / `readAllSheets`）、`PoiUtils`；`pdf.PdfUtil`（`fillImages`）、`PdfEditor`、`PdfOperator` |
+| `z-util-office` | jar | 基于 POI / PDFBox 的 Word / Excel / PDF / PPT 工具 + 模板引擎（详见模块 README） | `excel.ExcelUtils`（`readFirstSheet` / `readAllSheets` / `writeCell` / `writeRow`）、`ExcelTemplate`；`word.U` + `WordTemplate` + `WordExtractor`；`pdf.PdfUtil` / `PdfOperator` / `PdfExtractor`；`ppt.PptUtils` + `PptTemplate`；`core.RoundTripAssert` / `core.OfficeFormat` |
 | `z-util-media` | jar | 图像处理、验证码、GIF、二维码 | `CaptchaUtil`、`GifEncoder`/`GifBuilder`、`ColorUtil`、`graph/QRCode`（encoder + decoder） |
 | `z-util-dsl` | jar | 自研词法/语法/AST 框架，**运行时动态加载 `.g4`** | `g4.DynamicLexer`、`DynamicParser`、`G4FileParser`、`ASTFactory`、`ASTNode`、`token.Lexer` |
 | `z-util-parser` | **pom 聚合** | 多格式解析器聚合件（8 个子模块） | 见下表 |

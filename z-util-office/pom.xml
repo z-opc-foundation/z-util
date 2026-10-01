@@ -20,19 +20,6 @@
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>fontbox</artifactId>
-        </dependency>
-        <!-- jempbox 已在 pdfbox 2.0+ 中移除（被 fontbox/preflight 替代），无需再单独声明 -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>xmpbox</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>preflight</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -51,21 +38,13 @@
             <artifactId>poi-ooxml-full</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-        </dependency>
+        <!-- log4j-core 直接条目已删（2026-10-01）：本模块 src 对 org.apache.logging.log4j 零引用；
+             运行期实现经 z-util-core → log4j-slf4j2-impl 的传递链本来就带，直挂是重复。 -->
 
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
             <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>

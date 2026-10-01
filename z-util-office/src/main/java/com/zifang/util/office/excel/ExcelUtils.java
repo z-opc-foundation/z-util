@@ -2,6 +2,7 @@ package com.zifang.util.office.excel;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -13,8 +14,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -160,6 +163,24 @@ public class ExcelUtils {
     }
 
     /**
+     * 列出工作簿的全部工作表名，按工作簿内顺序。
+     *
+     * @param in           工作簿输入流（方法内关闭）
+     * @param expandedName 扩展名 xls / xlsx（不区分大小写）
+     * @return 工作表名列表
+     * @throws IOException 读取工作簿失败时抛出
+     */
+    public static List<String> readSheetNames(InputStream in, String expandedName) throws IOException {
+        try (Workbook workbook = createWorkbook(in, expandedName)) {
+            List<String> names = new ArrayList<>();
+            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                names.add(workbook.getSheetName(i));
+            }
+            return names;
+        }
+    }
+
+    /**
      * 按扩展名创建工作簿对象。
      *
      * @param in           工作簿输入流
@@ -208,5 +229,133 @@ public class ExcelUtils {
             return String.valueOf(longValue);
         }
         return String.valueOf(value);
+    }
+
+    /**
+     * 按扩展名创建一个全新的工作簿（xlsx → XSSFWorkbook；其它 → HSSFWorkbook）。
+     *
+     * @param expandedName 扩展名 xls / xlsx（不区分大小写），传 null 时按 xlsx 处理
+     * @return 新建的工作簿对象
+     */
+    public static Workbook createWorkbook(String expandedName) {
+        String name = expandedName == null ? "" : expandedName.trim();
+        return EXT_XLSX.equalsIgnoreCase(name) ? new XSSFWorkbook() : new HSSFWorkbook();
+    }
+
+    /**
+     * 将工作簿内容写入输出流，**不关闭**输出流，由调用方管理。
+     *
+     * @param workbook 工作簿
+     * @param out      输出流
+     * @throws IOException 写入失败时抛出
+     */
+    public static void write(Workbook workbook, OutputStream out) throws IOException {
+        if (workbook == null) {
+            throw new IllegalArgumentException("workbook must not be null");
+        }
+        if (out == null) {
+            throw new IllegalArgumentException("out must not be null");
+        }
+        workbook.write(out);
+    }
+
+    /**
+     * 在指定工作表中创建或覆盖一个单元格，并按值类型写入。
+     *
+     * @param sheet      工作表
+     * @param rowIndex   行索引（0-based）
+     * @param columnIndex 列索引（0-based）
+     * @param value      写入的值，支持 String/Number/Boolean/Date/null；null 视为空白
+     */
+    public static void writeCell(Sheet sheet, int rowIndex, int columnIndex, Object value) {
+        if (sheet == null) {
+            throw new IllegalArgumentException("sheet must not be null");
+        }
+        Row row = sheet.getRow(rowIndex);
+        if (row == null) {
+            row = sheet.createRow(rowIndex);
+        }
+        Cell cell = row.getCell(columnIndex);
+        if (cell == null) {
+            cell = row.createCell(columnIndex);
+        }
+        setCellValue(cell, value);
+    }
+
+    /**
+     * 在指定工作表中写入一行，按顺序填入 values。
+     *
+     * @param sheet    工作表
+     * @param rowIndex 行索引（0-based）
+     * @param values   单元格值列表，传 null 时该单元格写空白
+     */
+    public static void writeRow(Sheet sheet, int rowIndex, List<?> values) {
+        if (sheet == null) {
+            throw new IllegalArgumentException("sheet must not be null");
+        }
+        Row row = sheet.getRow(rowIndex);
+        if (row == null) {
+            row = sheet.createRow(rowIndex);
+        }
+        int column = 0;
+        if (values != null) {
+            for (Object v : values) {
+                Cell cell = row.getCell(column);
+                if (cell == null) {
+                    cell = row.createCell(column);
+                }
+                setCellValue(cell, v);
+                column++;
+            }
+        }
+    }
+
+    /**
+     * 在工作簿中创建一个新工作表并填入二维数据。第一行视为表头，作为示例保留。
+     *
+     * @param workbook   工作簿
+     * @param sheetName  工作表名，传 null 时使用默认名 SheetN
+     * @param rows       二维行数据，外层按行、内层按列；任一单元支持 String/Number/Boolean/Date/null
+     * @return 创建的工作表
+     */
+    public static Sheet writeSheet(Workbook workbook, String sheetName, List<List<?>> rows) {
+        if (workbook == null) {
+            throw new IllegalArgumentException("workbook must not be null");
+        }
+        Sheet sheet = sheetName == null ? workbook.createSheet() : workbook.createSheet(sheetName);
+        int rowIdx = 0;
+        if (rows != null) {
+            for (List<?> row : rows) {
+                writeRow(sheet, rowIdx, row);
+                rowIdx++;
+            }
+        }
+        return sheet;
+    }
+
+    /**
+     * 按 Java 值类型给单元格赋值。null 视为空白；其它类型按对应 POI 类型写入。
+     *
+     * @param cell  单元格
+     * @param value 值
+     */
+    private static void setCellValue(Cell cell, Object value) {
+        if (value == null) {
+            cell.setBlank();
+            return;
+        }
+        if (value instanceof Boolean) {
+            cell.setCellValue((Boolean) value);
+            return;
+        }
+        if (value instanceof Number) {
+            cell.setCellValue(((Number) value).doubleValue());
+            return;
+        }
+        if (value instanceof Date) {
+            cell.setCellValue((Date) value);
+            return;
+        }
+        cell.setCellValue(String.valueOf(value));
     }
 }
