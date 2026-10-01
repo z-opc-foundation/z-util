@@ -1,13 +1,13 @@
 package com.zifang.util.proxy.compliler;
 
 
-import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.tools.*;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +75,7 @@ public class CFJavaCompiler {
             log.error("编译失败. \noutWriter:{} \ndiagnostics info:{}", outWriter.toString(), error.toString());
         }
 
-        return Maps.newHashMapWithExpectedSize(0);
+        return new HashMap<>(0);
     }
 
 
