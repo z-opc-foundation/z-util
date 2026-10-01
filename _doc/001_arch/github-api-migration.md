@@ -100,10 +100,10 @@ POJO（`com.zifang.util.devops.git.github.model`）：`Repository` / `User` / `B
 
 | 方法 | HTTP | 勾 |
 |------|------|------|
-| `get(org)` / `get()` | `GET /orgs/{org}` | [ ] |
-| `listMembers()` | `GET /orgs/{org}/members` | [ ] |
-| `listRepos()` | `GET /orgs/{org}/repos` | [ ] |
-| `listTeams()` | `GET /orgs/{org}/teams` | [ ] |
+| `get(org)` / `get()` | `GET /orgs/{org}` | [x] |
+| `listMembers()` | `GET /orgs/{org}/members` | [x] |
+| `listRepos()` | `GET /orgs/{org}/repos` | [x] |
+| `listTeams()` | `GET /orgs/{org}/teams` | [x] |
 
 ### §action — `ActionApiWrapper`
 
