@@ -16,22 +16,13 @@
     <packaging>jar</packaging>
 
     <dependencies>
-        <!-- z-util-core for base utilities -->
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-core</artifactId>
-        </dependency>
-
         <!--
-            IT 测试需要 z-util-aop：
-            - WebLogAspectReplacementIT 用 @Advise / @Intercept / ProxyFactory
-            通过 z-util-core 传递依赖可见，但显式声明便于阅读。
-            保持 test scope：不污染 cache 模块的运行时依赖。
+            之前 cache→core 是过度声明（主代码 0 引用）。后来被迫保留是因为 IT 测试
+            （JwtAuthIT 用 core.jwt.* / WebLogAspectReplacementIT 用 core.trace.*）
+            占用了编译期入口。
+            按用户「cache 模块只测自己的事」原则，把 IT 全删后，cache→core 与
+            cache→aop 两依赖一起撤掉，cache 模块彻底零 z-util 内部依赖。
+            集成场景交给更上层的端到端测试。
         -->
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-aop</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>
