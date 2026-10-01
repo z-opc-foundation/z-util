@@ -46,9 +46,11 @@ public class AttributeFactory {
                 Code code = new Code(attributeNameIndex, attributeLength, poolList);
                 code.read(inputStream);
                 return code;
-            case "Deprecate":
+            case "Deprecated":
                 //类,方法,字段--被声明为deprecate的方法和字段
-                break;
+                DeprecatedAttribute deprecatedAttribute = new DeprecatedAttribute(attributeNameIndex, attributeLength);
+                deprecatedAttribute.read(inputStream);
+                return deprecatedAttribute;
             case "Exceptions":
                 //方法表--方法抛出的异常列表
                 ExceptionsAttribute exceptionsAttribute = new ExceptionsAttribute(attributeNameIndex, attributeLength);
@@ -57,7 +59,10 @@ public class AttributeFactory {
                 return exceptionsAttribute;
             case "EnclosingMethod":
                 //类文件--当一个类为局部类或匿名内部类时才拥有这个属性
-                break;
+                EnclosingMethodAttribute enclosingMethodAttribute = new EnclosingMethodAttribute(attributeNameIndex, attributeLength);
+                enclosingMethodAttribute.read(inputStream);
+                enclosingMethodAttribute.resolve(poolList);
+                return enclosingMethodAttribute;
             case "InnerClasses":
                 //类文件--内部类列表
                 InnerClassesAttribute innerClassesAttribute = new InnerClassesAttribute(attributeNameIndex, attributeLength);
@@ -86,7 +91,10 @@ public class AttributeFactory {
                 return signatureAttribute;
             case "SourceFile":
                 //类文件--记录源文件名称
-                break;
+                SourceFileAttribute sourceFileAttribute = new SourceFileAttribute(attributeNameIndex, attributeLength);
+                sourceFileAttribute.read(inputStream);
+                sourceFileAttribute.resolve(poolList);
+                return sourceFileAttribute;
             case "SourceDebugExtension":
                 //类文件--用于存储额外的调试信息
                 break;
@@ -95,15 +103,21 @@ public class AttributeFactory {
                 break;
             case "LocalVariableTypeTable":
                 //类--它使用特征签名代替描述符,是为了引入泛型语法之后能描述泛型参数化类型而添加
-                break;
+                LocalVariableTypeTableAttribute localVariableTypeTableAttribute =
+                        new LocalVariableTypeTableAttribute(attributeNameIndex, attributeLength);
+                localVariableTypeTableAttribute.read(inputStream);
+                return localVariableTypeTableAttribute;
             case "RuntimeVisibleAnnotations":
                 //类,方法表,字段表--为动态注解提供支持,该属性用于指明哪些注解是运行时;
                 RuntimeVisibleAnnotationsAttribute runtimeVisibleAnnotationsAttribute = new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength);
                 runtimeVisibleAnnotationsAttribute.read(inputStream);
                 return runtimeVisibleAnnotationsAttribute;
             case "RuntimeInvisibleAnnotations":
-                //类,方法表,字段表--为动态注解提供支持,用于标明哪些注解运行时是不可见的;
-                break;
+                //类,方法表,字段表--为动态注解提供支持,用于标明哪些注解运行时是不可见的
+                RuntimeInvisibleAnnotationsAttribute runtimeInvisibleAnnotationsAttribute =
+                        new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength);
+                runtimeInvisibleAnnotationsAttribute.read(inputStream);
+                return runtimeInvisibleAnnotationsAttribute;
             case "RuntimeVisibleParameterAnnotations":
                 //方法表--作用对象为方法参数
                 break;

@@ -31,4 +31,21 @@ public class ModernClassFixture {
             return -x;
         }
     }
+
+    /**
+     * 持有局部类以触发 EnclosingMethod 属性。
+     */
+    public Object enclosing() {
+        class Obj {
+            int v;
+        }
+        return new Obj();
+    }
+
+    /**
+     * 泛型 List 参数触发 LocalVariableTypeTable 属性（参数签名要保留 List<Integer>）。
+     */
+    public String withGenerics(java.util.List<Integer> ints) {
+        return ints.isEmpty() ? "" : String.valueOf(ints.get(0));
+    }
 }
