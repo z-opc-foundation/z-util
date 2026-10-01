@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>z-util-pattern</artifactId>
+    <packaging>pom</packaging>
+    <name>z-util :: pattern (aggregator: chain / command / composite / event / factory / ioc / memento / pool / register / spi / state / stream)</name>
+    <description>GoF + 行为类设计模式集合。子件可单独引用以按需拉依赖 (z-util-pattern-chain 等)。</description>
+
+    <modules>
+        <module>z-util-pattern-chain</module>
+        <module>z-util-pattern-command</module>
+        <module>z-util-pattern-composite</module>
+        <module>z-util-pattern-event</module>
+        <module>z-util-pattern-factory</module>
+        <module>z-util-pattern-ioc</module>
+        <module>z-util-pattern-memento</module>
+        <module>z-util-pattern-pool</module>
+        <module>z-util-pattern-register</module>
+        <module>z-util-pattern-spi</module>
+        <module>z-util-pattern-state</module>
+        <module>z-util-pattern-stream</module>
+        <module>z-util-pattern-strategy</module>
+        <module>z-util-pattern-template</module>
+        <module>z-util-pattern-visitor</module>
+        <module>z-util-pattern-builder</module>
+    </modules>
+</project>
