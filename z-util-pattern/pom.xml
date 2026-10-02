@@ -12,7 +12,7 @@
 
     <artifactId>z-util-pattern</artifactId>
     <packaging>pom</packaging>
-    <name>z-util :: pattern (aggregator: chain / command / composite / event / factory / ioc / memento / pool / register / spi / state / stream)</name>
+    <name>z-util :: pattern (aggregator: chain / command / composite / event / factory / ioc / memento / pool / register / spi / state / stream / validation)</name>
     <description>GoF + 行为类设计模式集合。子件可单独引用以按需拉依赖 (z-util-pattern-chain 等)。</description>
 
     <modules>
@@ -30,6 +30,7 @@
         <module>z-util-pattern-stream</module>
         <module>z-util-pattern-strategy</module>
         <module>z-util-pattern-template</module>
+        <module>z-util-pattern-validation</module>
         <module>z-util-pattern-visitor</module>
         <module>z-util-pattern-builder</module>
     </modules>

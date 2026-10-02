@@ -148,7 +148,7 @@
         <module>z-util-pattern</module>
         <module>z-util-ch</module>
         <module>z-util-cli</module>
-        <module>z-util-validation</module>
+        <!-- z-util-validation 已降级到 z-util-pattern 子模块下 (2026-10-02)，原 core 依赖为僵尸（main 零 import）随之删除 -->
         <!-- z-util-cache 已合并到 z-util-pattern 子模块下 (2026-10-02) -->
         <module>z-util-bc</module>
         <!-- z-util-bridge 已合并到 z-util-bc (2026-10-02) -->
@@ -319,11 +319,6 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-cli</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-validation</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

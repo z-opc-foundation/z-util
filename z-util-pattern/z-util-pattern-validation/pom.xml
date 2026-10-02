@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util-pattern</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: pattern :: validation (annotation-driven validation engine + built-in constraints)</name>
+
+    <artifactId>z-util-pattern-validation</artifactId>
+
+    <!-- 零内部依赖（2026-10-02 自 z-util-validation 降级收编）：原声明的 z-util-core 为僵尸
+         依赖（main 零 import），删除以满足 pattern 层"不依赖 core"铁律。
+         validation-api (javax.validation) 整条已删（2026-10-01）：src 对 javax.validation
+         零引用 —— 本模块的约束注解是自研体系（@annotation-driven），与 Bean Validation 规范无关。 -->
+</project>

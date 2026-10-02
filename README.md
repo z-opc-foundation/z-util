@@ -59,7 +59,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-proxy` | jar | JDK/CGLIB 动态代理 + 自研 class 文件字节码模型 | `CglibProxyFactory`/`CglibInterceptor`、`a.model.*`（`AbstractConstantPool`/`AttributeFactory`/`AccessFlagConvertor`）、`ByteCodeResolver`、内置反编译 demo（`a.decompile.*`） |
 | `z-util-ch` | jar | 中文工具：拼音/身份证/金额/星期 | `PinyinGeneratorUtil`、`IdcardUtil`、`MoneyUtil`、`NumberChineseUtil`、`WeekUtil` |
 | `z-util-cli` | jar | POSIX/GNU/Basic/Default 命令行解析 + OptionGroup + HelpFormatter | `CLI`、`CommandLine`、`CommandLineParser`、`BasicParser`/`GnuParser`/`DefaultParser`、`help.HelpFormatter` |
-| `z-util-validation` | jar | 注解驱动的校验引擎 + 内置约束 | `annotation.NotNull`/`Length`/`Pattern`/`Range`/`Email` 与同名 `*Validator`、`core.*` |
+| `z-util-pattern` | **pom 聚合** | GoF + 行为模式 + 校验原语聚合件（`z-util-pattern-chain`/`-command`/`-composite`/`-event`/`-factory`/`-ioc`/`-memento`/`-pool`/`-register`/`-spi`/`-state`/`-stream`/`-strategy`/`-template`/`-visitor`/`-builder`/`-cache`/`-validation` 等子件各自成坐标） | validation 面：`annotation.NotNull`/`Length`/`Pattern`/`Range`/`Email` 与同名 `*Validator`（2026-10-02 自 `z-util-validation` 降级收编，零内部依赖） |
 | `z-util-cache` | jar | **进程内**缓存：TTL + LRU / W-TinyLFU + builder + 装饰器 | `MemoryCache`、`WTinyLfuCache`、`BoundedCache`/`LruNode`、`LoadingCache`/`LoadingMemoryCache`/`CacheLoader`、`CacheBuilder`、`CacheManager`、`MeteredCache`、`TransactionalCache`、`CountMinSketch`、`Expiry`、`RemovalListener`（无 Redis/远端后端） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
@@ -218,7 +218,7 @@ z-util/
 
 它的版本表实测覆盖 20 个模块（core/monitor/parser-json/math/proxy/office/media/expr-js/workflow/
 visualization/jdbc/http/ml/devops/source/distribute/ch/parser-xml/dsl/cli）。
-`z-util-cache`、`z-util-ioc`、`z-util-aop`、`z-util-validation` 与各 `serialize-*`、其余 `parser-*` /
+`z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、其余 `parser-*` /
 `expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 43 个自家构件）。
 
 ### 本地构建
