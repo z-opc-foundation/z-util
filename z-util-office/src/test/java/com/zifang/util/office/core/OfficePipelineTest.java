@@ -128,6 +128,131 @@ public class OfficePipelineTest {
         }
     }
 
+    @Test
+    public void pdfReplaceText_persists() throws Exception {
+        File in = makeTempPdf("Original text");
+        try (OfficePipeline p = OfficePipeline.open(in)) {
+            int touched = p.pdfReplaceText("Original", "Replaced");
+            assertEquals(1, touched);
+            assertTrue(p.extractPdfText().contains("Replaced"));
+        } finally {
+            in.delete();
+        }
+    }
+
+    @Test
+    public void pdfRotatePage_persistsRotation() throws Exception {
+        File in = makeTempPdf("rot");
+        try (OfficePipeline p = OfficePipeline.open(in)) {
+            p.pdfRotatePage(0, 90);
+            byte[] rotated = p.toBytes();
+            java.io.File tmp = java.io.File.createTempFile("rotated-", ".pdf");
+            try {
+                java.nio.file.Files.write(tmp.toPath(), rotated);
+                assertEquals(90, com.zifang.util.office.pdf.PdfExtractor.pageRotation(tmp, 0));
+            } finally {
+                tmp.delete();
+            }
+        } finally {
+            in.delete();
+        }
+    }
+
+    @Test
+    public void pdfRemovePages_persists() throws Exception {
+        File in = makeTempPdfMultiPage(3);
+        try (OfficePipeline p = OfficePipeline.open(in)) {
+            assertEquals(3, p.pageCount());
+            int removed = p.pdfRemovePages(java.util.Arrays.asList(0, 2));
+            assertEquals(2, removed);
+            assertEquals(1, p.pageCount());
+        } finally {
+            in.delete();
+        }
+    }
+
+    @Test
+    public void pdfProtect_marksEncrypted() throws Exception {
+        File in = makeTempPdf("secret");
+        try (OfficePipeline p = OfficePipeline.open(in)) {
+            p.pdfProtect("pwd", null);
+            assertTrue(p.isEncrypted());
+        } finally {
+            in.delete();
+        }
+    }
+
+    @Test
+    public void pdfMergeWith_combinesPages() throws Exception {
+        File head = makeTempPdf("head");
+        File tail = makeTempPdf("tail");
+        try (OfficePipeline p = OfficePipeline.open(head)) {
+            p.pdfMergeWith(java.util.Collections.singletonList(tail));
+            assertEquals(2, p.pageCount());
+        } finally {
+            head.delete();
+            tail.delete();
+        }
+    }
+
+    @Test
+    public void convertToPdf_fromDocx_returnsPdfPipeline() throws Exception {
+        File docx = makeTempDocx("docx body");
+        try (OfficePipeline src = OfficePipeline.open(docx);
+             OfficePipeline pdf = src.convertToPdf()) {
+            assertEquals(Format.PDF, pdf.format());
+            assertTrue(pdf.name().endsWith(".pdf"));
+            assertTrue(pdf.extractPdfText().contains("docx body"));
+        } finally {
+            docx.delete();
+        }
+    }
+
+    @Test
+    public void convertToPdf_fromXlsx_returnsPdfPipeline() throws Exception {
+        File xlsx = makeTempXlsx();
+        try (OfficePipeline src = OfficePipeline.open(xlsx);
+             OfficePipeline pdf = src.convertToPdf()) {
+            assertEquals(Format.PDF, pdf.format());
+            String text = pdf.extractPdfText();
+            assertTrue("expected 'hello' in:\n" + text, text.contains("hello"));
+            assertTrue("expected 'pipeline' in:\n" + text, text.contains("pipeline"));
+        } finally {
+            xlsx.delete();
+        }
+    }
+
+    @Test
+    public void convertToPdf_chainWithWatermark() throws Exception {
+        File docx = makeTempDocx("chain body");
+        File out = File.createTempFile("chain-out-", ".pdf");
+        try {
+            try (OfficePipeline src = OfficePipeline.open(docx)) {
+                src.convertToPdf().pdfAddWatermark("DRAFT").saveAs(out);
+            }
+            try (OfficePipeline reopen = OfficePipeline.open(out)) {
+                assertEquals(Format.PDF, reopen.format());
+                assertEquals(1, reopen.pageCount());
+                assertTrue(reopen.extractPdfText().contains("chain body"));
+            }
+        } finally {
+            docx.delete();
+            out.delete();
+        }
+    }
+
+    @Test
+    public void convertToPdf_fromPdf_isIdentity() throws Exception {
+        File pdf = makeTempPdf("already pdf");
+        try (OfficePipeline src = OfficePipeline.open(pdf);
+             OfficePipeline same = src.convertToPdf()) {
+            assertEquals(Format.PDF, same.format());
+            assertTrue(same.extractPdfText().contains("already pdf"));
+        } finally {
+            pdf.delete();
+        }
+    }
+
     // ====== Fixtures ======
 
     private static File makeTempPdf(String body) throws Exception {
@@ -141,6 +266,25 @@ public class OfficePipelineTest {
                 cs.newLineAtOffset(100, 700);
                 cs.showText(body);
                 cs.endText();
+            }
+            doc.save(f);
+        }
+        return f;
+    }
+
+    private static File makeTempPdfMultiPage(int n) throws Exception {
+        File f = File.createTempFile("office-pipeline-pdf-n-", ".pdf");
+        try (PDDocument doc = new PDDocument()) {
+            for (int i = 0; i < n; i++) {
+                PDPage page = new PDPage();
+                doc.addPage(page);
+                try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
+                    cs.beginText();
+                    cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
+                    cs.newLineAtOffset(100, 700);
+                    cs.showText("page " + i);
+                    cs.endText();
+                }
             }
             doc.save(f);
         }

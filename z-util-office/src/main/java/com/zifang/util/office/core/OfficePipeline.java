@@ -177,7 +177,7 @@ public class OfficePipeline implements AutoCloseable {
         }
     }
 
-    // ====== PDF mutating ops (return new pipeline, buffer replaced) ======
+    // ====== PDF mutating ops (return this, buffer replaced) ======
 
     /**
      * 给 PDF 加水印；buffer 替换为加完水印的字节。要求当前 buffer 为 PDF。
@@ -197,6 +197,135 @@ public class OfficePipeline implements AutoCloseable {
             out.delete();
         }
         return this;
+    }
+
+    /**
+     * 在 PDF 文本层把 {@code oldText} 替换为 {@code newText}（走 PdfOperator 的内容流字符串替换）。
+     *
+     * @return 实际发生替换的页数
+     */
+    public int pdfReplaceText(String oldText, String newText) throws IOException {
+        requireFormat(Format.PDF, "pdfReplaceText");
+        File in = writeTemp();
+        File out = File.createTempFile("office-pipeline-", ".pdf");
+        try {
+            int touched = PdfOperator.replaceText(in, out, oldText, newText);
+            this.buffer = Files.readAllBytes(out.toPath());
+            return touched;
+        } finally {
+            in.delete();
+            out.delete();
+        }
+    }
+
+    /**
+     * 旋转指定页（0-based），角度为 90 的倍数。
+     */
+    public OfficePipeline pdfRotatePage(int pageIndex, int degrees) throws IOException {
+        requireFormat(Format.PDF, "pdfRotatePage");
+        File in = writeTemp();
+        File out = File.createTempFile("office-pipeline-", ".pdf");
+        try {
+            PdfOperator.rotatePage(in, out, pageIndex, degrees);
+            this.buffer = Files.readAllBytes(out.toPath());
+        } finally {
+            in.delete();
+            out.delete();
+        }
+        return this;
+    }
+
+    /**
+     * 删除指定页集合（0-based）。
+     *
+     * @return 删除的页数
+     */
+    public int pdfRemovePages(List<Integer> pageIndexes) throws IOException {
+        requireFormat(Format.PDF, "pdfRemovePages");
+        File in = writeTemp();
+        File out = File.createTempFile("office-pipeline-", ".pdf");
+        try {
+            int removed = PdfOperator.removePages(in, out, pageIndexes);
+            this.buffer = Files.readAllBytes(out.toPath());
+            return removed;
+        } finally {
+            in.delete();
+            out.delete();
+        }
+    }
+
+    /**
+     * 给 PDF 加密保护（AES-128）。加密后 buffer 不能再走其它 PDF mutate（无密码加载会抛）。
+     */
+    public OfficePipeline pdfProtect(String userPwd, String ownerPwd) throws IOException {
+        requireFormat(Format.PDF, "pdfProtect");
+        File in = writeTemp();
+        File out = File.createTempFile("office-pipeline-", ".pdf");
+        try {
+            PdfOperator.protect(in, out, userPwd, ownerPwd);
+            this.buffer = Files.readAllBytes(out.toPath());
+        } finally {
+            in.delete();
+            out.delete();
+        }
+        return this;
+    }
+
+    /**
+     * 把当前 PDF 与外部 PDF 文件列表按顺序合并；当前管线 buffer 被替换为合并结果。
+     */
+    public OfficePipeline pdfMergeWith(List<File> others) throws IOException {
+        requireFormat(Format.PDF, "pdfMergeWith");
+        if (others == null || others.isEmpty()) {
+            throw new IllegalArgumentException("others must not be empty");
+        }
+        File head = writeTemp();
+        List<File> inputs = new ArrayList<>();
+        inputs.add(head);
+        inputs.addAll(others);
+        File out = File.createTempFile("office-pipeline-", ".pdf");
+        try {
+            PdfOperator.merge(inputs, out);
+            this.buffer = Files.readAllBytes(out.toPath());
+        } finally {
+            head.delete();
+            out.delete();
+        }
+        return this;
+    }
+
+    // ====== Cross-format conversion ======
+
+    /**
+     * 把 DOCX / XLSX / PPTX 单向渲染为 PDF，返回一条<b>新</b>的 PDF 管线；当前管线不动。
+     * 已是 PDF 则返回 clone。
+     */
+    public OfficePipeline convertToPdf() throws IOException {
+        byte[] pdf;
+        switch (format) {
+            case PDF:
+                return OfficePipeline.bytes(buffer, Format.PDF, name);
+            case DOCX:
+                try (InputStream in = new ByteArrayInputStream(buffer)) {
+                    pdf = OfficeConverter.wordToPdf(in);
+                }
+                break;
+            case XLSX:
+                try (InputStream in = new ByteArrayInputStream(buffer)) {
+                    pdf = OfficeConverter.excelToPdf(in);
+                }
+                break;
+            case PPTX:
+                try (InputStream in = new ByteArrayInputStream(buffer)) {
+                    pdf = OfficeConverter.pptToPdf(in);
+                }
+                break;
+            default:
+                throw new IllegalStateException("convertToPdf does not support format " + format);
+        }
+        String pdfName = name == null ? "doc.pdf"
+                : (name.endsWith(".pdf") ? name : stripExtension(name) + ".pdf");
+        return OfficePipeline.bytes(pdf, Format.PDF, pdfName);
     }
 
     // ====== Output ======
@@ -254,5 +383,10 @@ public class OfficePipeline implements AutoCloseable {
             return "bin";
         }
         return name.substring(dot + 1);
+    }
+
+    private static String stripExtension(String name) {
+        int dot = name.lastIndexOf('.');
+        return dot < 0 ? name : name.substring(0, dot);
     }
 }
