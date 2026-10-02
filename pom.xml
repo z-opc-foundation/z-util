@@ -139,6 +139,7 @@
         <module>z-util-jdbc</module>
         <module>z-util-http</module>
         <module>z-util-math</module>
+        <module>z-util-ml</module>
         <module>z-util-monitor</module>
         <module>z-util-devops</module>
         <!-- z-util-source 已合并到 z-util-bc (2026-10-02)：源码工具迁入 com.zifang.util.bc.source.* -->

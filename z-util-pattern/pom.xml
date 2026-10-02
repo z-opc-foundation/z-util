@@ -33,5 +33,6 @@
         <module>z-util-pattern-validation</module>
         <module>z-util-pattern-visitor</module>
         <module>z-util-pattern-builder</module>
+        <module>z-util-pattern-cache</module>
     </modules>
 </project>

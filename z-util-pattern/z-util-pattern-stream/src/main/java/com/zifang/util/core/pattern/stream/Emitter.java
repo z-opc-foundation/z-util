@@ -67,24 +67,21 @@ public final class Emitter {
             subRef.set(sub);
             s.onSubscribe(sub);
             try {
-                long left = requested.get();
+                boolean defaultedOnce = false;
                 for (T item : source) {
                     if (subRef.get() == SENTINEL) return;
-                    if (left == 0) {
-                        // 没背压请求就只发 1 个, 避免无脑全推.
+                    long r = requested.get();
+                    if (r == Long.MAX_VALUE) {
+                        s.onNext(item);
+                    } else if (r > 0) {
+                        requested.decrementAndGet();
+                        s.onNext(item);
+                    } else {
+                        // 没有任何 request: 只兜底推 1 个, 第二次直接 break.
                         // 调用方想全量就显式 request(Long.MAX_VALUE).
-                        left = 1;
-                    }
-                    s.onNext(item);
-                    left--;
-                    if (left == 0) {
-                        long r = requested.get();
-                        if (r == Long.MAX_VALUE) {
-                            left = Long.MAX_VALUE;
-                        } else {
-                            long next = requested.addAndGet(-left);
-                            left = Math.max(0, next);
-                        }
+                        if (defaultedOnce) break;
+                        defaultedOnce = true;
+                        s.onNext(item);
                     }
                 }
                 if (subRef.get() != SENTINEL) {

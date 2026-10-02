@@ -36,7 +36,6 @@ class RegisterTest {
     @DisplayName("未注册的 key get 必须返 null, 不能抛")
     void missingGetReturnsNull() {
         Register<String, Integer> r = new Register<String, Integer>();
-        assertEquals(null, r.contains("missing"));
         assertFalse(r.contains("missing"));
         assertEquals(null, r.get("missing"));
     }

@@ -1,6 +1,5 @@
 package com.zifang.util.core.pattern.event;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +38,7 @@ public class Event {
         this.source = source;
         this.timestamp = System.currentTimeMillis();
         this.type = type;
-        this.data = data != null ? new HashMap<>(data) : new HashMap<>();
+        this.data = data != null ? data : new HashMap<>();
     }
 
     /**
@@ -72,10 +71,10 @@ public class Event {
     /**
      * 获取事件数据。
      *
-     * @return 不可修改的事件数据
+     * @return 事件数据 (引用透传, 与构造时传入的 Map 是同一实例)
      */
     public Map<String, Object> getData() {
-        return Collections.unmodifiableMap(data);
+        return data;
     }
 
     /**

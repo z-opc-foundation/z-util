@@ -41,6 +41,23 @@ public class AnnotationContext {
     }
 
     /**
+     * 以显式类型注册实例到容器中 (允许把 bean 挂在接口/父类下)。
+     *
+     * @param clazz    注册使用的类型 key
+     * @param instance 实例
+     * @param <T>      类型
+     */
+    public <T> void register(Class<T> clazz, T instance) {
+        if (clazz == null) {
+            throw new IllegalArgumentException("Class cannot be null");
+        }
+        if (instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+        beans.put(clazz, instance);
+    }
+
+    /**
      * 获取指定类型的bean实例。
      *
      * @param clazz 类
