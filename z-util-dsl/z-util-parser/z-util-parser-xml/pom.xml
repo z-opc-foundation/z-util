@@ -10,14 +10,19 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: csv (CSV reader/writer, ANTLR based)</name>
-    <artifactId>z-util-parser-csv</artifactId>
-    <description>CSV file parser supporting RFC 4180 format</description>
+    <name>z-util :: parser :: xml (XML parser + XPath query + formatter)</name>
+
+    <artifactId>z-util-parser-xml</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-dsl</artifactId>
+            <artifactId>z-util-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-dsl-kernel</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

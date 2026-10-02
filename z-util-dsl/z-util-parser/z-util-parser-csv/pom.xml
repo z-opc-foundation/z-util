@@ -10,13 +10,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: proto (Protobuf .proto parser: message/enum/rpc/service)</name>
-    <artifactId>z-util-parser-proto</artifactId>
-    <description>Proto3 .proto 文件解析器，支持 message、enum、service、RPC 等语法</description>
+    <name>z-util :: parser :: csv (CSV reader/writer, ANTLR based)</name>
+    <artifactId>z-util-parser-csv</artifactId>
+    <description>CSV file parser supporting RFC 4180 format</description>
+
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-dsl</artifactId>
+            <artifactId>z-util-dsl-kernel</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

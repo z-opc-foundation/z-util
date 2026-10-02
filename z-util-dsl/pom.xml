@@ -10,7 +10,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: dsl (self-made lexer/parser/AST framework with ANTLR g4 dynamic loading)</name>
     <artifactId>z-util-dsl</artifactId>
+    <packaging>pom</packaging>
+    <name>z-util :: dsl (language family aggregator: kernel lexer/parser/AST + expr engines + format parsers)</name>
+    <description>语言处理家族：自研词法/语法/AST 内核（kernel）、脚本表达式引擎（expr）、多格式静态解析（parser）</description>
 
+    <modules>
+        <module>z-util-dsl-kernel</module>
+        <module>z-util-expr</module>
+        <module>z-util-parser</module>
+    </modules>
 </project>

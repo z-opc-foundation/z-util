@@ -10,13 +10,13 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: tom (TOML parser, ANTLR based)</name>
-    <artifactId>z-util-parser-toml</artifactId>
-    <description>TOML 配置文件解析器（TOML v1.0.0 子集）</description>
+    <name>z-util :: parser :: ini (INI file parser, ANTLR based)</name>
+    <artifactId>z-util-parser-ini</artifactId>
+    <description>INI 配置文件解析器</description>
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-dsl</artifactId>
+            <artifactId>z-util-dsl-kernel</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

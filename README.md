@@ -37,18 +37,16 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 
 ## 🧩 模块清单
 
-下表**逐条对齐**根 `pom.xml` 的 `<modules>`（25 条，按 POM 内声明顺序），职责取自各模块 POM 的 `<name>`。
-`z-util-parser` / `z-util-expr` / `z-util-serialize` 是聚合 POM，它们的子模块单列在下面三张子表。
+下表**逐条对齐**根 `pom.xml` 的 `<modules>`（22 条，按 POM 内声明顺序），职责取自各模块 POM 的 `<name>`。
+`z-util-dsl` / `z-util-serialize` / `z-util-devops` 是聚合 POM；`z-util-dsl` 家族收编了 `z-util-dsl-kernel`（原 `z-util-dsl` jar）+ `z-util-expr` + `z-util-parser`，子模块单列在下面子表。
 
 | 模块（`<module>` 顺序） | 类型 | 职责 | 关键入口（实测存在的类） |
 |------|------|------|------|
 | `z-util-core` | jar | 基础工具：集合/字符串/IO/并发/加密/JWT/限流/熔断/调度 | `StringUtil` `CollectionUtil` `BeanUtil` `ReflectUtil` `FileUtil` `ZipUtil` `JarUtil` `XmlUtil` `Assert` `StopWatch` `EventBus`；`jwt.Jwt`/`Claims`/`HmacSha256`；`encrypt.AesUtil`/`RsaUtil`/`MD5Utils`/`Base64Utils`/`HMAC`/`ApiSignUtil`/`Base62`；`ratelimit.SlidingWindowRateLimiter`/`TokenBucketRateLimiter`；`resilience.CircuitBreaker`/`Bulkhead`/`TimeLimiter`；`meta.page.PageResult`；`lang.concurrency.NameThreadFactory`；`pattern.*`（chain/command/composite/factory/state/pool/event/spi） |
 | `z-util-office` | jar | 基于 POI / PDFBox 的 Word / Excel / PDF / PPT 工具 + 模板引擎（详见模块 README） | `excel.ExcelUtils`（`readFirstSheet` / `readAllSheets` / `writeCell` / `writeRow`）、`ExcelTemplate`；`word.U` + `WordTemplate` + `WordExtractor`；`pdf.PdfUtil` / `PdfOperator` / `PdfExtractor`；`ppt.PptUtils` + `PptTemplate`；`core.RoundTripAssert` / `core.OfficeFormat` |
 | `z-util-media` | jar | 图像处理、验证码、GIF、二维码 | `CaptchaUtil`、`GifEncoder`/`GifBuilder`、`ColorUtil`、`graph/QRCode`（encoder + decoder） |
-| `z-util-dsl` | jar | 自研词法/语法/AST 框架，**运行时动态加载 `.g4`** | `g4.DynamicLexer`、`DynamicParser`、`G4FileParser`、`ASTFactory`、`ASTNode`、`token.Lexer` |
-| `z-util-parser` | **pom 聚合** | 多格式解析器聚合件（8 个子模块） | 见下表 |
-| `z-util-expr` | **pom 聚合** | 表达式引擎聚合件（6 个子模块） | 见下表 |
-| `z-util-workflow` | jar | 节点式工作流引擎 + Java/Python/Spark 执行器 + BPMN | `WorkFlowApplication`、`bpmn.Bpmn`/`BpmnDiagram`/`BpmnProcess`/`BpmnModelConverter`、`engine.java`/`engine.python`/`engine.spark`/`engine.runtime` |
+| `z-util-dsl` | **pom 聚合** | 语言处理家族：`z-util-dsl-kernel`（自研词法/语法/AST + **运行时动态加载 `.g4`**）+ `z-util-expr`（6 引擎）+ `z-util-parser`（8 格式） | kernel：`g4.DynamicLexer`、`DynamicParser`、`G4FileParser`、`ASTFactory`、`ASTNode`、`token.Lexer` |
+| `z-util-wf` | jar | 节点式工作流引擎 + Java/Python/Spark 执行器 + BPMN | `WorkFlowApplication`、`bpmn.Bpmn`/`BpmnDiagram`/`BpmnProcess`/`BpmnModelConverter`、`engine.java`/`engine.python`/`engine.spark`/`engine.runtime` |
 | `z-util-visualization` | jar | Swing 图表与算法可视化（包名历史拼写 `visuallization`） | `chart.*`、`swing.AlgoFrame`/`AlgoVisHelper`/`AlgoVisualizer`、`robot.*` |
 | `z-util-jdbc` | jar | 数据源注册 + 多方言动态查询 + 内存 SQL + 极简 ORM | `context.DataSourceRegistry`/`DatasourceContextManager`/`PoolSpec`；`dialect.Dialects`/`MySqlDialect`/`PostgresDialect`/`H2Dialect`；`query.Query`/`Criteria`/`QueryCompiler`/`SqlTemplate`/`DynamicQuery`；`memory.InMemoryTables`；`respository.CrudRepository`；`@Select`/`@Insert`/`@Update`/`@Delete` + `@Transactional`/`TransactionManager`；`plugin.MyBatisPageInterceptor`；`generater.JpaStratege`/`MybaitsStratige` |
 | `z-util-http` | jar | 注解式 HTTP 客户端 + curl 解析 + 简易 HTTP 服务 + SSE | `client.HttpExecutor`/`HttpClientFactory`/`HttpRequestInvocationHandler`（OkHttp）；`server.AllPathHttpServer`/`HttpServerBuilder`；`parser.curl.CurlParser`/`CurlBuilder`；`sse.SseParser`/`SseFrame`/`SseEvent` |
@@ -69,11 +67,11 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表覆盖 **20 个**模块（不是"全部模块"） |
 | `z-util-zex` | jar（仅 `-Psandbox`） | 个人练习场：`bust`（《码出高效》章节）/`sort`/`leetcode`/`guava`/`interview`/`bytecode`/`disrupt` | 不在默认 reactor，Maven Central 实测 404 |
 
-### `z-util-parser` 的 8 个子模块（均为 ANTLR `.g4` + 自研 `z-util-dsl` 动态解析）
+### `z-util-parser` 的 8 个子模块（`z-util-dsl` 子件，ANTLR `.g4` + 自研 `z-util-dsl-kernel` 动态解析）
 
 | 子模块 | 内容 |
 |--------|------|
-| `z-util-parser-json` | `JSONParser` + `JsonObject`/`JsonArray` + `JsonUtil` + `BeautifyJsonUtils` + 序列化注解/`serializer.*`（依赖 `z-util-dsl`） |
+| `z-util-parser-json` | `JSONParser` + `JsonObject`/`JsonArray` + `JsonUtil` + `BeautifyJsonUtils` + 序列化注解/`serializer.*`（依赖 `z-util-dsl-kernel`） |
 | `z-util-parser-xml` | `XDocument`/`XElement`/`XAttribute` 模型 + XPath 查询 + 注解绑定（`AnnotationIntrospector`） |
 | `z-util-parser-yaml` | `YamlG4Parser` + `SimpleYamlParser` + `SnakeYamlBackend` 门面 |
 | `z-util-parser-csv` | `CsvReader`/`CsvWriter`/`CsvG4Parser` + `CsvCharsetDetector` |
@@ -82,7 +80,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-parser-properties` | `PropertiesParser`/`PropertiesG4Parser`/`PropertiesModel` |
 | `z-util-parser-proto` | `ProtoParser`/`ProtoG4Parser` + `ProtoMessage`/`ProtoEnum`/`ProtoRpc`/`ProtoService` |
 
-### `z-util-expr` 的 6 个子模块（每种语言一个入口，彼此不共用 SPI）
+### `z-util-expr` 的 6 个子模块（`z-util-dsl` 子件；每种语言一个入口，彼此不共用 SPI）
 
 | 子模块 | 入口 | 用途 |
 |--------|------|------|

@@ -33,7 +33,7 @@
         <!-- 解析框架依赖（ANTLR 等） -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-dsl</artifactId>
+            <artifactId>z-util-dsl-kernel</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

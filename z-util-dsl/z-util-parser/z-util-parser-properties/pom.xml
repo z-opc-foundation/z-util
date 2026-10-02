@@ -10,19 +10,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: xml (XML parser + XPath query + formatter)</name>
-
-    <artifactId>z-util-parser-xml</artifactId>
+    <name>z-util :: parser :: properties (.properties file parser, ANTLR based)</name>
+    <artifactId>z-util-parser-properties</artifactId>
+    <description>Java Properties 文件解析器，支持标准 JDK Properties 格式</description>
 
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-dsl</artifactId>
+            <artifactId>z-util-dsl-kernel</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

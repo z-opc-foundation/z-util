@@ -65,7 +65,7 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-workflow</artifactId>
+                <artifactId>z-util-wf</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -130,7 +130,7 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-dsl</artifactId>
+                <artifactId>z-util-dsl-kernel</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

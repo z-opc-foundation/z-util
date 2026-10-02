@@ -131,9 +131,8 @@
         <module>z-util-office</module>
         <module>z-util-media</module>
         <module>z-util-dsl</module>
-        <module>z-util-parser</module>
-        <module>z-util-expr</module>
-        <module>z-util-workflow</module>
+        <!-- z-util-parser / z-util-expr 已收编进 z-util-dsl 家族 (2026-10-02) -->
+        <module>z-util-wf</module>
         <module>z-util-visualization</module>
         <module>z-util-jdbc</module>
         <module>z-util-http</module>
@@ -151,10 +150,11 @@
         <!-- z-util-cache 已合并到 z-util-pattern 子模块下 (2026-10-02) -->
         <module>z-util-bc</module>
         <!-- z-util-bridge 已合并到 z-util-bc (2026-10-02) -->
-        <module>z-util-ioc</module>
-        <!-- z-util-aop 已删除（2026-10-02 合并到 z-util-bc） -->
         <module>z-util-serialize</module>
         <module>z-util-all</module>
+
+        <module>z-util-ioc</module>
+        <module>z-util-aop</module>
     </modules>
 
     <dependencyManagement>
@@ -266,12 +266,12 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-dsl</artifactId>
+                <artifactId>z-util-dsl-kernel</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-workflow</artifactId>
+                <artifactId>z-util-wf</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
