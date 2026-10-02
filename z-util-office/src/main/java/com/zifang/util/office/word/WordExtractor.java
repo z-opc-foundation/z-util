@@ -137,6 +137,62 @@ public class WordExtractor {
         }
     }
 
+    /**
+     * 抽取全部表格为三维文本：外层按表格索引、中层按行、内层按列。
+     *
+     * @param in .docx 输入流
+     * @return 每个表格的二维文本列表；无表格时返回空列表
+     * @throws IOException 读取失败
+     */
+    public static List<List<List<String>>> readAllTables(InputStream in) throws IOException {
+        try (XWPFDocument doc = new XWPFDocument(in)) {
+            List<List<List<String>>> result = new ArrayList<>();
+            for (XWPFTable table : doc.getTables()) {
+                List<List<String>> grid = new ArrayList<>();
+                for (XWPFTableRow row : table.getRows()) {
+                    List<String> cells = new ArrayList<>();
+                    for (XWPFTableCell cell : row.getTableCells()) {
+                        cells.add(cell.getText());
+                    }
+                    grid.add(cells);
+                }
+                result.add(grid);
+            }
+            return result;
+        }
+    }
+
+    /**
+     * 表格个数（不含内层嵌套）。
+     *
+     * @param in .docx 输入流
+     * @return 顶层表格数
+     * @throws IOException 读取失败
+     */
+    public static int tableCount(InputStream in) throws IOException {
+        try (XWPFDocument doc = new XWPFDocument(in)) {
+            return doc.getTables().size();
+        }
+    }
+
+    /**
+     * 抽取文档内嵌图片（word/media/*）：返回原始字节列表，顺序与 POI 迭代顺序一致。
+     * 调用方通过图片二进制头部魔数自行判定类型（PNG/JPEG/GIF/...）。
+     *
+     * @param in .docx 输入流
+     * @return 每张图片的字节；无图片时返回空列表
+     * @throws IOException 读取失败
+     */
+    public static List<byte[]> extractImages(InputStream in) throws IOException {
+        try (XWPFDocument doc = new XWPFDocument(in)) {
+            List<byte[]> result = new ArrayList<>();
+            for (org.apache.poi.xwpf.usermodel.XWPFPictureData pic : doc.getAllPictures()) {
+                result.add(pic.getData());
+            }
+            return result;
+        }
+    }
+
     private static void putIfPresent(Map<String, String> map, String key, String value) {
         if (value != null && !value.isEmpty()) {
             map.put(key, value);

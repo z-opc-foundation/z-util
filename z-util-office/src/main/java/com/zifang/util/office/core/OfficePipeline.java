@@ -177,6 +177,49 @@ public class OfficePipeline implements AutoCloseable {
         }
     }
 
+    /**
+     * 读取 DOCX 全部表格（三维：外层表格索引、中层行、内层列）。要求 DOCX 格式。
+     */
+    public List<List<List<String>>> readWordTables() throws IOException {
+        requireFormat(Format.DOCX, "readWordTables");
+        try (InputStream in = new ByteArrayInputStream(buffer)) {
+            return WordExtractor.readAllTables(in);
+        }
+    }
+
+    /**
+     * 抽取 DOCX 内嵌图片字节。要求 DOCX 格式。
+     */
+    public List<byte[]> extractWordImages() throws IOException {
+        requireFormat(Format.DOCX, "extractWordImages");
+        try (InputStream in = new ByteArrayInputStream(buffer)) {
+            return WordExtractor.extractImages(in);
+        }
+    }
+
+    /**
+     * 抽取 XLSX 内嵌图片（{@code xl/media/*}）。要求 XLSX 格式。
+     */
+    public List<ExcelUtils.PictureRef> extractExcelPictures() throws IOException {
+        requireFormat(Format.XLSX, "extractExcelPictures");
+        try (InputStream in = new ByteArrayInputStream(buffer)) {
+            return ExcelUtils.extractPictures(in);
+        }
+    }
+
+    /**
+     * 抽取 PDF 每一页内嵌位图并编码为 PNG 字节。要求 PDF 格式。
+     */
+    public List<byte[]> extractPdfImages() throws IOException {
+        requireFormat(Format.PDF, "extractPdfImages");
+        File tmp = writeTemp();
+        try {
+            return PdfExtractor.extractImages(tmp);
+        } finally {
+            tmp.delete();
+        }
+    }
+
     // ====== PDF mutating ops (return this, buffer replaced) ======
 
     /**

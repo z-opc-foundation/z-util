@@ -358,4 +358,58 @@ public class ExcelUtils {
         }
         cell.setCellValue(String.valueOf(value));
     }
+
+    /**
+     * 抽取 XLSX 工作簿内嵌图片（{@code xl/media/*}）。
+     * <p>只走 XSSF 路径；HSSF 的老式 .xls 用 {@code processPOIFSReaderOn} API 不同，
+     * 若传入 .xls 流会抛 {@link IOException}（POI 会尝试用 XSSF 解 OLE2 容器失败）。
+     *
+     * @param in xlsx 输入流
+     * @return 图片引用列表；无图片时返回空列表
+     * @throws IOException 读取失败
+     */
+    public static List<PictureRef> extractPictures(InputStream in) throws IOException {
+        try (XSSFWorkbook wb = new XSSFWorkbook(in)) {
+            List<PictureRef> result = new ArrayList<>();
+            for (org.apache.poi.xssf.usermodel.XSSFPictureData pic : wb.getAllPictures()) {
+                String mime = pic.getMimeType();
+                if (mime == null) {
+                    mime = "image/" + pic.suggestFileExtension();
+                }
+                String partName = pic.getPackagePart() == null ? null
+                        : pic.getPackagePart().getPartName().getName();
+                String baseName = partName == null ? pic.suggestFileExtension()
+                        : partName.substring(partName.lastIndexOf('/') + 1);
+                result.add(new PictureRef(baseName, mime, pic.getData()));
+            }
+            return result;
+        }
+    }
+
+    /**
+     * 图片引用（value object）：文件名 + MIME + 原始字节。
+     */
+    public static final class PictureRef {
+        private final String fileName;
+        private final String mimeType;
+        private final byte[] data;
+
+        public PictureRef(String fileName, String mimeType, byte[] data) {
+            this.fileName = fileName;
+            this.mimeType = mimeType;
+            this.data = data == null ? new byte[0] : data;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getMimeType() {
+            return mimeType;
+        }
+
+        public byte[] getData() {
+            return data;
+        }
+    }
 }

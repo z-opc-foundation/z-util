@@ -7,7 +7,9 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -163,6 +165,45 @@ public class PdfExtractor {
             javax.imageio.ImageIO.write(image, "png", targetPng);
             return new int[]{image.getWidth(), image.getHeight()};
         }
+    }
+
+    /**
+     * 抽取 PDF 每一页内嵌位图（PDImageXObject）为 PNG 字节。
+     * 相同 XObject 出现在多页时按 (页, 位置) 重复计数——与页面渲染顺序一致。
+     * 无图片返回空列表。
+     *
+     * @param input 输入 PDF
+     * @return PNG 编码后的图片字节列表
+     * @throws IOException 读 / 编码失败
+     */
+    public static List<byte[]> extractImages(File input) throws IOException {
+        if (input == null || !input.exists() || !input.isFile()) {
+            throw new IllegalArgumentException("input not a file: " + input);
+        }
+        List<byte[]> result = new ArrayList<>();
+        try (PDDocument doc = Loader.loadPDF(input)) {
+            for (int p = 0; p < doc.getNumberOfPages(); p++) {
+                org.apache.pdfbox.pdmodel.PDResources res = doc.getPage(p).getResources();
+                if (res == null) {
+                    continue;
+                }
+                for (org.apache.pdfbox.cos.COSName name : res.getXObjectNames()) {
+                    org.apache.pdfbox.pdmodel.graphics.PDXObject xobj = res.getXObject(name);
+                    if (xobj instanceof org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject) {
+                        org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject img =
+                                (org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject) xobj;
+                        java.awt.image.BufferedImage bi = img.getImage();
+                        if (bi == null) {
+                            continue;
+                        }
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        javax.imageio.ImageIO.write(bi, "png", baos);
+                        result.add(baos.toByteArray());
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     private static void putIfPresent(Map<String, String> map, String key, String value) {
