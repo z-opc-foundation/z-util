@@ -139,7 +139,6 @@
         <module>z-util-jdbc</module>
         <module>z-util-http</module>
         <module>z-util-math</module>
-        <module>z-util-ml</module>
         <module>z-util-monitor</module>
         <module>z-util-devops</module>
         <!-- z-util-source 已合并到 z-util-bc (2026-10-02)：源码工具迁入 com.zifang.util.bc.source.* -->
@@ -796,8 +795,8 @@
                 <version>1.3</version>
             </dependency>
             <!-- 明确**不**钉的一格（这一行漂移是认过账的）：
-                 com.fasterxml.jackson.module:jackson-module-jaxb-annotations 2.12.2 → 2.18.9。
-                 迁前它是 2.12.2，而本仓 jackson-databind/core/annotations 全在 2.18.9 —— 那才是错的组合；
+                 com.fasterxml.jackson.module:jackson-module-jaxb-annotations 2.12.2 → 2.18.11。
+                 迁前它是 2.12.2，而本仓 jackson-databind/core/annotations 全在 2.18.11 —— 那才是错的组合；
                  地板的 jackson-bom 按本仓自己的 ${jackson.version} 插值，把它抬进同族 ⇒ 接受。 -->
 
 
