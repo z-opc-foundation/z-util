@@ -62,19 +62,8 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <!-- cglib 在 JDK 17+ 需要 add opens 才能 defineClass -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>
-                        --add-opens java.base/java.lang=ALL-UNNAMED
-                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
-                    </argLine>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <!--
+        surefire 的 add-opens 参数已删（2026-10-02）：项目是 Java 8，无模块系统，
+        该参数仅 JDK 9+ 需要（当时为 cglib 测试所加，cglib 依赖同日移除）。
+    -->
 </project>

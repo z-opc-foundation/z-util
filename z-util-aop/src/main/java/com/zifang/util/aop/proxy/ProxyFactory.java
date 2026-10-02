@@ -12,7 +12,7 @@ public abstract class ProxyFactory implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 根据用户引入Cglib与否自动创建代理对象
+     * 创建代理对象
      *
      * @param <T>         切面对象类型
      * @param target      目标对象
@@ -29,9 +29,9 @@ public abstract class ProxyFactory implements Serializable {
     }
 
     /**
-     * 根据用户引入Cglib与否自动创建代理对象
+     * 创建代理对象
      *
-     * @param <T>    切面对象类型
+     * @param <T>    代理对象类型
      * @param target 被代理对象
      * @param aspect 切面实现
      * @return 代理对象
@@ -41,17 +41,16 @@ public abstract class ProxyFactory implements Serializable {
     }
 
     /**
-     * 根据用户引入Cglib与否创建代理工厂
+     * 创建代理工厂。
+     * <p>
+     * 2026-10-02 起 cglib 依赖已移除：类代理走自研 {@link ClassProxyFactory}
+     * （SourceProxyFactory 内存编译子类代理，零三方依赖）；接口代理走
+     * {@link JdkProxyFactory}。类代理能力是接口代理的超集，默认直接类代理。
      *
      * @return 代理工厂
      */
     public static ProxyFactory create() {
-        try {
-            return new CglibProxyFactory();
-        } catch (NoClassDefFoundError e) {
-            // ignore
-        }
-        return new JdkProxyFactory();
+        return new ClassProxyFactory();
     }
 
     /**

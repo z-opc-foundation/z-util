@@ -9,7 +9,8 @@ import java.lang.reflect.Method;
  * 字节码代理可以直接复用 aop 模块的切面定义，而不必每个 Aspect 都重写一遍钩子接口。
  * <p>
  * 缺点：方法按 obj 形参数查找（EchoService 这类无重载目标够用；多版本目标需要
- * 拓展解析）。
+ * 拓展解析）；{@link Aspect} 的 boolean 返回值被忽略——MethodHook.before 为 void，
+ * 无"before=false 拦截调用"语义。
  */
 public class AspectToHookAdapter implements MethodHook {
 

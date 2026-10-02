@@ -5,6 +5,7 @@ import com.zifang.util.bc.compile.BytesJavaFileObject;
 import com.zifang.util.bc.compile.MapClassLoader;
 
 import java.io.File;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.CodeSource;
@@ -20,6 +21,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * 内存编译后用自定义 ClassLoader 定义并实例化。
  * <p>
  * 链路 = 解析目标类 → 源码制造 → 字节码 → 加载执行（制造字节码能力的一等用户）。
+ * <p>
+ * 类定义注入三条路径（按优先级）：代理类必须与目标同一个定义 ClassLoader——
+ * JVM 按加载器划运行时包，包私有目标只有同运行时包才允许被子类化（cglib 同理）。
+ * <ol>
+ *   <li>Lookup.defineClass（JDK 9+）：privateLookupIn 进目标包，定义进目标自己的加载器；</li>
+ *   <li>反射 ClassLoader.defineClass（Java 8：无模块系统可直接 setAccessible）；</li>
+ *   <li>MapClassLoader 兜底：独立加载器定义，仅 public 目标可用。</li>
+ * </ol>
  * <p>
  * 范围：仅目标类自身声明的 public 非 static 非 final 非 synthetic 方法；
  * final/static/私有方法不可覆写，走继承原样生效。
@@ -47,15 +56,66 @@ public class SourceProxyFactory {
             throw new RuntimeException("代理源码编译无产物: " + proxyFqn + "，源码如下\n" + source);
         }
         byte[] classBytes = compiled.get(proxyFqn).getBytes();
+        ClassLoader targetLoader = targetClass.getClassLoader() == null
+                ? ClassLoader.getSystemClassLoader() : targetClass.getClassLoader();
 
-        MapClassLoader loader = new MapClassLoader(Collections.singletonMap(proxyFqn, classBytes));
+        RuntimeException firstFailure = null;
         try {
-            Class<?> proxyClass = loader.loadClass(proxyFqn);
-            Object instance = proxyClass.getConstructor(MethodHook.class).newInstance(hook);
-            return (T) targetClass.cast(instance);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("代理类定义/实例化失败: " + proxyFqn, e);
+            Class<?> proxyClass = defineViaLookup(targetClass, targetLoader, proxyFqn, classBytes);
+            return (T) targetClass.cast(newInstance(proxyClass, hook));
+        } catch (RuntimeException | ReflectiveOperationException e) {
+            firstFailure = new RuntimeException("代理类定义失败(Lookup 注入): " + proxyFqn, e);
         }
+        try {
+            Class<?> proxyClass = defineViaLoaderReflection(targetLoader, proxyFqn, classBytes);
+            return (T) targetClass.cast(newInstance(proxyClass, hook));
+        } catch (RuntimeException | ReflectiveOperationException e) {
+            firstFailure = firstFailure == null
+                    ? new RuntimeException("代理类定义失败(加载器反射): " + proxyFqn, e) : firstFailure;
+        }
+        try {
+            Class<?> proxyClass = new MapClassLoader(Collections.singletonMap(proxyFqn, classBytes))
+                    .loadClass(proxyFqn);
+            return (T) targetClass.cast(newInstance(proxyClass, hook));
+        } catch (ReflectiveOperationException e) {
+            throw firstFailure != null ? firstFailure
+                    : new RuntimeException("代理类定义失败(MapClassLoader): " + proxyFqn, e);
+        }
+    }
+
+    /**
+     * JDK 9+ 注入：privateLookupIn 拿目标包的私有 Lookup，代理类定义进目标自己的
+     * ClassLoader——同一定义加载器即同一运行时包，包私有目标也能子类化。
+     * Java 8 无此 API，反射查找抛 NoSuchMethodException 走下一条路径。
+     */
+    private static Class<?> defineViaLookup(Class<?> targetClass, ClassLoader targetLoader,
+                                            String proxyFqn, byte[] bytes)
+            throws ReflectiveOperationException {
+        Class<?> lookupClass = Class.forName("java.lang.invoke.MethodHandles$Lookup");
+        Method privateLookupIn = MethodHandles.class.getMethod("privateLookupIn", Class.class, lookupClass);
+        Object privateLookup = privateLookupIn.invoke(null, targetClass, MethodHandles.lookup());
+        Method defineClass = lookupClass.getMethod("defineClass", byte[].class);
+        defineClass.invoke(privateLookup, (Object) bytes);
+        return targetLoader.loadClass(proxyFqn);
+    }
+
+    /**
+     * Java 8 注入：无模块系统，反射 ClassLoader 的 defineClass 私有方法把代理类定义进
+     * 目标加载器。JDK 9+ 上 setAccessible 抛 InaccessibleObjectException（RuntimeException），
+     * 由调用方转下一条路径。
+     */
+    @SuppressWarnings("JavaReflectionMemberAccess")
+    private static Class<?> defineViaLoaderReflection(ClassLoader loader, String proxyFqn, byte[] bytes)
+            throws ReflectiveOperationException {
+        Method defineClass = ClassLoader.class.getDeclaredMethod(
+                "defineClass", String.class, byte[].class, int.class, int.class);
+        defineClass.setAccessible(true);
+        defineClass.invoke(loader, proxyFqn, bytes, 0, bytes.length);
+        return loader.loadClass(proxyFqn);
+    }
+
+    private static Object newInstance(Class<?> proxyClass, MethodHook hook) throws ReflectiveOperationException {
+        return proxyClass.getConstructor(MethodHook.class).newInstance(hook);
     }
 
     static String buildSource(Class<?> targetClass, String proxyFqn) {

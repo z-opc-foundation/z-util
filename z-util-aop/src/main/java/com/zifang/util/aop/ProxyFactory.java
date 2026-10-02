@@ -21,7 +21,8 @@ import java.util.concurrent.ConcurrentMap;
  * <h3>设计取舍</h3>
  * <ul>
  *   <li><b>仅接口代理</b>：与 JDK Proxy 保持一致，零三方依赖。
- *       如需类代理请用 spring-aop 或 cglib（已知有这些能力时不重复造）。</li>
+ *       如需类代理（不实现接口的目标），用 {@link com.zifang.util.aop.proxy.ClassProxyFactory}
+ *       （自研子类代理，同样零三方依赖）。</li>
  *   <li><b>advice 链</b>：同一方法多个 advise，按 {@code @Intercept.value()} 数组顺序串行执行。</li>
  *   <li><b>advice 实例</b>：默认每个目标对象复用同一组 advise 实例（首次创建后缓存）。
  *       若 advice 需要有状态隔离，请让 advise 内部自行同步。</li>

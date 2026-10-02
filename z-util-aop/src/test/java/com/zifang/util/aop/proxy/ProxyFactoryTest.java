@@ -70,18 +70,20 @@ public class ProxyFactoryTest {
 
     @Test
     /**
-     * testCglibProxyFactoryProxy方法。
+     * testClassProxyFactoryProxy方法。
      */
-    public void testCglibProxyFactoryProxy() {
+    public void testClassProxyFactoryProxy() {
         TestService target = new TestServiceImpl();
         CountingAspect aspect = new CountingAspect();
 
-        CglibProxyFactory factory = new CglibProxyFactory();
+        ClassProxyFactory factory = new ClassProxyFactory();
         TestService proxy = factory.proxy(target, aspect);
         assertNotNull(proxy);
 
         String result = proxy.sayHello();
         assertEquals("Hello", result);
+        assertTrue(aspect.isBeforeCalled());
+        assertTrue(aspect.isAfterCalled());
     }
 
     /**
