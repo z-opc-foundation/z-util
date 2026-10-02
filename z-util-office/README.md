@@ -16,7 +16,7 @@
 | **Word** `.docx` | （经 POI `XWPFDocument` 直接读） | （经 POI + `U` 类静态方法构造） | `word.U` 静态 API：加文本/标题/图/表格/合并单元格 | `WordExtractor.extractParagraphs` / `extractText` / `readTable` / `extractMetadata` | `WordTemplate.render` 三种占位符 |
 | **PDF** `.pdf` | `Loader.loadPDF` 直接读 | 经 PDFBox + `PdfUtil.fillImages` 图→PDF | `PdfOperator.merge` / `split` / `replaceText` / `addWatermark` / `rotatePage` / `removePages` / `protect` | `PdfExtractor.extractText` / `extractMetadata` / `pageCount` / `pageRotation` / `isEncrypted` / `renderPageAsImage` | （不提供模板引擎，PDF 的"模板"含义已被 POI 覆盖） |
 | **PPT** `.pptx` | `PptUtils.read` / `collectAllText` / `collectText` | `PptUtils.create` / `addBlankSlide` / `addTextBox` / `write` | `PptTemplate.renderInPlace` | `collectText` / `collectAllText` | `PptTemplate.render` 两种占位符 |
-| **跨格式** | `core.OfficeFormat.detect`（魔数 + OOXML 包内目录） | — | — | — | `core.RoundTripAssert`：写→读→断言相等 / 包含 |
+| **跨格式** | `core.OfficeFormat.detect`（魔数 + OOXML 包内目录） | — | `core.OfficePipeline` 链式门面：`open(File)` 自动检测格式 → `readExcelSheets` / `extractWordText` / `extractPdfText` / `pdfAddWatermark` → `saveAs` / `toBytes`（PDF 变更走临时文件，buffer 原地更新；`bytes(data, format, name)` 入内存出字节） | `core.RoundTripAssert`：写→读→断言相等 / 包含 |
 
 ## 三、占位符语法（v0）
 
