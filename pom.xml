@@ -140,7 +140,7 @@
         <module>z-util-ml</module>
         <module>z-util-monitor</module>
         <module>z-util-devops</module>
-        <module>z-util-source</module>
+        <!-- z-util-source 已合并到 z-util-bc (2026-10-02)：源码工具迁入 com.zifang.util.bc.source.* -->
         <module>z-util-distribute</module>
         <!-- z-util-proxy 已合并到 z-util-bc (2026-10-02) -->
         <module>z-util-pattern</module>
@@ -307,11 +307,6 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-devops-nexus</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-source</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -654,8 +649,8 @@
                  （z-boot README 消费模型第 5 条实测的形状，这里用的是同一个机制的反方向）。
                  ============================================================ -->
             <!-- javaparser：本仓 DM 直钉 symbol-solver-core 3.28.2，它带的 core 被地板压成 3.23.1
-                 ⇒ 同族两套版本；core 必须跟着 3.28.2（main 域真正吃它的是 z-util-source；
-                 z-util-proxy 2026-10-01 起只有 test 域在用） -->
+                 ⇒ 同族两套版本；core 必须跟着 3.28.2（main 域真正吃它的是 z-util-bc 的 bc.source 面，
+                 2026-10-02 自 z-util-source 收编；z-util-bc 自身 ct 测试为 test 域消费） -->
             <dependency>
                 <groupId>com.github.javaparser</groupId>
                 <artifactId>javaparser-core</artifactId>

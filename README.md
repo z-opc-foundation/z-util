@@ -54,7 +54,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-ml` | jar | 机器学习（教学/练手性质，98 个主源文件） | `nn.Sequential`/`Dense`/`Conv2d`/`LSTM`/`TransformerEncoder`；`loss.CrossEntropyLoss`、`nnet.MSELoss`；`optim.SGD`/`Adam`/`Adagrad`；`tree.DecisionTree`/`RandomForest`/`XGBoost`；`clustering.KMeans`/`DBSCAN`/`GMM`；`decomposition.PCA`/`tSNE`/`UMAP`；`rl.QLearning`；`ga`/`ensemble`/`association`/`anomaly` |
 | `z-util-monitor` | jar | JVM / 线程池 / OS / 网络监控 + 指标导出 | `JvmMonitor`/`OsMonitor`/`NetMonitor`/`ThreadMonitor`、`ExecutorManager`/`FixedMonitorableExecutor`、`MetricsRegistry`/`MetricsCollector`/`MetricsSnapshot`、`HtmlExporter`/`JsonExporter`、`AlarmService`/`LogAlarmService`/`ThreadPoolOvertimeAlarmPolicy` |
 | `z-util-devops` | **pom 聚合** | DevOps 三件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST | 见下表 |
-| `z-util-source` | jar | class 字节码解析/生成 + 源码生成 + 运行时编译 | `parser.ByteCodeParser(Impl)`、`generator.ByteCodeGenerator(Impl)`、`analyser.AnalysisContext`/`ClassInfo`/`AnnotationInfo`、`compiler.CharSequenceJavaFileObject` |
+| `z-util-bc` | jar | 字节码 + 源码工具集（字节码模型/ASM 编织/内存编译；2026-10-02 收编 z-util-source 为源码面，compiler 孤岛死码随迁删除） | `bytecode.*` class 模型、`compile.CFJavaCompiler`/`MapClassLoader`、`weave.*`；`source.parser.SourceCodeParser`（javaparser）、`source.define.ByteCodeParser`/`ByteCodeGenerator`（契约）+ `parser.ByteCodeParserImpl`/`generator.ByteCodeGeneratorImpl`、`source.generator.JavaSourceGenerator` + `diff.ClassInfoDiffer`、`source.generator.info.ClassInfo`/`FieldInfo`/`MethodInfo`、`source.analyser.AnalysisContext` |
 | `z-util-distribute` | jar | 分布式 ID：Snowflake / Segment / NanoId / UUID v7 | `sequence.SnowflakeIdWorker`（`(workerId, datacenterId)` → `nextId()`）、`Sequence`、`SegmentIdGenerator`、`NanoId`（`new NanoId(size, alphabet).next()`）、`UuidV7.next()`/`fromMillis`/`toUuid`、`SystemClock` |
 | `z-util-proxy` | jar | JDK/CGLIB 动态代理 + 自研 class 文件字节码模型 | `CglibProxyFactory`/`CglibInterceptor`、`a.model.*`（`AbstractConstantPool`/`AttributeFactory`/`AccessFlagConvertor`）、`ByteCodeResolver`、内置反编译 demo（`a.decompile.*`） |
 | `z-util-ch` | jar | 中文工具：拼音/身份证/金额/星期 | `PinyinGeneratorUtil`、`IdcardUtil`、`MoneyUtil`、`NumberChineseUtil`、`WeekUtil` |
@@ -135,7 +135,7 @@ Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(s
 z-util/
 ├── pom.xml                # 根聚合 POM：继承 z-boot-parent:1.0.21，<revision> 统一版本，DM 覆盖 43 个自家构件
 ├── z-util-core/           # 基础库（23 个包：lang/io/jwt/encrypt/pattern/ratelimit/resilience/meta/schedule/...）
-├── z-util-{aop,ioc,proxy,cache,validation,source}/     # 容器、切面、代理、缓存、校验、字节码
+├── z-util-{aop,ioc,proxy,cache,validation,bc}/          # 容器、切面、代理、缓存、校验、字节码+源码工具
 ├── z-util-parser/         # 聚合 POM → 8 个格式子模块
 ├── z-util-expr/           # 聚合 POM → 6 个表达式子模块（含 -sql / -obj）
 ├── z-util-dsl/            # 自研 lexer/parser/AST，运行时加载 .g4

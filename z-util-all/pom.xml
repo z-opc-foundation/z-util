@@ -110,11 +110,6 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-source</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-distribute</artifactId>
                 <version>${revision}</version>
             </dependency>

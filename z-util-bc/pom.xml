@@ -17,10 +17,13 @@
 
     <dependencies>
         <!--
-            z-util-bc = 字节码工具集（2026-10-02 二次拆分后）：
+            z-util-bc = 字节码 + 源码工具集（2026-10-02 二次拆分后；同日 source 收编）：
             - 自研 class 文件模型（11+ 属性） + 反编译 + try/catch 控制流
             - ASM 编织 (ChildFirstClassLoader/EntryWeaver/WeaveRecorder)
             - 内存编译 (CFJavaCompiler/BytesJavaFileObject/MapClassLoader)
+            - 源码面 bc.source.*：javaparser 解析 + ClassInfo 元模型 + 源码生成/diff
+              （2026-10-02 自 z-util-source 收编，包名升级 com.zifang.util.bc.source.*；
+              原 compiler 子包为孤岛死码随迁删除，define 契约接口保留）
 
             原 aop/proxy/aspects/aopgen/interceptor 五包已拆往 z-util-aop
             （com.zifang.util.aop.*，切面框架，底层经 aopgen → compile 单向下沉引用本模块）。
@@ -30,6 +33,15 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!--
+            javaparser：main 域（bc.source 解析 Java 源码）+ ct 包测试反向生成源码共用，
+            compile 声明已覆盖测试域可见性。
+        -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
         </dependency>
 
         <dependency>
@@ -45,12 +57,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!--
-            ct 包测试用 javaparser 反向生成 java 源码；与 proxy 旧 pom 一致声明为 test。
-        -->
+        <!-- bc.source 测试的 slf4j 绑定（自 z-util-source 迁入） -->
         <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
             <scope>test</scope>
         </dependency>
 
