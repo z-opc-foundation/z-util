@@ -103,8 +103,10 @@
         <!-- gson.version 这一格删掉了：迁前它**谁也没挂** —— 全仓 47 个 pom 里没有一条 gson 依赖，
              0 个 java 文件 import com.google.gson，纯粹是属性表里的死账（不在本次"版本口径"的账上，
              删它不改任何解析结果）。 -->
-        <!-- 地板 jackson 2.18.6（并经 jackson-bom import 整族），本仓 2.18.9。 -->
-        <jackson.version>2.18.9</jackson.version>
+        <!-- 地板 jackson 2.18.6（并经 jackson-bom import 整族），本仓 2.18.11
+             （2026-10-02 2.18.9→2.18.11：Dependabot 7 个 CVE 全打在 ≤2.18.10，
+             2.18.10 修 CVE-2026-68497/83557/19032，2.18.11 修 CVE-2026-89425/89407/91776/91777）。 -->
+        <jackson.version>2.18.11</jackson.version>
         <!-- okhttp.version / netty.version / protobuf-java.version 三格删掉了：
              地板面值 4.12.0 / 4.1.138.Final / 3.25.5 与本仓迁前**逐格相同** ⇒ 键与对应的
              <dependencyManagement> 条目一起删，改由父链下发（迁移后 tree 里这几族版本一件没动）。 -->
