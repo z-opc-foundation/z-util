@@ -38,8 +38,9 @@
             <artifactId>poi-ooxml-full</artifactId>
         </dependency>
 
-        <!-- log4j-core 直接条目已删（2026-10-01）：本模块 src 对 org.apache.logging.log4j 零引用；
-             运行期实现经 z-util-core → log4j-slf4j2-impl 的传递链本来就带，直挂是重复。 -->
+        <!-- log4j-core 直接条目已删（2026-10-01）：本模块 src 对 org.apache.logging.log4j 零引用。
+             （2026-10-02 更正：core 的 log4j-slf4j2-impl 已降 test 域，「经 core 传递带」不再成立；
+             运行期绑定由消费方应用自备，这是库件的正确形状。本模块测试零 slf4j 使用，无需 test 域自给。） -->
 
         <dependency>
             <groupId>javax.xml.bind</groupId>

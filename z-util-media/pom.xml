@@ -14,12 +14,7 @@
 
     <artifactId>z-util-media</artifactId>
 
-    <dependencies>
-
-        <!--日志-->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j2-impl</artifactId>
-        </dependency>
-    </dependencies>
+    <!-- 原「日志」条 log4j-slf4j2-impl 已删（2026-10-02）：本模块 main/test 对 slf4j 与
+         log4j 零引用，compile 域声明只是把绑定强塞给每个消费方。依赖块就此清空。 -->
+    <dependencies/>
 </project>

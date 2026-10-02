@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 import static com.zifang.util.core.Const.Symbol.*;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.*;
-import static org.apache.logging.log4j.util.Strings.EMPTY;
 
 /**
  * 字符串处理工具类。
@@ -1503,7 +1502,7 @@ public class StringUtil {
      */
     public static String repeat(final char ch, final int repeat) {
         if (repeat <= 0) {
-            return EMPTY;
+            return "";
         }
         final char[] buf = new char[repeat];
         Arrays.fill(buf, ch);
