@@ -5,6 +5,7 @@ import com.zifang.util.office.excel.ExcelUtils;
 import com.zifang.util.office.pdf.PdfExtractor;
 import com.zifang.util.office.pdf.PdfOperator;
 import com.zifang.util.office.word.WordExtractor;
+import com.zifang.util.office.word.WordMailMerge;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -338,6 +339,21 @@ public class OfficePipeline implements AutoCloseable {
     }
 
     // ====== Cross-format conversion ======
+
+    /**
+     * 把当前 DOCX 视为邮件合并模板，用 records 逐条渲染为多条独立 DOCX 管线。
+     * 当前管线不动；返回列表大小 = records.size()。要求 DOCX 格式。
+     */
+    public List<OfficePipeline> mailMerge(List<Map<String, Object>> records) throws IOException {
+        requireFormat(Format.DOCX, "mailMerge");
+        List<byte[]> rendered = WordMailMerge.render(buffer, records);
+        List<OfficePipeline> result = new ArrayList<>(rendered.size());
+        String base = stripExtension(name);
+        for (int i = 0; i < rendered.size(); i++) {
+            result.add(OfficePipeline.bytes(rendered.get(i), Format.DOCX, base + "-" + i + ".docx"));
+        }
+        return result;
+    }
 
     /**
      * 把 DOCX / XLSX / PPTX 单向渲染为 PDF，返回一条<b>新</b>的 PDF 管线；当前管线不动。

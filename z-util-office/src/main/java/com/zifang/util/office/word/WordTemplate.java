@@ -79,15 +79,26 @@ public class WordTemplate {
             if (!m.find()) {
                 continue;
             }
-            String key = m.group(1).trim();
-            if (key.endsWith("[*]")) {
-                listActions.add(new ListParagraphAction(p, key.substring(0, key.length() - 3)));
-                replaceAllRuns(p, m.replaceAll(""));
-            } else {
-                Object v = model.get(key);
-                String head = text.substring(0, m.start());
-                String tail = text.substring(m.end());
-                replaceAllRuns(p, head + (v == null ? "" : v.toString()) + tail);
+            // multi-pass：一个段落内可能有多个 ${var}；先把所有变量替换掉，
+            // 遇到的 ${list[*]} 只登记不展开（展开走下方 listActions 循环，v0 语义保留）。
+            StringBuilder sb = new StringBuilder();
+            int cursor = 0;
+            List<String> listKeys = new ArrayList<>();
+            do {
+                String key = m.group(1).trim();
+                sb.append(text, cursor, m.start());
+                if (key.endsWith("[*]")) {
+                    listKeys.add(key.substring(0, key.length() - 3));
+                } else {
+                    Object v = model.get(key);
+                    sb.append(v == null ? "" : v.toString());
+                }
+                cursor = m.end();
+            } while (m.find());
+            sb.append(text.substring(cursor));
+            replaceAllRuns(p, sb.toString());
+            for (String base : listKeys) {
+                listActions.add(new ListParagraphAction(p, base));
             }
         }
         // 应用 list[*] 段落展开
