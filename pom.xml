@@ -5,20 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- ============================================================== -->
-    <!-- 消费入口统一走 z-boot-parent（1.0.19 起全组织口径）：                 -->
-    <!-- 继承第三方地板 z-boot-dependencies + import 兄弟仓 z-boot-fleet，   -->
-    <!-- 并下发 Java 8 的 pluginManagement。                                -->
-    <!-- 迁前这里**没有** <parent>（自己就是一棵树的根），版本口径全靠下面     -->
-    <!-- <properties> + <dependencyManagement> 那张 29 格的表。迁后表里       -->
-    <!-- 与父链同值的键删掉，其余全部保留 —— 保留的理由逐条写在原地。          -->
-    <!-- relativePath 必须留空：parent 不在磁盘上，在 repo1。                -->
+    <!-- 本仓是一棵独立的 POM 树：**没有** <parent>，也不 import 任何外部 BOM。 -->
+    <!-- 版本口径全由下面的 <properties> + <dependencyManagement> 自供，发布到   -->
+    <!-- repo1 的根 pom 因此可被任何消费者独立解析，不需要 foundation 内部仓库。  -->
+    <!-- 2026-10-03 撤掉 2026-09-29（0fe0504e）挂上的 z-boot-parent 继承，      -->
+    <!-- 当时由父链下发的那几格（编码键 + okhttp/netty/protobuf 三族及其直接 DM） -->
+    <!-- 已原地补回；补回前后 dependency:list 全 70 模块逐坐标零漂移（104 个坐标一件没动）。 -->
     <!-- ============================================================== -->
-    <parent>
-        <groupId>io.github.yuku123</groupId>
-        <artifactId>z-boot-parent</artifactId>
-        <version>1.0.21</version>
-        <relativePath/>
-    </parent>
 
     <groupId>io.github.yuku123</groupId>
     <artifactId>z-util</artifactId>
@@ -69,53 +62,45 @@
 
     <properties>
         <revision>1.0.16</revision>
-        <!-- project.build.sourceEncoding / project.reporting.outputEncoding 这两个键删掉了：
-             z-boot-parent 供的都是 UTF-8，与本仓原来写的 utf-8 同一字符集（Java 的 Charset 名不区分大小写），
-             编译编码另有 <encoding>utf-8</encoding> 字面量兜着 ⇒ 删键零漂移（已用 tree 复跑验过）。
-             compile.version 必须留着：父链供的是 maven.compiler.source/target，**没有** compile.version 这个键，
-             而下面的 maven-compiler-plugin 和 central profile 的 maven-javadoc-plugin 都在引用它
-             —— 正是 z-boot README「消费模型」第 6 条那个 ${compile.version} 悬空坑的同一形状。 -->
+        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
+             下面的 maven-compiler-plugin 和 central profile 的 maven-javadoc-plugin 都读 ${compile.version}。 -->
         <compile.version>8</compile.version>
 
         <!-- ==================== 第三方依赖版本集中管理 ==================== -->
-        <!-- ⚠ 下面每一格都是**量出来**的分歧，不是"忘了删"：判据见各处注释。 -->
-        <!-- 地板 log4j2 是 2.25.4，本仓 2.26.1；且地板只直接管 api/core，slf4j2-impl 它压根不管。 -->
+        <!-- 每一格都是本仓自己的口径（不参照任何外部 parent/BOM）；改动理由写在原地。 -->
+        <!-- 2.26.1：log4j-slf4j2-impl 必须与 log4j-api/core 同版本，整族一起升。 -->
         <log4j.version>2.26.1</log4j.version>
-        <!-- 地板（经 spring-boot-dependencies import）供 slf4j-api 1.7.36，本仓要 2.0.16：
-             log4j-slf4j2-impl 2.26.1 只对 SLF4J 2.x 的 ServiceLoader 绑定机制有效。 -->
+        <!-- 2.0.16 不能降：log4j-slf4j2-impl 只对 SLF4J 2.x 的 ServiceLoader 绑定机制有效。 -->
         <slf4j.version>2.0.16</slf4j.version>
-        <!-- 地板 import 的 junit-bom 是 5.9.3，本仓 5.11.4。 -->
         <junit.version>5.11.4</junit.version>
         <javax.inject.version>1</javax.inject.version>
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <validation.version>2.0.1.Final</validation.version>
         <javax.mail.version>1.6.2</javax.mail.version>
-        <!-- 地板（spring-boot-dependencies）供 javax.servlet-api 4.0.1，本仓刻意留 3.1.0。 -->
+        <!-- 刻意留 3.1.0：Servlet 3.1 的 API 面是本仓编译底线，升 4.0.1 只是跟着容器走。 -->
         <servlet.version>3.1.0</servlet.version>
         <jaxb.version>2.3.1</jaxb.version>
         <jaxb.impl.version>2.3.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
-        <!-- 地板 druid 1.2.23，本仓 1.2.24。 -->
         <druid.version>1.2.24</druid.version>
-        <!-- 地板 guava 32.0.0-jre，本仓 33.6.0-jre。 -->
         <guava.version>33.6.0-jre</guava.version>
         <cglib.version>3.3.0</cglib.version>
-        <!-- gson.version 这一格删掉了：迁前它**谁也没挂** —— 全仓 47 个 pom 里没有一条 gson 依赖，
-             0 个 java 文件 import com.google.gson，纯粹是属性表里的死账（不在本次"版本口径"的账上，
-             删它不改任何解析结果）。 -->
-        <!-- 地板 jackson 2.18.6（并经 jackson-bom import 整族），本仓 2.18.11
-             （2026-10-02 2.18.9→2.18.11：Dependabot 7 个 CVE 全打在 ≤2.18.10，
-             2.18.10 修 CVE-2026-68497/83557/19032，2.18.11 修 CVE-2026-89425/89407/91776/91777）。 -->
+        <!-- gson.version 这一格不存在：全仓 pom 里没有一条 gson 依赖、0 个 java 文件 import com.google.gson。 -->
+        <!-- 2026-10-02 2.18.9→2.18.11：Dependabot 7 个 CVE 全打在 ≤2.18.10，
+             2.18.10 修 CVE-2026-68497/83557/19032，2.18.11 修 CVE-2026-89425/89407/91776/91777。 -->
         <jackson.version>2.18.11</jackson.version>
-        <!-- okhttp.version / netty.version / protobuf-java.version 三格删掉了：
-             地板面值 4.12.0 / 4.1.138.Final / 3.25.5 与本仓迁前**逐格相同** ⇒ 键与对应的
-             <dependencyManagement> 条目一起删，改由父链下发（迁移后 tree 里这几族版本一件没动）。 -->
+        <okhttp.version>4.12.0</okhttp.version>
+        <!-- netty 4.1.138.Final：2026-09-28「同坐标单版本」从 4.1.137 升上来对齐 CVE 口径。 -->
+        <netty.version>4.1.138.Final</netty.version>
+        <!-- protobuf-java 是给 mysql-connector-j 拉入的旧版做「强制升级 transitive」用的。 -->
+        <protobuf-java.version>3.25.5</protobuf-java.version>
         <antlr.version>4.13.2</antlr.version>
         <jsoup.version>1.23.1</jsoup.version>
-        <!-- 地板 javassist 3.24.1-GA，本仓 3.32.0-GA（高版本默认开启 module 支持，Java 17+ 兼容）。 -->
+        <!-- 3.32.0-GA：高版本默认开启 module 支持，Java 17+ 消费侧兼容。 -->
         <javassist.version>3.32.0-GA</javassist.version>
         <jol.version>0.17</jol.version>
-        <!-- 地板 javaparser 3.23.1，本仓 3.28.2。 -->
         <javaparser.version>3.28.2</javaparser.version>
         <pdfbox.version>3.0.8</pdfbox.version>
         <poi.version>5.5.1</poi.version>
@@ -507,13 +492,24 @@
                 <version>${jackson.version}</version>
             </dependency>
 
-            <!-- okhttp / okhttp-sse 的 managed 条目删掉：地板 z-boot-dependencies 按坐标直接钉
-                 com.squareup.okhttp3:okhttp / :okhttp-sse = ${okhttp.version}=4.12.0，与本仓迁前同一格，
-                 改由父链下发（tree 里 okhttp 两件迁移前后都是 4.12.0）。 -->
+            <!-- OkHttp HTTP 客户端（z-util-http / z-util-devops-{git,nexus} 均不写版本，吃这条） -->
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-sse</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
 
-            <!-- Netty：netty-all 的 managed 条目删掉，地板 import 的 io.netty:netty-bom
-                 （${netty.version}=4.1.138.Final，与本仓迁前那一格逐字相同，含 2026-09-28
-                 「同坐标单版本」那次 4.1.137→4.1.138 的 CVE 对齐）整族下发。 -->
+            <!-- Netty 网络框架 -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
 
             <!-- JAXB API：提供 javax.xml.bind 相关注解 -->
             <dependency>
@@ -625,25 +621,26 @@
                 <version>${github-api.version}</version>
             </dependency>
 
-            <!-- protobuf-java 的 managed 条目删掉：地板按坐标直接钉 com.google.protobuf:protobuf-java
-                 = 3.25.5，与本仓迁前那一格相同。原来这条是给 mysql-connector-j 拉入的旧版做
-                 「强制升级 transitive」用的，父链下发同样按坐标改写传递版本，作用一字没少。 -->
+            <!-- 强制升级 transitive protobuf-java（mysql-connector-j 拉入旧版） -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
 
             <!-- ============================================================ -->
-            <!-- 传递依赖连贯性锚点（迁入 z-boot-parent 时**量出来**的 25 格）   -->
-            <!-- 迁后第一遍 tree 实测漂了 27 个坐标，全部是"本仓没钉、由上游 pom 自己带"的传递件：
-                 继承来的 DM 会改写**传递依赖**的版本，而地板对这些格的口径比带它们的那几个上游库
-                 自己声明的更旧（objenesis 3.3→2.6、kotlin-stdlib 1.8.21→1.6.21、
+            <!-- 传递依赖连贯性锚点（25 格）                                    -->
+            <!-- 出处：2026-09-29 那次挂父链时，第一遍 tree 实测漂了 27 个坐标 ——
+                 全部是"本仓没钉、由上游 pom 自己带"的传递件，父链的直接 DM 把它们压得比
+                 带它们的上游库自己声明的更旧（objenesis 3.3→2.6、kotlin-stdlib 1.8.21→1.6.21、
                  commons-compress 1.28.0→1.26.0、commons-collections4 4.5.0→4.4、asm 9.7→9.2、
-                 javaparser-core 3.28.2→3.23.1 …），并把 junit 整族压到 junit-bom 的 5.9.3 ——
-                 那意味着聚合件 junit-jupiter 还是 5.11.4、它的 api/engine 却成 5.9.3，测试台混版本。
-                 这 25 条**不是版本属性表**（CEO 要拆的是那张表）：它们不声明"本仓用什么"，
-                 只是把每个坐标钉回"带它的那个上游库自己要求的版本"，一条对一条实测漂移，
-                 并且刻意写字面量、不再新增 property。
-                 判据：写完复跑 tree，除下面明确认账的 4 行外漂移为 0。
-                 ⚠ 必须逐条写**直接**条目：地板的 junit-bom/jackson-bom/spring-boot-dependencies
-                 是 import 进来的，而"继承来的直接 DM"压过"本仓 import 的 BOM"
-                 （z-boot README 消费模型第 5 条实测的形状，这里用的是同一个机制的反方向）。
+                 javaparser-core 3.28.2→3.23.1 …），并把 junit 整族压到 junit-bom 的 5.9.3。
+                 这 25 条把每个坐标钉回"带它的那个上游库自己要求的版本"，一条一条实测过。
+                 2026-10-03 父链已经撤了（本仓是独立的 POM 树），但这些面值**一位没改**：
+                 它们现在是本仓自己的传递依赖口径 —— 发布的根 pom 带完整 DM，消费者拿到的
+                 传递版本是确定的，不再取决于上游某个 pom 声明了什么。
+                 下面各条注释里的"地板"指 2026-09-29~2026-10-03 期间生效的那条父链，
+                 读作"这些面值的出处"，不是当前的依赖关系。
                  ============================================================ -->
             <!-- javaparser：本仓 DM 直钉 symbol-solver-core 3.28.2，它带的 core 被地板压成 3.23.1
                  ⇒ 同族两套版本；core 必须跟着 3.28.2（main 域真正吃它的是 z-util-bc 的 bc.source 面，
@@ -831,6 +828,36 @@
     </dependencies>
 
     <build>
+        <!-- 独立树 = 插件版本也得自己钉：不钉的话，构建产物跟着使用者本机 Maven 的
+             super-POM 默认版本漂移（surefire 2.12.4 系列根本不跑 JUnit 5，会绿成 0 个测试）。
+             面值取自撤父链前实际生效的那一套，保证这一刀的解析结果与行为都对得上旧树。 -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.22.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <configuration>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -840,6 +867,11 @@
                     <source>${compile.version}</source>
                     <target>${compile.version}</target>
                     <encoding>utf-8</encoding>
+                    <!-- -parameters 是原父链 pluginManagement 下发的；撤父链后原地自留，
+                         否则字节码里的方法形参名元数据消失，靠形参名反射的面（IoC/EL/序列化）会静默变味。 -->
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -880,8 +912,8 @@
                      0 处 ${}。⇒ 按「本来就发带 <parent> 的扁平 pom 保持它自己的 flattenMode 不动」那一档处理：
                      模式与版本都**不改**（尤其不换成 oss —— oss 会把 <dependencyManagement> 整个删掉，
                      z-util 这棵 umbrella 对外供的就是这张表，换了就是换交付物）。
-                     代价说清楚：根 pom 发布件的 `<parent>` 计数因此从 0 变成 1（→ z-boot-parent:1.0.19），
-                     这条链子在 repo1 上读得动（已 ranged GET 200 复核），并由 repo1-only 那遍复跑兜住。
+                     根 pom 发布件的 `<parent>` 计数 = 0（2026-10-03 起本仓无 parent），
+                     消费侧只需 repo1 一条链，不依赖任何内部仓库。
                      也正因为不换成 oss，上面自家模块的 DM 面值必须写 `${revision}` 不能写
                      `${project.version}`（本插件只展开 revision/sha1/changelist）。 -->
                 <configuration>

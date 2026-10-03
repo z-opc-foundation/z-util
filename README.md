@@ -25,7 +25,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **仓库** | `z-util`（org: z-opc-foundation 的基础库；本仓 remote 仍是个人仓 `github.com:yuku123/z-util.git`） |
 | **Maven 坐标** | 根聚合 `io.github.yuku123:z-util:${revision}`（`packaging=pom`）；子件 `io.github.yuku123:z-util-<module>:${revision}` |
 | **当前版本** | `1.0.14`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`） |
-| **父项目** | `io.github.yuku123:z-boot-parent:1.0.21`（`<relativePath/>` 留空，parent 在 repo1 不在磁盘；2026-09 消费者轮从 1.0.19 抬上来） |
+| **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）；唯一 404 是 `z-util-zex`（不进默认 reactor、不发布） |
 | **模块数** | 根 POM `<modules>` 25 个条目；展开 `parser`(8) / `expr`(6) / `serialize`(6) 三个聚合件后共 **45 个模块 POM = 41 个 jar + 4 个 pom** |
 | **运行口径** | Java 8（`compile.version=8`，各模块 `maven.compiler.source/target=8`；产物可直接被 Spring Boot 2.7 系消费） |
@@ -133,7 +133,7 @@ Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(s
 
 ```
 z-util/
-├── pom.xml                # 根聚合 POM：继承 z-boot-parent:1.0.21，<revision> 统一版本，DM 覆盖 43 个自家构件
+├── pom.xml                # 根聚合 POM：无 parent，<revision> 统一版本，DM 自供全部第三方+自家构件版本
 ├── z-util-core/           # 基础库（23 个包：lang/io/jwt/encrypt/pattern/ratelimit/resilience/meta/schedule/...）
 ├── z-util-{aop,ioc,proxy,cache,validation,bc}/          # 容器、切面、代理、缓存、校验、字节码+源码工具
 ├── z-util-parser/         # 聚合 POM → 8 个格式子模块
@@ -162,9 +162,9 @@ z-util/
 | 层级 | 技术（版本取自根 POM `<properties>` 与各模块 POM 实测） |
 |------|------|
 | 语言 / 运行时 | Java 8（`compile.version=8`） |
-| 父链 | `z-boot-parent:1.0.21` → `z-boot-dependencies`（第三方地板）+ `z-boot-fleet`（兄弟仓权威表）；本仓只保留**量出分歧**的格 |
-| 本仓覆盖的第三方版本 | `log4j 2.26.1`（地板 2.25.4）、`slf4j 2.0.16`（地板经 spring-boot 供 1.7.36）、`junit 5.11.4`（地板 junit-bom 5.9.3） |
-| 测试 | JUnit Jupiter 5.11.4 + `junit-vintage-engine`（跑历史 JUnit4 用例）；surefire 3.5.4 仅在 `z-util-proxy` 覆写 |
+| 版本口径 | **无父链**：全部第三方版本由本仓根 POM 的 `<properties>` + `<dependencyManagement>` 自供，另含 25 条传递依赖连贯性锚点（把上游 pom 自己带的传递件按坐标钉死） |
+| 关键第三方版本 | `log4j 2.26.1`、`slf4j 2.0.16`（`log4j-slf4j2-impl` 只认 SLF4J 2.x 的绑定机制）、`junit 5.11.4`、`jackson 2.18.11`、`okhttp 4.12.0`、`netty 4.1.138.Final`、`protobuf-java 3.25.5` |
+| 测试 | JUnit Jupiter 5.11.4 + `junit-vintage-engine`（跑历史 JUnit4 用例）；surefire / failsafe 在根 POM `<pluginManagement>` 钉 `2.22.2`，jar `3.3.0`、resources `3.3.1` |
 | JSON | 自研 `z-util-parser-json`（`.g4` + 自研 DSL 解析器，非 Jackson）；Jackson 2.18.9 作 databind/jsr310 辅助 |
 | 解析 | ANTLR 4.13.2（runtime）、jsoup 1.23.1 与 Guava 33.6.0-jre **只在根 DM 里管着，没有任何模块引用** |
 | HTTP | OkHttp（client）、JDK `com.sun.net.httpserver`（server）；`netty-all` 在 `z-util-http/pom.xml` 声明但**全仓无一处 `io.netty` 代码** |
@@ -228,10 +228,10 @@ mvn clean install -DskipTests        # 编译 + 安装到本地仓库
 mvn clean install -pl z-util-core -am -DskipTests   # 单模块（含其上游）
 ```
 
-构建需要能解析到 `io.github.yuku123:z-boot-parent:1.0.21`（在 repo1，`<relativePath/>` 留空）。
-第三方版本主要由父链（`z-boot-dependencies` 地板 + `z-boot-fleet` 兄弟仓权威表）供给；
-但**模块 POM 里实测还留着 15 处字面版本钉**（清单见「🔧 技术栈」），新增依赖时优先交给父链，
-别再往模块里添新的一格。
+构建只需要 Maven 自己 + repo1 上能拉到的公开第三方件：本仓根 POM **没有 `<parent>`**，
+第三方版本全部由本仓 `<properties>` + `<dependencyManagement>` 自供（25 条传递依赖锚点把上游 pom
+自己带的传递件也按坐标钉死）。新增依赖时先在根 DM 里登记版本，模块 POM 不写字面版本，
+也别再引入任何外部 parent/BOM。
 
 ### 常用入口
 
