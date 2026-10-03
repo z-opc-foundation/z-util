@@ -24,7 +24,7 @@
     <!-- ============================================================== -->
     <name>z-util</name>
     <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/aop/dsl/parser/expr/workflow/http/jdbc/math/ml/office/media/visualization/monitor/devops/distribute/cli/ch 等）</description>
-    <url>https://github.com/yuku123/z-util</url>
+    <url>https://github.com/z-opc-foundation/z-util</url>
 
     <licenses>
         <license>
@@ -48,15 +48,19 @@
         </developer>
     </developers>
 
+    <!-- 2026-10-03：URL 由 yuku123/z-util 对齐到实际远端 z-opc-foundation/z-util（组织仓）。
+         groupId 刻意保持 io.github.yuku123 不动 —— 那是已发布坐标（Central 上 1.0.2~1.0.16
+         全系列都在），改它等于另起一个新库并要求所有消费方改坐标；而 SCM 链接指错位置
+         只影响「从 Central 页面点回源码」这一个动作，代价小得多。 -->
     <scm>
-        <connection>scm:git:git://github.com/yuku123/z-util.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/yuku123/z-util.git</developerConnection>
-        <url>https://github.com/yuku123/z-util</url>
+        <connection>scm:git:git://github.com/z-opc-foundation/z-util.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/z-opc-foundation/z-util.git</developerConnection>
+        <url>https://github.com/z-opc-foundation/z-util</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
-        <url>https://github.com/yuku123/z-util/issues</url>
+        <url>https://github.com/z-opc-foundation/z-util/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 

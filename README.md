@@ -22,9 +22,9 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 
 | 字段 | 值 |
 |------|-----|
-| **仓库** | `z-util`（org: z-opc-foundation 的基础库；本仓 remote 仍是个人仓 `github.com:yuku123/z-util.git`） |
-| **Maven 坐标** | 根聚合 `io.github.yuku123:z-util:${revision}`（`packaging=pom`）；子件 `io.github.yuku123:z-util-<module>:${revision}` |
-| **当前版本** | `1.0.14`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`） |
+| **仓库** | `z-util`（org: z-opc-foundation 的基础库；远端为组织仓 `github.com:z-opc-foundation/z-util.git`） |
+| **Maven 坐标** | 根聚合 `io.github.yuku123:z-util:${revision}`（`packaging=pom`）；子件 `io.github.yuku123:z-util-<module>:${revision}`。groupId 保持 `io.github.yuku123`（已发布坐标，Central 上 1.0.2~1.0.16 全系列），与 GitHub 组织归属解耦 |
+| **当前版本** | `1.0.16`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）；唯一 404 是 `z-util-zex`（不进默认 reactor、不发布） |
 | **模块数** | 根 POM `<modules>` 25 个条目；展开 `parser`(8) / `expr`(6) / `serialize`(6) 三个聚合件后共 **45 个模块 POM = 41 个 jar + 4 个 pom** |

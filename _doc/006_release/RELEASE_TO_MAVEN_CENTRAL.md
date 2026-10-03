@@ -101,7 +101,7 @@ z-util 相比典型 Java 项目有以下特殊点：
 
 <name>z-util</name>
 <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/...）</description>
-<url>https://github.com/yuku123/z-util</url>
+<url>https://github.com/z-opc-foundation/z-util</url>
 
 <licenses>
     <license>
@@ -119,8 +119,8 @@ z-util 相比典型 Java 项目有以下特殊点：
 </developers>
 
 <scm>
-    <connection>scm:git:git://github.com/yuku123/z-util.git</connection>
-    <url>https://github.com/yuku123/z-util</url>
+    <connection>scm:git:git://github.com/z-opc-foundation/z-util.git</connection>
+    <url>https://github.com/z-opc-foundation/z-util</url>
 </scm>
 
 <revision>1.0.4-SNAPSHOT</revision>  <!-- 升级时改成 1.0.4 / 1.0.5 ... -->
