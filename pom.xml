@@ -65,7 +65,7 @@
     </issueManagement>
 
     <properties>
-        <revision>1.0.16</revision>
+        <revision>1.0.17</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
