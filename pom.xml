@@ -93,7 +93,7 @@
         <!-- 地板（spring-boot-dependencies）供 javax.servlet-api 4.0.1，本仓刻意留 3.1.0。 -->
         <servlet.version>3.1.0</servlet.version>
         <jaxb.version>2.3.1</jaxb.version>
-        <jaxb.impl.version>2.3.9</jaxb.impl.version>
+        <jaxb.impl.version>4.0.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
         <!-- 地板 druid 1.2.23，本仓 1.2.24。 -->
         <druid.version>1.2.24</druid.version>
