@@ -68,7 +68,7 @@
     </issueManagement>
 
     <properties>
-        <revision>1.0.15</revision>
+        <revision>1.0.16</revision>
         <!-- project.build.sourceEncoding / project.reporting.outputEncoding 这两个键删掉了：
              z-boot-parent 供的都是 UTF-8，与本仓原来写的 utf-8 同一字符集（Java 的 Charset 名不区分大小写），
              编译编码另有 <encoding>utf-8</encoding> 字面量兜着 ⇒ 删键零漂移（已用 tree 复跑验过）。
