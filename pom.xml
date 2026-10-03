@@ -221,11 +221,10 @@
                 <version>${revision}</version>
             </dependency>
 
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-proxy</artifactId>
-                <version>${revision}</version>
-            </dependency>
+            <!-- 2026-10-03 删：z-util-proxy 已于 2026-10-02 合并进 z-util-bc，这条 DM 是僵尸。
+                 危害不是构建报错（reactor 无此坐标时 Maven 静默回落到本地仓库旧件），
+                 而是 DM 会改写传递依赖版本 —— 旧 proxy:1.0.14 的字节码会被悄悄拉进树里。
+                 接收方 z-util-bc 已在下方 DM 中补齐。 -->
 
             <!-- ↓↓↓ 「消费模型」步骤 4：自家 reactor 的 jar 模块**逐个**钉在本仓 DM 里。
                  上面那 16 条只覆盖了 reactor 的一部分（dsl / http / ml / devops / source / ch / cli /
@@ -792,6 +791,129 @@
                 <artifactId>hamcrest-core</artifactId>
                 <version>1.3</version>
             </dependency>
+
+            <!-- ==================== 自家 jar 件补齐（2026-10-03） ==================== -->
+            <!-- 上方「消费模型」步骤 4 那段注释写的是「jar 模块逐个钉进 DM」，但实测当时只补了
+                 38/61，23 个 jar 件仍是空的，整条 z-util-pattern-* 家族（18 个）一个没补。
+                 后果和该注释自己担心的场景一致：这些件只能靠子模块在 <dependency> 上自己写
+                 ${revision} 顶着 —— 一旦消费方（fleet）经**传递依赖**把它们拉进来，
+                 而 fleet 的 DM 停在旧 z-util 版本上，这些子件就会反向被压成旧字节码。
+                 与本仓直接 <dependency> 引用（自带版本）不同，传递路径上没有任何东西兜底。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-bc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-aop</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-kernel</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-executor-java</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-wf-py</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- z-util-pattern 家族 18 件：GoF 各自的实现件，传递依赖链最深的一簇，
+                 也是过去最容易被 fleet 的旧 DM 压版本的一簇，故整族补齐。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-builder</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-chain</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-command</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-composite</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-event</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-factory</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-ioc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-memento</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-pool</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-register</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-spi</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-state</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-strategy</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-stream</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-template</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-validation</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-pattern-visitor</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- ⚠ z-util-zex 仍然刻意不列：它在默认 reactor 之外（sandbox profile），
+                 中央上从来没有这个坐标，与上方 z-util-zex 那条注记同因。 -->
+
             <!-- 明确**不**钉的一格（这一行漂移是认过账的）：
                  com.fasterxml.jackson.module:jackson-module-jaxb-annotations 2.12.2 → 2.18.11。
                  迁前它是 2.12.2，而本仓 jackson-databind/core/annotations 全在 2.18.11 —— 那才是错的组合；

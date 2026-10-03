@@ -56,15 +56,14 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-devops` | **pom 聚合** | DevOps 三件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST | 见下表 |
 | `z-util-bc` | jar | 字节码 + 源码工具集（字节码模型/ASM 编织/内存编译；2026-10-02 收编 z-util-source 为源码面，compiler 孤岛死码随迁删除） | `bytecode.*` class 模型、`compile.CFJavaCompiler`/`MapClassLoader`、`weave.*`；`source.parser.SourceCodeParser`（javaparser）、`source.define.ByteCodeParser`/`ByteCodeGenerator`（契约）+ `parser.ByteCodeParserImpl`/`generator.ByteCodeGeneratorImpl`、`source.generator.JavaSourceGenerator` + `diff.ClassInfoDiffer`、`source.generator.info.ClassInfo`/`FieldInfo`/`MethodInfo`、`source.analyser.AnalysisContext` |
 | `z-util-distribute` | jar | 分布式 ID：Snowflake / Segment / NanoId / UUID v7 | `sequence.SnowflakeIdWorker`（`(workerId, datacenterId)` → `nextId()`）、`Sequence`、`SegmentIdGenerator`、`NanoId`（`new NanoId(size, alphabet).next()`）、`UuidV7.next()`/`fromMillis`/`toUuid`、`SystemClock` |
-| `z-util-proxy` | jar | JDK/CGLIB 动态代理 + 自研 class 文件字节码模型 | `CglibProxyFactory`/`CglibInterceptor`、`a.model.*`（`AbstractConstantPool`/`AttributeFactory`/`AccessFlagConvertor`）、`ByteCodeResolver`、内置反编译 demo（`a.decompile.*`） |
 | `z-util-ch` | jar | 中文工具：拼音/身份证/金额/星期 | `PinyinGeneratorUtil`、`IdcardUtil`、`MoneyUtil`、`NumberChineseUtil`、`WeekUtil` |
 | `z-util-cli` | jar | POSIX/GNU/Basic/Default 命令行解析 + OptionGroup + HelpFormatter | `CLI`、`CommandLine`、`CommandLineParser`、`BasicParser`/`GnuParser`/`DefaultParser`、`help.HelpFormatter` |
 | `z-util-pattern` | **pom 聚合** | GoF + 行为模式 + 校验原语聚合件（`z-util-pattern-chain`/`-command`/`-composite`/`-event`/`-factory`/`-ioc`/`-memento`/`-pool`/`-register`/`-spi`/`-state`/`-stream`/`-strategy`/`-template`/`-visitor`/`-builder`/`-cache`/`-validation` 等子件各自成坐标） | validation 面：`annotation.NotNull`/`Length`/`Pattern`/`Range`/`Email` 与同名 `*Validator`（2026-10-02 自 `z-util-validation` 降级收编，零内部依赖） |
-| `z-util-cache` | jar | **进程内**缓存：TTL + LRU / W-TinyLFU + builder + 装饰器 | `MemoryCache`、`WTinyLfuCache`、`BoundedCache`/`LruNode`、`LoadingCache`/`LoadingMemoryCache`/`CacheLoader`、`CacheBuilder`、`CacheManager`、`MeteredCache`、`TransactionalCache`、`CountMinSketch`、`Expiry`、`RemovalListener`（无 Redis/远端后端） |
+| `z-util-pattern-cache` | jar | **进程内**缓存：TTL + LRU / W-TinyLFU + builder + 装饰器（2026-10-02 自 `z-util-cache` 收编进 pattern 家族） | `MemoryCache`、`WTinyLfuCache`、`BoundedCache`/`LruNode`、`LoadingCache`/`LoadingMemoryCache`/`CacheLoader`、`CacheBuilder`、`CacheManager`、`MeteredCache`、`TransactionalCache`、`CountMinSketch`、`Expiry`、`RemovalListener`（无 Redis/远端后端） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
 | `z-util-serialize` | **pom 聚合** | 跨语言、schema-first、零拷贝编解码（6 个子模块） | 见下表 |
-| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表覆盖 **20 个**模块（不是"全部模块"） |
+| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表覆盖 **23 个**模块（不是"全部模块"；2026-10-03 删除了已收编的 `z-util-proxy`） |
 | `z-util-zex` | jar（仅 `-Psandbox`） | 个人练习场：`bust`（《码出高效》章节）/`sort`/`leetcode`/`guava`/`interview`/`bytecode`/`disrupt` | 不在默认 reactor，Maven Central 实测 404 |
 
 ### `z-util-parser` 的 8 个子模块（`z-util-dsl` 子件，ANTLR `.g4` + 自研 `z-util-dsl-kernel` 动态解析）
@@ -170,7 +169,7 @@ z-util/
 | HTTP | OkHttp（client）、JDK `com.sun.net.httpserver`（server）；`netty-all` 在 `z-util-http/pom.xml` 声明但**全仓无一处 `io.netty` 代码** |
 | 数据 | `z-util-jdbc`：Druid 1.2.24 + mysql-connector-j 8.2.0 + `javax.persistence-api` 2.2 + MyBatis 3.5.16（`<optional>`，只服务分页插件兼容层）+ H2 2.2.224（`test` scope） |
 | Office | POI 5.5.1（+ `poi-ooxml-full`）、PDFBox 3.0.8 |
-| 字节码 | ASM 9.7（`z-util-proxy` 内字面钉）、cglib 3.3.0、javassist 3.32.0-GA、javaparser 3.28.2、jol-core 0.17 |
+| 字节码 | ASM 9.7（`z-util-bc` 内字面钉 + 根 DM 地板）、cglib 3.3.0、javassist 3.32.0-GA、javaparser 3.28.2、jol-core 0.17 |
 | 运维 | github-api 1.330（根 DM）、JGit 5.13.4 + gitlab4j-api 5.2.0（`z-util-devops` 内字面钉）、Docker CLI/HTTP、Nexus REST |
 | 模块内字面版本钉（现状） | 实测仍有 15 处非 `${revision}` 的第三方字面 `<version>`：pinyin4j 2.5.1（ch）、luaj-jse 3.0.1（expr-lua）、snakeyaml 2.2（parser-yaml）、mysql-connector-j 8.2.0 / javax.persistence-api 2.2 / mybatis 3.5.16 / h2 2.2.224（jdbc）、asm 9.7（proxy）、jgit 5.13.4 / gitlab4j-api 5.2.0（devops）、kryo 5.5.0 / jmh 1.37 ×2（serialize-benchmarks）、junit 4.13.2（serialize-it）；expr-groovy 走 `${groovy.version}` |
 | Java EE 口径 | `javax.inject 1`、`javax.annotation 1.3.2`、`javax.servlet-api 3.1.0`、`validation 2.0.1.Final`、`javax.mail 1.6.2`、JAXB 2.3.x |
@@ -216,10 +215,10 @@ z-util/
 </dependencies>
 ```
 
-它的版本表实测覆盖 20 个模块（core/monitor/parser-json/math/proxy/office/media/expr-js/workflow/
+它的版本表实测覆盖 23 个模块（core/monitor/parser-json/math/proxy/office/media/expr-js/workflow/
 visualization/jdbc/http/ml/devops/source/distribute/ch/parser-xml/dsl/cli）。
 `z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、其余 `parser-*` /
-`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 43 个自家构件）。
+`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 64 个自家构件，其中 jar 件 60 个）。
 
 ### 本地构建
 
@@ -258,16 +257,15 @@ mvn clean install -pl z-util-core -am -DskipTests   # 单模块（含其上游�
 
 ```bash
 mvn test                     # 全量：请在 JDK 17 上跑（见下）
-mvn test -pl z-util-cache -am
+mvn test -pl z-util-pattern/z-util-pattern-cache -am
 mvn test -Dtest=JsonUtilTest -pl z-util-parser/z-util-parser-json
 ```
 
-- **全量 `mvn test` 不能跑在 JDK 8 上。** `z-util-proxy/pom.xml` 的 surefire `<argLine>` 写死了
-  `--add-opens java.base/java.lang=ALL-UNNAMED` 与 `--add-opens java.base/java.lang.reflect=ALL-UNNAMED`
-  （它的测试要对 JDK 内部类 `setAccessible`）。这两个参数是 JDK 9+ 才认识的，**JDK 8 的 JVM 会直接拒绝启动 forked 进程**，
-  于是从根跑的 `mvn test` 必然在该模块断掉。库本身的编译/运行口径仍是 Java 8 —— 两件事不要混。
-- 规模：主源 1468 个 `.java`、测试 748 个 `.java`；`z-util-core`(236)、`z-util-http`(129)、`z-util-ml`(76)、
-  `z-util-proxy`(47) 占了大头。`@Disabled` 数量为 0。
+- 规模（2026-10-03 实测）：主源 **1531** 个 `.java`、测试 **791** 个 `.java`；
+  `z-util-core`(235)、`z-util-http`(129)、`z-util-ml`(76)、`z-util-bc`(68)、`z-util-dsl`(64) 占了大头。
+  `@Disabled` 数量为 0。
+- **surefire 的 `--add-opens` 已全部删除**（2026-10-02）：项目口径是 Java 8，无模块系统，
+  那些参数仅 JDK 9+ 需要。现在全量 `mvn test` 在 JDK 8 与 9+ 上都能起 forked 进程。
 - 部分用例碰外部世界，离线或无凭据环境会红：`z-util-http`（真实出网）、`z-util-devops`（GitHub API / docker 命令）、
   `z-util-jdbc`（MySQL 连接串，另有一批走 H2）。这类失败不代表代码坏了，验证时可以先按模块跑：
   `mvn test -pl z-util-core,z-util-parser/z-util-parser-json,z-util-expr/z-util-expr-obj`。
@@ -313,7 +311,7 @@ bash _doc/003_script/install-settings.sh               # 把 server id=central �
    整帧一起丢。产出侧要相信 `JsonUtil.toJson`：它会把 `\n`/`\t`/`\r` 转义（`JsonUtilTest` 有断言）。
    消费不可信来源时用 `parseObjectQuietly` / `parseToMap`（失败返回 null / 空 Map，不抛）。
 3. **`z-util-all` 不聚合 jar**，只发版本号 —— 见「快速开始」，这是最容易踩的一条。
-4. **`z-util-cache` 没有分布式后端**，只有进程内实现（W-TinyLFU / LRU / Loading / Transactional / Metered）。
+4. **`z-util-pattern-cache` 没有分布式后端**，只有进程内实现（W-TinyLFU / LRU / Loading / Transactional / Metered）。
    需要跨节点一致请另找 z-cache。
 5. **`netty-all` 与 `guava`/`jsoup` 是"账面依赖"**：前者在 `z-util-http` 的 POM 里声明但代码零引用，
    后两者只在根 DM 里管版本、没有模块使用。别据此推断本仓有 Netty 网关或 Guava 依赖。
@@ -354,7 +352,5 @@ _Maintained by the z-opc-foundation organization._
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 发布入口（`gpg-init` / `publish` / `verify` / `readme` / `help`；须在仓库根目录上下文运行，凭据取 `.env`）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh) — 把 `<server id="central">` 写进 `~/.m2/settings.xml`
   - `11.1.sh` / `11.3.sh` / `11.4.sh` / `11.7.sh` / `11.8.sh` / `12.1.sh` / `12.4.sh` / `12.7.sh` / `13.1.sh` / [`loopDir.sh`](_doc/003_script/loopDir.sh) — Shell 学习笔记示例（多命令、echo、变量、算术、退出码、if、数值比较、case、循环、递归遍历目录），**不是运维脚本**，与构建无关
-- `_doc/004_skill/` — AI skill 定义：
-  - [`CLAUDE.md`](CLAUDE.md) — 给 AI 协作的构建/模块约定（其版本号段落已过时，以本 README 与 POM 为准）
 
 各文档详细说明见各子目录。

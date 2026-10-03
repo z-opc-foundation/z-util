@@ -43,11 +43,8 @@
                 <artifactId>z-util-math</artifactId>
                 <version>${revision}</version>
             </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-proxy</artifactId>
-                <version>${revision}</version>
-            </dependency>
+            <!-- 2026-10-03 删：z-util-proxy 已合并进 z-util-bc（2026-10-02），BOM 里留着等于
+                 让消费方 import 时解析到一个 repo1 上不存在于本版本的坐标。 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-office</artifactId>
