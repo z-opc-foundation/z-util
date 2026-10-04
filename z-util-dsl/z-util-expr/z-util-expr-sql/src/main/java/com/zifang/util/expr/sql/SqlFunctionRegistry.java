@@ -2,6 +2,7 @@ package com.zifang.util.expr.sql;
 
 import com.zifang.util.expr.sql.annotation.SqlFunction;
 import com.zifang.util.expr.sql.function.SqlFunctions;
+import com.zifang.util.expr.sql.function.SqlJsonFunctions;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -11,13 +12,12 @@ import java.util.Set;
 
 /**
  * SQL 函数注册表。
- * 扫描内置函数 + 用户自定义类，统一的函数查找入口。
+ * 单例创建时自动注册内置函数（幂等），无需调用方手工初始化。
  * <p>
  * 用法：
  * <pre>
- * SqlFunctionRegistry reg = SqlFunctionRegistry.get();
- * reg.registerBuiltin();                      // 注册内置函数
- * reg.register(MyFunctions.class);            // 注册自定义类
+ * SqlFunctionRegistry reg = SqlFunctionRegistry.get();  // 内置函数已就绪
+ * reg.register(MyFunctions.class);                      // 按需追加自定义函数
  * </pre>
  */
 public final class SqlFunctionRegistry {
@@ -30,6 +30,7 @@ public final class SqlFunctionRegistry {
     private final Map<String, SqlFunctionDef> functions = new HashMap<>();
 
     private SqlFunctionRegistry() {
+        registerBuiltin();
     }
 
     public static SqlFunctionRegistry get() {
@@ -38,10 +39,11 @@ public final class SqlFunctionRegistry {
 
     /**
      * 注册内置函数。
-     * 自动扫描 SqlFunctions 类中所有带 @SqlFunction 注解的方法。
+     * 自动扫描 SqlFunctions / SqlJsonFunctions 类中所有带 @SqlFunction 注解的方法。
      */
     public SqlFunctionRegistry registerBuiltin() {
         register(SqlFunctions.class);
+        register(SqlJsonFunctions.class);
         return this;
     }
 

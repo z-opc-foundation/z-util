@@ -11,8 +11,9 @@ public class SelectStmt {
 
     private boolean distinct;
     private List<Expression> selectItems;     // SELECT 列表（AliasedExpr 或 ColumnRef 等）
-    private String tableName;                 // 主表名
+    private String tableName;                 // 主表名（FROM 为子查询时为 null，由执行器物化后回填）
     private String tableAlias;                // 主表别名
+    private SelectStmt fromSubquery;          // FROM (SELECT ...) AS t 派生表
     private Expression whereClause;           // WHERE 条件
     private List<Expression> groupBy;         // GROUP BY 列表
     private Expression havingClause;          // HAVING 条件
@@ -71,6 +72,14 @@ public class SelectStmt {
      */
     public String getTableContextName() {
         return tableAlias != null ? tableAlias : tableName;
+    }
+
+    public SelectStmt getFromSubquery() {
+        return fromSubquery;
+    }
+
+    public void setFromSubquery(SelectStmt fromSubquery) {
+        this.fromSubquery = fromSubquery;
     }
 
     public Expression getWhereClause() {
@@ -149,7 +158,12 @@ public class SelectStmt {
             if (i > 0) sb.append(", ");
             sb.append(selectItems.get(i));
         }
-        sb.append(" FROM ").append(tableName);
+        sb.append(" FROM ");
+        if (fromSubquery != null) {
+            sb.append("(").append(fromSubquery).append(")");
+        } else {
+            sb.append(tableName);
+        }
         if (tableAlias != null) sb.append(" AS ").append(tableAlias);
         for (JoinClause join : joins) {
             sb.append(" ").append(join);

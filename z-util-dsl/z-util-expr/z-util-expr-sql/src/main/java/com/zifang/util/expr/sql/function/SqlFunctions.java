@@ -651,11 +651,6 @@ public final class SqlFunctions {
         return min(row, args);
     }
 
-    @SqlFunction("ROW_NUMBER")
-    public static Object row_number(Map<String, Object> row, Object... args) {
-        return 1L; // 由执行器覆盖
-    }
-
     @SqlFunction("UUID")
     public static Object uuid(Map<String, Object> row, Object... args) {
         return UUID.randomUUID().toString();
