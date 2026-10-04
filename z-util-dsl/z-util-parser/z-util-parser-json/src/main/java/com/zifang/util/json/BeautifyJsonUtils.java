@@ -52,8 +52,10 @@ public class BeautifyJsonUtils {
 
             sb.append("\n");
             sb.append(getIndentString());
+            // key 与 value 同样要转义：key 里出现 " 或控制字符、value 里出现换行，
+            // 都会让这段输出不再是可以被解析回来的 JSON。
             sb.append("\"");
-            sb.append(key);
+            sb.append(JsonUtil.escapeString(key));
             sb.append("\"");
             sb.append(": ");
 
@@ -65,7 +67,7 @@ public class BeautifyJsonUtils {
                 sb.append(beautify((JsonArray) value));
             } else if (value instanceof String) {
                 sb.append("\"");
-                sb.append(value);
+                sb.append(JsonUtil.escapeString((String) value));
                 sb.append("\"");
             } else {
                 sb.append(value);
@@ -115,7 +117,7 @@ public class BeautifyJsonUtils {
             } else if (ele instanceof String) {
                 sb.append(getIndentString());
                 sb.append("\"");
-                sb.append(ele);
+                sb.append(JsonUtil.escapeString((String) ele));
                 sb.append("\"");
             } else {
                 sb.append(getIndentString());
