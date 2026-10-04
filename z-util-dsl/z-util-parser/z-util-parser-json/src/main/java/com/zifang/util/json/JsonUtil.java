@@ -12,6 +12,22 @@ import com.zifang.util.json.serializer.ValueSerializer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.MonthDay;
+import java.time.OffsetDateTime;
+import java.time.Period;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -148,6 +164,15 @@ public class JsonUtil {
                 return String.valueOf(t);
             }
             if (t instanceof Date) return String.valueOf(((Date) t).getTime());
+            // java.time（JSR-310）：必须在此显式分派。
+            // 缺这一分支时这些类型会掉进 solvePojo 反射其私有字段，后果分两档：
+            //   JDK 9+ 抛 InaccessibleObjectException（module java.base 不 "opens java.time"）；
+            //   JDK 8  不抛，但静默输出内部结构，ZonedDateTime 尤其糟——会把整张时区转换表
+            //   （数千个数字）灌进 JSON。两者都实测过，不是推断。
+            // 这里统一输出 ISO-8601 文本，与 java.time 自身的 toString() 一致，可读且跨时区无歧义。
+            if (t instanceof TemporalAccessor || t instanceof TemporalAmount) {
+                return "\"" + escapeString(t.toString()) + "\"";
+            }
             if (t instanceof Collection) return solveList((Collection<?>) t);
             if (t instanceof Map) return solveMap((Map<?, ?>) t);
             if (t.getClass().isArray()) return solveArray(t);
@@ -728,9 +753,12 @@ public class JsonUtil {
         int i = 0;
         for (FieldMeta meta : metas) {
             if (meta.ignore) continue;
-            meta.field.setAccessible(true);
             Object value;
             try {
+                // setAccessible 必须放进 try：JDK 9+ 对未 opens 的包抛的是
+                // InaccessibleObjectException（RuntimeException），放在 try 外会整段序列化失败。
+                // 取不到就按 null 输出，与下方 field.get 失败的处理保持一致。
+                meta.field.setAccessible(true);
                 value = meta.field.get(obj);
             } catch (Exception e) {
                 value = null;
@@ -767,6 +795,13 @@ public class JsonUtil {
     @SuppressWarnings("unchecked")
     private static <T> T convertValue(Object parsed, java.lang.reflect.Type targetType) {
         if (parsed == null) return null;
+
+        // java.time（JSR-310）：与 toJson 的 java.time 分支配对，保证 ISO-8601 能读回来。
+        // 缺这一分支时 parsed(String) 会一路落到末尾的 return (T) parsed，
+        // 随后 field.set(String) 抛 IllegalArgumentException，报错还指向"值格式不对"，很难查。
+        if (targetType instanceof Class && isJavaTimeType((Class<?>) targetType)) {
+            return (T) parseJavaTime((Class<?>) targetType, parsed);
+        }
 
         if (targetType == JsonObject.class) {
             if (parsed instanceof JsonObject) return (T) parsed;
@@ -842,6 +877,14 @@ public class JsonUtil {
 
         // POJO
         if (parsed instanceof JsonObject) {
+            // 泛型 POJO（Pageable<T> / Result<T> 这类非 List/Map 的包装类型）：
+            // List/Map 的 ParameterizedType 已在上面处理完，落到这里的 raw type 一定是普通类。
+            // 旧实现直接 (Class<T>) targetType —— unchecked 转换不改变运行时对象，
+            // 到 deserializePojo 里调 clazz.getDeclaredConstructor() 就抛
+            // ClassCastException: ParameterizedTypeImpl cannot be cast to Class。
+            if (targetType instanceof ParameterizedType) {
+                return deserializeParameterizedPojo((JsonObject) parsed, (ParameterizedType) targetType);
+            }
             return deserializePojo((JsonObject) parsed, (Class<T>) targetType);
         }
         if (parsed instanceof JsonArray && targetType == List.class) {
@@ -856,7 +899,82 @@ public class JsonUtil {
         return (T) parsed;
     }
 
+    /**
+     * 判断目标类型是否属于 {@code java.time} 的受支持集合。
+     * <p>只认白名单里的具体类型，不认 {@code TemporalAccessor}/{@code TemporalAmount} 接口——
+     * 接口无法定位到具体实现，认了也构造不出来。</p>
+     */
+    private static boolean isJavaTimeType(Class<?> type) {
+        return type == LocalDate.class
+                || type == LocalDateTime.class
+                || type == LocalTime.class
+                || type == OffsetDateTime.class
+                || type == ZonedDateTime.class
+                || type == Instant.class
+                || type == Year.class
+                || type == YearMonth.class
+                || type == MonthDay.class
+                || type == Duration.class
+                || type == Period.class;
+    }
+
+    /**
+     * 把 JSON 值转成 {@code java.time} 类型。
+     * <p>字符串按 ISO-8601 解析（与 {@link #toJson} 的输出配对）；{@link Instant} 额外接受
+     * 数字型 epoch 毫秒，因为时间戳是它最常见的传输形态。</p>
+     *
+     * @param type   目标 java.time 类型，必须已在 {@link #isJavaTimeType} 白名单内
+     * @param parsed 已解析的 JSON 值（ISO 字符串，或 Instant 允许的数字）
+     * @return 转换结果；无法转换时返回 null，由调用方按"字段缺失"处理
+     */
+    private static Object parseJavaTime(Class<?> type, Object parsed) {
+        try {
+            if (type == Instant.class && parsed instanceof Number) {
+                return Instant.ofEpochMilli(((Number) parsed).longValue());
+            }
+            String text = parsed instanceof String ? (String) parsed : String.valueOf(parsed);
+            if (type == LocalDate.class) return LocalDate.parse(text);
+            if (type == LocalDateTime.class) return LocalDateTime.parse(text);
+            if (type == LocalTime.class) return LocalTime.parse(text);
+            if (type == OffsetDateTime.class) return OffsetDateTime.parse(text);
+            if (type == ZonedDateTime.class) return ZonedDateTime.parse(text);
+            if (type == Instant.class) return Instant.parse(text);
+            if (type == Year.class) return Year.parse(text);
+            if (type == YearMonth.class) return YearMonth.parse(text);
+            if (type == MonthDay.class) return MonthDay.parse(text);
+            if (type == Duration.class) return Duration.parse(text);
+            if (type == Period.class) return Period.parse(text);
+        } catch (RuntimeException e) {
+            // 解析失败返回 null：与"字段缺失"同等处理，避免把格式问题升级成整次反序列化失败
+            return null;
+        }
+        return null;
+    }
+
     private static <T> T deserializePojo(JsonObject obj, Class<T> clazz) {
+        return deserializePojo(obj, clazz, Collections.<TypeVariable<?>, Type>emptyMap());
+    }
+
+    /**
+     * 反序列化泛型 POJO：把 {@code Pageable<ZConfigDTO>} 这类实参绑到字段声明里的类型变量上。
+     * <p>例如 {@code Pageable<T>} 的 {@code records} 字段声明为 {@code List<T>}，
+     * 直接用 {@code field.getGenericType()} 拿到的是 {@code List<T>}（T 未定），
+     * 元素会被当成裸 Object 填成 LinkedHashMap；绑定后才是 {@code List<ZConfigDTO>}。</p>
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T deserializeParameterizedPojo(JsonObject obj, ParameterizedType pt) {
+        Class<?> raw = (Class<?>) pt.getRawType();
+        TypeVariable<?>[] params = raw.getTypeParameters();
+        Type[] args = pt.getActualTypeArguments();
+        Map<TypeVariable<?>, Type> bindings = new HashMap<>();
+        for (int i = 0; i < params.length && i < args.length; i++) {
+            bindings.put(params[i], args[i]);
+        }
+        return (T) deserializePojo(obj, raw, bindings);
+    }
+
+    private static <T> T deserializePojo(JsonObject obj, Class<T> clazz,
+                                         Map<TypeVariable<?>, Type> bindings) {
         try {
             // 枚举类型特殊处理：用 "name" 字段 + Enum.valueOf（FEATURE008 P1 修复 v4 2026-06-25）
             // 修复原因：枚举没有无参构造器，clazz.getDeclaredConstructor() 会抛 NoSuchMethodException
@@ -879,7 +997,8 @@ public class JsonUtil {
                 if (rawValue == null) continue;
                 // 关键：用 field.getGenericType() 而非 getType() — 这样 List<InputParam> 能保留泛型
                 // (FEATURE008 P1 修复 v5 2026-06-25)
-                java.lang.reflect.Type targetType = meta.field.getGenericType();
+                // 再经 bindings 把类型变量替换成实参：List<T> → List<ZConfigDTO>
+                Type targetType = resolveType(meta.field.getGenericType(), bindings);
                 Object converted;
                 if (meta.deserializer != null) {
                     converted = deserializeWithDeserializer(rawValue, meta.deserializer, meta.dateFormat, meta.field.getType());
@@ -892,6 +1011,85 @@ public class JsonUtil {
             return instance;
         } catch (Exception e) {
             throw new RuntimeException("deserializePojo failed: " + clazz.getName(), e);
+        }
+    }
+
+    /**
+     * 把字段声明里的类型变量按 bindings 替换成实际类型参数。
+     * <p>{@code List<T>} + T→{@code ZConfigDTO} ⇒ {@code List<ZConfigDTO>}；
+     * 没有可替换内容时原样返回（含 bindings 为空的情况，不做任何额外分配）。</p>
+     */
+    private static Type resolveType(Type type, Map<TypeVariable<?>, Type> bindings) {
+        if (bindings.isEmpty()) return type;
+        if (type instanceof TypeVariable) {
+            Type resolved = bindings.get(type);
+            return resolved != null ? resolved : type;
+        }
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            Type[] args = pt.getActualTypeArguments();
+            Type[] resolvedArgs = new Type[args.length];
+            boolean changed = false;
+            for (int i = 0; i < args.length; i++) {
+                resolvedArgs[i] = resolveType(args[i], bindings);
+                if (resolvedArgs[i] != args[i]) changed = true;
+            }
+            return changed ? new ResolvedParameterizedType(pt.getRawType(), resolvedArgs, pt.getOwnerType()) : pt;
+        }
+        return type;
+    }
+
+    /** 替换过类型实参的 {@link ParameterizedType}，供 {@link #convertValue} 继续读取 getActualTypeArguments()。 */
+    private static final class ResolvedParameterizedType implements ParameterizedType {
+        private final Type rawType;
+        private final Type[] actualTypeArguments;
+        private final Type ownerType;
+
+        ResolvedParameterizedType(Type rawType, Type[] actualTypeArguments, Type ownerType) {
+            this.rawType = rawType;
+            this.actualTypeArguments = actualTypeArguments;
+            this.ownerType = ownerType;
+        }
+
+        @Override
+        public Type[] getActualTypeArguments() {
+            return actualTypeArguments.clone();
+        }
+
+        @Override
+        public Type getRawType() {
+            return rawType;
+        }
+
+        @Override
+        public Type getOwnerType() {
+            return ownerType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof ParameterizedType)) return false;
+            ParameterizedType other = (ParameterizedType) o;
+            return java.util.Objects.equals(rawType, other.getRawType())
+                    && java.util.Arrays.equals(actualTypeArguments, other.getActualTypeArguments())
+                    && java.util.Objects.equals(ownerType, other.getOwnerType());
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Arrays.hashCode(actualTypeArguments)
+                    ^ java.util.Objects.hashCode(ownerType)
+                    ^ java.util.Objects.hashCode(rawType);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder(rawType.getTypeName()).append('<');
+            for (int i = 0; i < actualTypeArguments.length; i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(actualTypeArguments[i].getTypeName());
+            }
+            return sb.append('>').toString();
         }
     }
 
