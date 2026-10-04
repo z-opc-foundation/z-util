@@ -65,7 +65,9 @@
     </issueManagement>
 
     <properties>
-        <revision>1.0.17</revision>
+        <!-- 1.0.18: 携带 cfeeb2e8 —— JsonObject/JsonArray.toString() 转义字符串与 key，
+             不再产出非法 JSON。1.0.17 发布时该修复尚未提交。 -->
+        <revision>1.0.18</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
