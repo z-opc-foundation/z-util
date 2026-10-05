@@ -65,9 +65,13 @@
     </issueManagement>
 
     <properties>
-        <!-- 1.0.18: 携带 cfeeb2e8 —— JsonObject/JsonArray.toString() 转义字符串与 key，
-             不再产出非法 JSON。1.0.17 发布时该修复尚未提交。 -->
-        <revision>1.0.18</revision>
+        <!-- 1.0.19：cfeeb2e8（JsonObject/JsonArray.toString() 转义，不再产出非法 JSON）与
+             b3666913（JsonUtil 补 java.time 分支 + 泛型 POJO 反序列化）**首次**进入中央件。
+             已发布的 1.0.18 不含这两笔：两条线同夜各自把 revision bump 成 1.0.18，我这侧
+             （expr-sql 八项消费方反馈）先占下中央槽位（2026-10-04T17:38Z PUBLISHED），而中央
+             版本不可覆盖 ⇒ 只能另发新版。核对凭据：repo1 的 z-util-parser-json-1.0.18-sources.jar
+             里 BeautifyJsonUtils 无 escape、JsonUtil 比 main 少 200 行。 -->
+        <revision>1.0.19</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
