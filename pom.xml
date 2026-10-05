@@ -718,7 +718,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
-                <version>4.5.0</version>
+                <version>4.6.0</version>
             </dependency>
             <!-- ⚠ 迁前这三格 commons-* 在本仓内部就是**分叉**的：devops 经 jgit/github-api 拿
                  commons-io 2.16.1、commons-codec 1.11、commons-logging 1.2；office 经 poi/pdfbox 拿
