@@ -7,6 +7,7 @@ import com.zifang.util.expr.sql.engine.ast.*;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 内存 SQL 执行引擎。
@@ -17,7 +18,16 @@ import java.util.*;
  */
 public class SqlEngine {
 
+    /**
+     * 聚合函数名（与 evaluateAggregateFunction 支持面一致）。
+     * GROUP BY / 隐式聚合场景下，只有命中这个名字面的函数才走聚合求值，
+     * 其余一律按标量表达式对组代表行求值（MySQL 宽松语义）。
+     */
+    private static final Set<String> AGGREGATE_FUNCTIONS = new HashSet<>(
+            Arrays.asList("COUNT", "SUM", "AVG", "MAX", "MIN"));
+
     private final TableRegistry registry;
+    private final AtomicLong derivedTableCounter = new AtomicLong();
 
     public SqlEngine(TableRegistry registry) {
         this.registry = registry;
@@ -30,6 +40,71 @@ public class SqlEngine {
      * @return 结果行列表
      */
     public List<Map<String, Object>> execute(SelectStmt stmt) {
+        List<String> derivedTables = new ArrayList<>();
+        try {
+            return executePlan(materializeSubqueries(stmt, derivedTables));
+        } finally {
+            for (String name : derivedTables) {
+                registry.unregister(name);
+            }
+        }
+    }
+
+    /**
+     * 把 FROM / JOIN 里的派生表（子查询）递归执行后物化成临时虚拟表，
+     * 并返回表名被改写为该临时表的语句副本。物化名在查询结束后统一注销。
+     */
+    private SelectStmt materializeSubqueries(SelectStmt stmt, List<String> derivedTables) {
+        String mainName = stmt.getTableName();
+        boolean changed = false;
+
+        if (stmt.getFromSubquery() != null) {
+            mainName = materialize(stmt.getFromSubquery(), derivedTables);
+            changed = true;
+        }
+
+        List<JoinClause> joins = stmt.getJoins();
+        List<JoinClause> newJoins = joins;
+        for (int i = 0; i < joins.size(); i++) {
+            JoinClause join = joins.get(i);
+            if (join.getSubquery() != null) {
+                if (newJoins == joins) {
+                    newJoins = new ArrayList<>(joins);
+                }
+                String name = materialize(join.getSubquery(), derivedTables);
+                newJoins.set(i, new JoinClause(join.getJoinType(), name, join.getAlias(), join.getOnCondition()));
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return stmt;
+        }
+
+        SelectStmt copy = new SelectStmt();
+        copy.setDistinct(stmt.isDistinct());
+        copy.setSelectItems(stmt.getSelectItems());
+        copy.setTableName(mainName);
+        copy.setTableAlias(stmt.getTableAlias());
+        copy.setWhereClause(stmt.getWhereClause());
+        copy.setGroupBy(stmt.getGroupBy());
+        copy.setHavingClause(stmt.getHavingClause());
+        copy.setOrderBy(stmt.getOrderBy());
+        copy.setLimit(stmt.getLimit());
+        copy.setOffset(stmt.getOffset());
+        copy.setJoins(newJoins);
+        return copy;
+    }
+
+    private String materialize(SelectStmt subquery, List<String> derivedTables) {
+        List<Map<String, Object>> rows = execute(subquery);
+        String name = "__derived_" + derivedTableCounter.incrementAndGet() + "__";
+        registry.register(name, rows);
+        derivedTables.add(name);
+        return name;
+    }
+
+    private List<Map<String, Object>> executePlan(SelectStmt stmt) {
         // 1. 加载主表
         VirtualTable mainTable = registry.getTable(stmt.getTableName());
         List<Map<String, Object>> rows = new ArrayList<>(mainTable.getRows());
@@ -362,7 +437,7 @@ public class SqlEngine {
         for (Expression item : selectItems) {
             String outputName = getExprOutputName(item);
             Expression expr = item instanceof AliasedExpr ? ((AliasedExpr) item).getExpression() : item;
-            if (expr instanceof FunctionCall) {
+            if (expr instanceof FunctionCall && isAggregateCall((FunctionCall) expr)) {
                 resultRow.put(outputName, evaluateAggregateFunction((FunctionCall) expr, rows));
             } else {
                 resultRow.put(outputName, evaluate(expr, rows.isEmpty() ? Collections.emptyMap() : rows.get(0)));
@@ -423,10 +498,15 @@ public class SqlEngine {
             expr = item;
         }
 
-        if (expr instanceof FunctionCall) {
+        if (expr instanceof FunctionCall && isAggregateCall((FunctionCall) expr)) {
             return evaluateAggregateFunction((FunctionCall) expr, groupRows);
         }
+        // 非聚合函数（DATE/IF/INSTR/JSON_* 等）按标量对组代表行求值（MySQL 宽松语义）
         return evaluate(expr, firstRow);
+    }
+
+    private boolean isAggregateCall(FunctionCall func) {
+        return AGGREGATE_FUNCTIONS.contains(func.getName());
     }
 
     private Object evaluateAggregateFunction(FunctionCall func, List<Map<String, Object>> rows) {
@@ -447,14 +527,25 @@ public class SqlEngine {
                 return count;
             }
             case "SUM": {
+                // 类型口径与 z-util-expr-obj 的 Aggregates 对齐：
+                // 全整型列给 Long，掺了浮点才给 Double（前端拿到的 1000 不该渲染成 1000.0）
                 BigDecimal sum = BigDecimal.ZERO;
+                boolean integral = true;
                 for (Map<String, Object> row : rows) {
                     Object val = evaluate(args.get(0), row);
                     if (val != null) {
                         sum = sum.add(toBigDecimal(val));
+                        integral &= isIntegralValue(val);
                     }
                 }
-                return sum;
+                if (integral) {
+                    try {
+                        return sum.longValueExact();
+                    } catch (ArithmeticException e) {
+                        return sum; // 超出 long 的整型和，保精度降级为 BigDecimal
+                    }
+                }
+                return sum.doubleValue();
             }
             case "AVG": {
                 BigDecimal sum = BigDecimal.ZERO;
@@ -467,7 +558,12 @@ public class SqlEngine {
                     }
                 }
                 if (count == 0) return null;
-                return sum.divide(BigDecimal.valueOf(count), 10, BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
+                BigDecimal avg = sum.divide(BigDecimal.valueOf(count), 10, BigDecimal.ROUND_HALF_UP).stripTrailingZeros();
+                // stripTrailingZeros 会把 100 变成 1E+2（scale<0），Jackson 会原样序列化成科学计数法
+                if (avg.scale() < 0) {
+                    avg = avg.setScale(0);
+                }
+                return avg;
             }
             case "MAX": {
                 Object max = null;
@@ -658,7 +754,8 @@ public class SqlEngine {
             return def.exec(row, resolvedArgs);
         }
 
-        throw new SqlException("未知的函数: " + funcName);
+        throw new SqlException("未知的函数: " + funcName
+                + "（内置函数已随注册表自动注册，请检查拼写；自定义函数需先 SqlFunctionRegistry.get().register(...)）");
     }
 
     // ==================== 工具方法 ====================
@@ -708,6 +805,24 @@ public class SqlEngine {
         if (val instanceof BigDecimal) return (BigDecimal) val;
         if (val instanceof Number) return BigDecimal.valueOf(((Number) val).doubleValue());
         return new BigDecimal(val.toString());
+    }
+
+    /**
+     * 与 z-util-expr-obj Aggregates#isIntegral 同一口径：
+     * 整型包装类恒真；BigDecimal 看 scale<=0；浮点看是否整值。
+     */
+    private boolean isIntegralValue(Object v) {
+        if (v instanceof Integer || v instanceof Long || v instanceof Short || v instanceof Byte) {
+            return true;
+        }
+        if (v instanceof BigDecimal) {
+            return ((BigDecimal) v).scale() <= 0;
+        }
+        if (v instanceof Number) {
+            double d = ((Number) v).doubleValue();
+            return d == Math.floor(d) && !Double.isInfinite(d);
+        }
+        return false;
     }
 
     private boolean matchLike(String text, String pattern) {

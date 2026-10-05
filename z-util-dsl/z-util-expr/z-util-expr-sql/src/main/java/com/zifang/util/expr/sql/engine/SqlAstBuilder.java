@@ -118,14 +118,24 @@ public class SqlAstBuilder {
         // selectItems
         stmt.setSelectItems(parseSelectItems());
 
-        // FROM tableName [alias]
+        // FROM tableName [alias] 或 FROM (SELECT ...) AS alias
         expect("FROM");
-        stmt.setTableName(expect("ID").getText());
-        if (check("AS")) {
-            advance(); // consume AS
-            stmt.setTableAlias(expect("ID").getText());
-        } else if (check("ID") && !isClauseKeyword(peek().getTokenName())) {
-            stmt.setTableAlias(advance().getText());
+        if (check("LPAREN") && isSubqueryAhead()) {
+            advance(); // consume LPAREN
+            SelectStmt sub = parseSelect();
+            expect("RPAREN");
+            stmt.setFromSubquery(sub);
+            String alias = parseTableAlias();
+            if (alias == null) {
+                throw new SqlException("FROM 子查询必须指定别名：FROM (SELECT ...) AS t");
+            }
+            stmt.setTableAlias(alias);
+        } else {
+            stmt.setTableName(expect("ID").getText());
+            String alias = parseTableAlias();
+            if (alias != null) {
+                stmt.setTableAlias(alias);
+            }
         }
 
         // [JOIN ...]
@@ -167,6 +177,27 @@ public class SqlAstBuilder {
         }
 
         return stmt;
+    }
+
+    /**
+     * 解析表别名：AS alias 或裸 ID（非子句关键字）。
+     */
+    private String parseTableAlias() {
+        if (check("AS")) {
+            advance(); // consume AS
+            return expect("ID").getText();
+        }
+        if (check("ID") && !isClauseKeyword(peek().getTokenName())) {
+            return advance().getText();
+        }
+        return null;
+    }
+
+    /**
+     * 当前 LPAREN 之后是否直接跟 SELECT（即派生表子查询）。
+     */
+    private boolean isSubqueryAhead() {
+        return pos + 1 < tokens.length && "SELECT".equals(tokens[pos + 1].getTokenName());
     }
 
     /**
@@ -234,12 +265,20 @@ public class SqlAstBuilder {
         }
         expect("JOIN");
 
-        String tableName = expect("ID").getText();
-        String alias = null;
-        if (check("ID") && !isClauseKeyword(peek().getTokenName())) {
-            alias = advance().getText();
-        } else if (match("AS")) {
-            alias = expect("ID").getText();
+        // JOIN 目标：表名 或 (SELECT ...) 派生表
+        String tableName = null;
+        SelectStmt subquery = null;
+        if (check("LPAREN") && isSubqueryAhead()) {
+            advance(); // consume LPAREN
+            subquery = parseSelect();
+            expect("RPAREN");
+        } else {
+            tableName = expect("ID").getText();
+        }
+
+        String alias = parseTableAlias();
+        if (subquery != null && alias == null) {
+            throw new SqlException("JOIN 子查询必须指定别名：JOIN (SELECT ...) AS t");
         }
 
         Expression onCondition = null;
@@ -247,6 +286,9 @@ public class SqlAstBuilder {
             onCondition = parseOrExpr();
         }
 
+        if (subquery != null) {
+            return new JoinClause(joinType, subquery, alias, onCondition);
+        }
         return new JoinClause(joinType, tableName, alias, onCondition);
     }
 

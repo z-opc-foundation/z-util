@@ -10,11 +10,11 @@
 #   help       显示此帮助
 #
 # 用法：
-#   ./deploy_maven_center.sh                   # 等同 publish
-#   ./deploy_maven_center.sh publish
-#   ./deploy_maven_center.sh gpg-init          # 首次必须先跑
-#   ./deploy_maven_center.sh verify
-#   ./deploy_maven_center.sh readme            # 看发布指引摘要
+#   bash _doc/003_script/deploy_maven_center.sh                   # 等同 publish
+#   bash _doc/003_script/deploy_maven_center.sh publish
+#   bash _doc/003_script/deploy_maven_center.sh gpg-init          # 首次必须先跑
+#   bash _doc/003_script/deploy_maven_center.sh verify
+#   bash _doc/003_script/deploy_maven_center.sh readme            # 看发布指引摘要
 #
 # 设计原则：
 #   - 所有凭证从 ./.env 读，.env 已被 .gitignore 排除
@@ -48,7 +48,7 @@ cd "$REPO_ROOT"
 
 # ---------- 加载 .env ----------
 load_env() {
-    [[ -f .env ]] || die ".env 不存在。首次发布请先跑：./deploy_maven_center.sh gpg-init"
+    [[ -f .env ]] || die ".env 不存在。首次发布请先跑：bash _doc/003_script/deploy_maven_center.sh gpg-init"
     # shellcheck disable=SC1091
     set -a; source .env; set +a
 
@@ -70,7 +70,7 @@ check_deps() {
     if [[ -d ./.gnupg ]]; then
         export GNUPGHOME="$PWD/.gnupg"
     else
-        warn "未找到 ./.gnupg，请先跑 ./deploy_maven_center.sh gpg-init"
+        warn "未找到 ./.gnupg，请先跑 bash _doc/003_script/deploy_maven_center.sh gpg-init"
         exit 1
     fi
 }
@@ -128,7 +128,7 @@ EOF
         warn "keyserver 上传失败，可手动跑：gpg --keyserver hkps://keys.openpgp.org --send-keys $KEY_ID"
 
     log "完成。.env 已写入 GPG_KEY_ID=$KEY_ID"
-    log "下一步：跑 ./deploy_maven_center.sh publish"
+    log "下一步：跑 bash _doc/003_script/deploy_maven_center.sh publish"
 }
 
 # ---------- 子命令：publish ----------
@@ -209,7 +209,7 @@ cmd_readme() {
 
 【首次发布】
 
-  $ ./deploy_maven_center.sh gpg-init
+  $ bash _doc/003_script/deploy_maven_center.sh gpg-init
   # 生成 GPG 密钥，把 passphrase 写到 ./.env
   # KEY_ID 自动写回 .env
 

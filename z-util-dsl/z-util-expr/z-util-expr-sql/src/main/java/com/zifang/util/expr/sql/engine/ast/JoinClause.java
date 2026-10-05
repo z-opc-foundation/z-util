@@ -10,13 +10,23 @@ public class JoinClause {
     }
 
     private final JoinType joinType;
-    private final String tableName;
+    private final String tableName;   // JOIN 为子查询时为 null，由执行器物化后替换
+    private final SelectStmt subquery; // JOIN (SELECT ...) AS t 派生表
     private final String alias;
     private final Expression onCondition;
 
     public JoinClause(JoinType joinType, String tableName, String alias, Expression onCondition) {
+        this(joinType, tableName, null, alias, onCondition);
+    }
+
+    public JoinClause(JoinType joinType, SelectStmt subquery, String alias, Expression onCondition) {
+        this(joinType, null, subquery, alias, onCondition);
+    }
+
+    private JoinClause(JoinType joinType, String tableName, SelectStmt subquery, String alias, Expression onCondition) {
         this.joinType = joinType;
         this.tableName = tableName;
+        this.subquery = subquery;
         this.alias = alias;
         this.onCondition = onCondition;
     }
@@ -27,6 +37,10 @@ public class JoinClause {
 
     public String getTableName() {
         return tableName;
+    }
+
+    public SelectStmt getSubquery() {
+        return subquery;
     }
 
     public String getAlias() {
@@ -47,7 +61,12 @@ public class JoinClause {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(joinType).append(" JOIN ").append(tableName);
+        sb.append(joinType).append(" JOIN ");
+        if (subquery != null) {
+            sb.append("(").append(subquery).append(")");
+        } else {
+            sb.append(tableName);
+        }
         if (alias != null) sb.append(" AS ").append(alias);
         if (onCondition != null) sb.append(" ON ").append(onCondition);
         return sb.toString();

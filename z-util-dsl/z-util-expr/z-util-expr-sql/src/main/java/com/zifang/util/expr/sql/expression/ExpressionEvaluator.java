@@ -293,7 +293,10 @@ public class ExpressionEvaluator {
 
         Object eval(Map<String, Object> row) {
             SqlFunctionDef def = SqlFunctionRegistry.get().find(name);
-            if (def == null) throw new SqlException("Unknown function: " + name);
+            if (def == null) {
+                throw new SqlException("未知的函数: " + name
+                        + "（内置函数已随注册表自动注册，请检查拼写；自定义函数需先 SqlFunctionRegistry.get().register(...)）");
+            }
             Object[] resolvedArgs = new Object[args.length];
             for (int i = 0; i < args.length; i++) resolvedArgs[i] = args[i].eval(row);
             return def.exec(row, resolvedArgs);
