@@ -91,7 +91,7 @@
         <jaxb.impl.version>2.3.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
         <druid.version>1.2.24</druid.version>
-        <guava.version>33.6.0-jre</guava.version>
+        <guava.version>33.7.2-jre</guava.version>
         <cglib.version>3.3.0</cglib.version>
         <!-- gson.version 这一格不存在：全仓 pom 里没有一条 gson 依赖、0 个 java 文件 import com.google.gson。 -->
         <!-- 2026-10-02 2.18.9→2.18.11：Dependabot 7 个 CVE 全打在 ≤2.18.10，
