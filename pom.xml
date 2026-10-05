@@ -96,7 +96,7 @@
         <!-- gson.version 这一格不存在：全仓 pom 里没有一条 gson 依赖、0 个 java 文件 import com.google.gson。 -->
         <!-- 2026-10-02 2.18.9→2.18.11：Dependabot 7 个 CVE 全打在 ≤2.18.10，
              2.18.10 修 CVE-2026-68497/83557/19032，2.18.11 修 CVE-2026-89425/89407/91776/91777。 -->
-        <jackson.version>2.18.11</jackson.version>
+        <jackson.version>2.22</jackson.version>
         <okhttp.version>4.12.0</okhttp.version>
         <!-- netty 4.1.138.Final：2026-09-28「同坐标单版本」从 4.1.137 升上来对齐 CVE 口径。 -->
         <netty.version>4.1.138.Final</netty.version>
