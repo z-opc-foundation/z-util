@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>5.13.4.202507202350-r</version>
+            <version>5.13.5.202508271544-r</version>
         </dependency>
 
         <!-- OkHttp：GitHub REST 客户端（GithubHttpClient） -->

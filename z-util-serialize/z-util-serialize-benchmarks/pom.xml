@@ -26,7 +26,7 @@
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>5.5.0</version>
+            <version>5.7.0</version>
         </dependency>
         <!-- jmh-core / jmh-generator-annprocess 两条已删（2026-10-01）：ZSerializeVsKryoBench
              是手搓 main() 计时（import 里没有一条 org.openjdk.jmh、无 @Benchmark 注解），

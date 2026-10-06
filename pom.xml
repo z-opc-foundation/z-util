@@ -94,7 +94,7 @@
         <jaxb.version>2.3.1</jaxb.version>
         <jaxb.impl.version>2.3.9</jaxb.impl.version>
         <jaxb.core.version>2.3.0.1</jaxb.core.version>
-        <druid.version>1.2.24</druid.version>
+        <druid.version>1.2.28</druid.version>
         <guava.version>33.6.0-jre</guava.version>
         <cglib.version>3.3.0</cglib.version>
         <!-- gson.version 这一格不存在：全仓 pom 里没有一条 gson 依赖、0 个 java 文件 import com.google.gson。 -->
@@ -722,7 +722,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
-                <version>4.5.0</version>
+                <version>4.6.0</version>
             </dependency>
             <!-- ⚠ 迁前这三格 commons-* 在本仓内部就是**分叉**的：devops 经 jgit/github-api 拿
                  commons-io 2.16.1、commons-codec 1.11、commons-logging 1.2；office 经 poi/pdfbox 拿
@@ -1142,7 +1142,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.7</version>
+                        <version>3.2.8</version>
                         <configuration>
                             <skip>${central.gpg.skip}</skip>
                         </configuration>
