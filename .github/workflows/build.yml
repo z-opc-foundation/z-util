@@ -49,8 +49,16 @@ jobs:
         shell: bash
         run: python3 _doc/003_script/check_ignored_bugs.py
 
+      - name: Install Xvfb
+        # z-util-visualization 的 ChartFrame extends JFrame，构造任何图表都会
+        # 创建窗口 —— headless 下必抛 HeadlessException（实测 36 个用例里 20 个 error，
+        # 与 CI 首次运行的失败数一致）。GitHub runner 无 X11，故用虚拟帧缓冲。
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
       - name: Build (compile + unit test)
-        run: mvn -B clean install
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" mvn -B clean install
 
       # 口径说明：只认 surefire XML，不认日志行求和。
       # 原因有二 ——
