@@ -328,7 +328,20 @@ public class StackObjectPool<T> implements ObjectPool<T> {
         }
     }
 
-    private PooledObject<T> findPooledObject(T obj) {
+    /**
+     * 查找给定对象对应的 PooledObject 包装。
+     * <p>
+     * 先查已分配表 allocatedObjects，再遍历 idle 栈按对象身份比对。
+     * <p>
+     * 可见性为 public：调用方需要读取 PooledObject 的元数据
+     * （borrowCount / state / idleTime），而 ObjectPool 接口并不暴露这一层。
+     * 该方法此前是 private，测试里只能另写一个同名 helper 占位 —— 而那个
+     * helper 直接 return null，于是 testPooledObjectMetadata 长期被 @Ignore 掩盖。
+     *
+     * @param obj 目标对象
+     * @return 找到返回其 PooledObject 包装，否则返回 null
+     */
+    public PooledObject<T> findPooledObject(T obj) {
         // 先从 allocatedObjects 中查找
         PooledObject<T> p = allocatedObjects.get(obj);
         if (p != null) {

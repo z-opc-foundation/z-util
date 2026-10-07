@@ -45,6 +45,10 @@ jobs:
           java-version: '8'
           cache: maven
 
+      - name: Guard — no @Ignore hiding known defects
+        shell: bash
+        run: python3 _doc/003_script/check_ignored_bugs.py
+
       - name: Build (compile + unit test)
         run: mvn -B clean install
 

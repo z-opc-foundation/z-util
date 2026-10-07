@@ -991,6 +991,30 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!--
+                栈：JSONParserTest#testParseLongEscapedString 递归深度随输入长度线性增长
+                （2000 个 "a\\\"b" 片段 ≈ 8000 字符），实测该用例需要 ≥ 2MB 栈：
+                -Xss1m 溢出、-Xss2m 通过。而 HotSpot 默认 ThreadStackSize 恰好是
+                2048 KB —— **正卡在临界点上**，于是受 JIT/GC 时机影响而抖动。
+                本机连续跑 3 次就有 1 次 StackOverflowError，GitHub Actions 上线
+                第一次构建即命中（z-util-dsl/z-util-parser-json，Tests run 30 / Errors 1）。
+
+                4m 是 2 倍余量，把该用例从临界点挪到安全区。
+                ⚠️ 这是资源配置，不是修解析器：**递归深度仍随输入线性增长**，
+                传入远超本测试规模的字符串仍会溢出。真要治根需把该路径改成迭代，
+                属于另一件事。
+
+                ⚠️ argLine 是独占项：将来接入 jacoco/coverage 时必须改成
+                @{argLine} 占位符拼接，否则会静默覆盖掉覆盖率注入。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xss4m</argLine>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

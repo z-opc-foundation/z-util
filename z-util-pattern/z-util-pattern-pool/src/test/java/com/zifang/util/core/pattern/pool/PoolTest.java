@@ -259,21 +259,25 @@ public class PoolTest {
     }
 
     @Test
-    @org.junit.Ignore("findPooledObject 是 stub，返回 null，测试无法正常工作")
     /**
      * testPooledObjectMetadata方法。
      */
     public void testPooledObjectMetadata() throws Exception {
-        pool = new StackObjectPool<>(createFactory());
+        // 用具体类型而非字段上的 ObjectPool 接口 —— findPooledObject 只在实现类上
+        StackObjectPool<StringBuffer> stackPool = new StackObjectPool<>(createFactory());
+        pool = stackPool;
 
-        StringBuffer sb1 = pool.borrowObject();
-        PooledObject<StringBuffer> p1 = findPooledObject(sb1);
+        StringBuffer sb1 = stackPool.borrowObject();
+        // 直接问池本身要 PooledObject —— 该方法已从 private 放开为 public。
+        // 此前这里靠一个同名 helper 占位，而那个 helper 直接 return null，
+        // 于是本用例长期被 @Ignore 掩盖（"findPooledObject 是 stub"）。
+        PooledObject<StringBuffer> p1 = stackPool.findPooledObject(sb1);
 
         assertNotNull(p1);
         assertTrue(p1.getBorrowCount() >= 1);
         assertTrue(p1.isIdle() || p1.getState() == PooledObjectState.ALLOCATED);
 
-        pool.returnObject(sb1);
+        stackPool.returnObject(sb1);
         assertTrue(p1.isIdle());
         assertTrue(p1.getIdleTime() >= 0);
     }
@@ -298,7 +302,6 @@ public class PoolTest {
     }
 
     @Test
-    @org.junit.Ignore("KeyedObjectPool.getNumIdle 逻辑问题，需详细调试")
     /**
      * testKeyedObjectPool方法。
      */
@@ -311,11 +314,19 @@ public class PoolTest {
 
         keyedPool.returnObject("key1", sb1);
 
+        // 归还之后：sb1 回到 "key1" 的 idle 栈 ⇒ idle=1、active=0
+        // ⚠️ 原先这两条断言被放在下一次 borrowObject **之后**，而那时 sb2 已经
+        // 把对象借走了，idle 必然是 0、active 必然是 1 —— 于是报 expected 1 but was 0。
+        // 断言时机错了，不是实现错：按语义，idle/active 只在归还后才 +1/-1。
+        assertEquals(1, keyedPool.getNumIdle("key1"));
+        assertEquals(0, keyedPool.getNumActive("key1"));
+
         StringBuffer sb2 = keyedPool.borrowObject("key1");
         assertEquals(0, sb2.length());
 
-        assertEquals(1, keyedPool.getNumIdle("key1"));
-        assertEquals(0, keyedPool.getNumActive("key1"));
+        // 借出之后：对象离开 idle 栈 ⇒ idle=0、active=1
+        assertEquals(0, keyedPool.getNumIdle("key1"));
+        assertEquals(1, keyedPool.getNumActive("key1"));
 
         keyedPool.close();
     }
@@ -413,9 +424,4 @@ public class PoolTest {
         };
     }
 
-    private PooledObject<StringBuffer> findPooledObject(StringBuffer obj) throws Exception {
-        // This is a workaround since we don't have direct access to internal structures
-        // In real usage, you'd have a method to get PooledObject from ObjectPool
-        return null;
     }
-}

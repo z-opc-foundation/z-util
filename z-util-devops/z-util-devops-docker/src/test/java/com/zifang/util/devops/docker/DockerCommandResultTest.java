@@ -2,6 +2,9 @@ package com.zifang.util.devops.docker;
 
 import org.junit.Test;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 /**
@@ -29,16 +32,28 @@ public class DockerCommandResultTest {
     }
 
     @Test
-    @org.junit.Ignore("DockerCommandResult 实现 bug，getData() 和 getStdout() 返回不同值")
     /**
      * testSuccessWithData方法。
      */
     public void testSuccessWithData() {
-        DockerCommandResult<String> result = DockerCommandResult.success("container-id-123");
+        // ⚠️ 这里**必须**用非 String 类型，否则验不到 success(T data) 分支。
+        //
+        // DockerCommandResult 同时有 success(T data)（擦除后 success(Object)）与
+        // success(String stdout) 两个重载。Java 的重载解析取**更具体**的那个，
+        // String 比 Object 具体，所以只要实参是 String，编译器**必然**选
+        // success(String) —— 于是只填 stdout，data 恒为 null。
+        // 换句话说 success(T data) 在 T=String 时是不可达的分支，
+        // testSuccessWithStdout 断言的 getData() == null 正是这个规则的结果，不是 bug。
+        //
+        // 原先这里传的是 String 并期望 getData() 与 getStdout() 同时有值，
+        // 那与 testSuccessWithStdout 用同一个调用方式却要求相反的期望，
+        // 二者在 Java 里不可能同时成立，故按上面的规则改写。
+        List<String> data = Collections.singletonList("container-id-123");
+        DockerCommandResult<List<String>> result = DockerCommandResult.success(data);
 
         assertTrue(result.isSuccess());
-        assertEquals("container-id-123", result.getData());
-        assertEquals("container-id-123", result.getStdout());
+        assertEquals(data, result.getData());
+        assertNull(result.getStdout());
     }
 
     @Test

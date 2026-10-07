@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.FileAlreadyExistsException;
 
 /**
  * Utility class for file and directory copy operations.
@@ -71,7 +72,7 @@ public final class FileCopyUtil {
      * @param overwrite whether to overwrite if the destination already exists
      * @throws IOException          if the source file does not exist, or copying fails
      * @throws NullPointerException if src or dest is {@code null}
-     * @throws FileExistsException  if overwrite is false and dest already exists
+     * @throws FileAlreadyExistsException if overwrite is false and dest already exists
      */
     public static void copyFile(File src, File dest, boolean overwrite) throws IOException {
         if (src == null) {
@@ -87,8 +88,14 @@ public final class FileCopyUtil {
             throw new IOException("Source is not a file: " + src.getAbsolutePath());
         }
         if (!overwrite && dest.exists()) {
-            logger.debug("Destination already exists and overwrite is false, skipping copy: {}", dest.getAbsolutePath());
-            return;
+            // ⚠️ 行为变更：此前这里是「记一行 debug 然后静默 return」，
+            // 与本方法 Javadoc 承诺的「an exception will be thrown」直接矛盾，
+            // 也与 testCopyFileNoOverwriteThrows 的期望矛盾。
+            // 之所以判实现错而非文档错：overwrite=false 的语义是「不要覆盖」，
+            // 静默跳过会让调用方**误以为复制已经完成**，属于更危险的失败方式。
+            // 本仓内部所有 copyFile 调用均使用 overwrite=true，不依赖静默跳过。
+            throw new FileAlreadyExistsException(
+                    "Destination already exists and overwrite is false: " + dest.getAbsolutePath());
         }
 
         // Ensure parent directories exist

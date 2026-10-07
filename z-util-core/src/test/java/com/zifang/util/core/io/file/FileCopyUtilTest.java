@@ -130,13 +130,23 @@ public class FileCopyUtilTest {
         File dest = new File(tempBaseDir, "dest3.txt");
         Files.write(dest.toPath(), "dest".getBytes(StandardCharsets.UTF_8));
 
-        FileCopyUtil.copyFile(src, dest, false);
+        // ⚠️ 本用例原先期望「静默跳过、dest 保持不变」，而
+        // testCopyFileNoOverwriteThrows 期望同一调用抛 FileAlreadyExistsException ——
+        // 二者用完全相同的调用却要求相反的行为，在 Java 里不可能同时成立。
+        // 判实现错：Javadoc 明写 "an exception will be thrown"，且静默跳过会让
+        // 调用方误以为复制已完成。现改为断言抛异常，并保留「dest 未被改写」这一
+        // testCopyFileNoOverwriteThrows 未覆盖的点。
+        try {
+            FileCopyUtil.copyFile(src, dest, false);
+            fail("overwrite=false 且目标已存在时应当抛 FileAlreadyExistsException");
+        } catch (java.nio.file.FileAlreadyExistsException expected) {
+            // 预期
+        }
         // dest should be unchanged
         assertEquals("dest", new String(Files.readAllBytes(dest.toPath()), StandardCharsets.UTF_8));
     }
 
     @Test(expected = java.nio.file.FileAlreadyExistsException.class)
-    @org.junit.Ignore("与 testCopyFileNoOverwrite 行为矛盾，实际应静默跳过")
     /**
      * testCopyFileNoOverwriteThrows方法。
      */

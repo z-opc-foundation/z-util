@@ -27,6 +27,12 @@ public class DockerCommandResult<T> {
     /**
      * 创建包含数据的成功结果
      *
+     * <p>⚠️ <b>重载陷阱</b>：本类同时有本方法（擦除后 {@code success(Object)}）与
+     * {@link #success(String)}。Java 重载解析取<b>更具体</b>的那个，String 比 Object
+     * 具体，因此实参为 String 时<b>必然</b>选中 {@code success(String)}，
+     * {@code data} 恒为 null —— 即本方法在 {@code T=String} 时是不可达分支。
+     * 需要填充 data 时请传非 String 类型（详见 DockerCommandResultTest#testSuccessWithData）。
+     *
      * @param data 结果数据
      * @param <T>  数据类型
      * @return 成功结果对象

@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
 public class ExampleTest {
 
     @Test
-    @Ignore("Num.sum/multiply 实现 bug，结果与预期不符")
     /**
      * testNumBasicOperations方法。
      */
@@ -32,8 +31,14 @@ public class ExampleTest {
         assertEquals(10, arr.size());
 
         // 算术运算
+        // arange(0,10,1) = [0,1,...,9]；multiply(2) = [0,2,4,...,18]；
+        // 求和 = 0+2+4+...+18 = 90.0。
+        // ⚠️ 原先这里期望 18.0 —— 那是**最后一个元素**（max）而不是 sum，
+        // 被误当成总和写进了断言。Num.sum() 实为 reduce((a,b) -> a+b, 0.0)，
+        // 实现一直是对的，错的是期望值（此前被 @Ignore 掩盖）。
         Num doubled = arr.multiply(2);
-        assertEquals(18.0, doubled.sum(), 0.001);
+        assertEquals(90.0, doubled.sum(), 0.001);
+        assertEquals(18.0, doubled.max(), 0.001);
 
         // 统计方法
         assertEquals(4.5, arr.mean(), 0.001);
