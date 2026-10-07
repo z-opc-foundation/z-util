@@ -40,6 +40,25 @@ public class NumRandom {
     // ==================== 简单随机数据 ====================
 
     /**
+     * 校验形状：每一维都必须非负
+     * <p>
+     * 不校验的话，{@code new double[-5]} 抛的是 {@link NegativeArraySizeException}，
+     * 它继承自 {@code RuntimeException} 而<b>不是</b> {@code IllegalArgumentException}，
+     * 调用方按「参数非法」那一族去 catch 就接不住。这里提前拦一层，
+     * 让所有生成器对非法形状给出同一种异常。
+     *
+     * @param shape 形状参数
+     * @throws IllegalArgumentException 任一维度为负
+     */
+    private static void checkShape(int... shape) {
+        for (int i = 0; i < shape.length; i++) {
+            if (shape[i] < 0) {
+                throw new IllegalArgumentException("形状第 " + i + " 维不能为负: " + shape[i]);
+            }
+        }
+    }
+
+    /**
      * 设置默认随机数生成器的种子
      *
      * @param seed 随机种子
@@ -66,6 +85,7 @@ public class NumRandom {
      * @throws UnsupportedOperationException 维度超过 2 时抛出
      */
     public Num rand(int... shape) {
+        checkShape(shape);
         if (shape.length == 1) {
             double[] array = new double[shape[0]];
             for (int i = 0; i < shape[0]; i++) {
@@ -92,6 +112,7 @@ public class NumRandom {
      * @throws UnsupportedOperationException 维度超过 2 时抛出
      */
     public Num randn(int... shape) {
+        checkShape(shape);
         if (shape.length == 1) {
             double[] array = new double[shape[0]];
             for (int i = 0; i < shape[0]; i++) {
@@ -122,6 +143,7 @@ public class NumRandom {
      * @throws UnsupportedOperationException 维度超过 2 时抛出
      */
     public Num randint(int low, int high, int... shape) {
+        checkShape(shape);
         if (shape.length == 0) {
             return new Num(new int[]{random.nextInt(high - low) + low});
         } else if (shape.length == 1) {
@@ -161,6 +183,7 @@ public class NumRandom {
      * @throws UnsupportedOperationException 维度超过 2 时抛出
      */
     public Num normal(double loc, double scale, int... shape) {
+        checkShape(shape);
         if (shape.length == 0) {
             return new Num(new double[]{random.nextGaussian() * scale + loc});
         } else if (shape.length == 1) {
@@ -203,6 +226,7 @@ public class NumRandom {
      * @throws UnsupportedOperationException 维度超过 2 时抛出
      */
     public Num uniform(double low, double high, int... shape) {
+        checkShape(shape);
         if (shape.length == 0) {
             return new Num(new double[]{random.nextDouble() * (high - low) + low});
         } else if (shape.length == 1) {

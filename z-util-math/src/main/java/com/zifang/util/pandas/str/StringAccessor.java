@@ -25,6 +25,12 @@ public class StringAccessor {
      */
     public StringAccessor(Series series) {
         this.series = series;
+        // 优先用 Series 保留的字符串本体；数值构造的 Series 没有本体，才走数值格式化
+        String[] strings = series.stringValues();
+        if (strings != null) {
+            this.stringData = strings.clone();
+            return;
+        }
         // 将 Series 中的数值数据转换为字符串
         double[] data = series.toArray();
         this.stringData = new String[data.length];

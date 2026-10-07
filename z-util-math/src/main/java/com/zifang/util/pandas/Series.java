@@ -20,6 +20,20 @@ public class Series {
     private String name;
     private DType dtype;
 
+    /**
+     * 由 {@code String[]} 构造时保留的字符串本体；其余构造路径为 {@code null}
+     * <p>
+     * 背景：{@link Num} 只存 {@code double[]}，所以 {@code Series} 由字符串数组构造时
+     * 不得不把「解析不出数字的元素」降级成它的下标（见构造函数里的 {@code String[]} 分支）。
+     * 字符串本体如果就此丢弃，{@link com.zifang.util.pandas.str.StringAccessor}
+     * 就再也拿不到 {@code "Hello World"} —— 只能读到 {@code 0}，
+     * 于是 {@code length()} 全是 1、{@code contains("World")} 恒为 0。
+     * <p>
+     * 这里把原始字符串另存一份，供 StringAccessor 优先取用；
+     * 数值路径（{@code new Series(double[])}）没有字符串，置 {@code null}。
+     */
+    private String[] stringValues;
+
     // ==================== 构造函数 ====================
 
     /**
@@ -89,6 +103,8 @@ public class Series {
                 }
             }
             this.data = new Num(numericValues);
+            // 数值化之后字符串就没了，另存一份原始本体给 StringAccessor 用
+            this.stringValues = strArray.clone();
         } else {
             throw new IllegalArgumentException("Unsupported data type: " + data.getClass());
         }
@@ -116,18 +132,10 @@ public class Series {
      * @return 新创建的 Series 对象
      */
     public static Series of(String[] values) {
-        // 将字符串值转换为数值索引，同时保留字符串信息
-        double[] numericValues = new double[values.length];
-        for (int i = 0; i < values.length; i++) {
-            try {
-                // 尝试将字符串解析为数字
-                numericValues[i] = Double.parseDouble(values[i]);
-            } catch (NumberFormatException e) {
-                // 如果不是数字，使用索引作为值
-                numericValues[i] = i;
-            }
-        }
-        return new Series(numericValues, Index.of(values), "string_series", null);
+        // 直接交给主构造函数处理：数值化（下标兜底）与保留字符串本体都在那里做。
+        // ⚠️ 以前这里自己先算出 double[] 再传进去，字符串本体就永久丢了，
+        //    StringAccessor 于是只能拿到下标。
+        return new Series(values, Index.of(values), "string_series", null);
     }
 
 
@@ -1255,6 +1263,15 @@ public class Series {
      */
     public DType dtype() {
         return dtype;
+    }
+
+    /**
+     * stringValues方法。
+     *
+     * @return 由 {@code String[]} 构造时保留的字符串本体；数值构造时为 {@code null}
+     */
+    public String[] stringValues() {
+        return stringValues == null ? null : stringValues.clone();
     }
 
     // ==================== 数据导出 ====================

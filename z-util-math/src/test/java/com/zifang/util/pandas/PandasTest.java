@@ -232,7 +232,6 @@ public class PandasTest {
         Pandas.seed(42);
     }
 
-    @Ignore
     @Test
     /**
      * testCSVReadWrite方法。

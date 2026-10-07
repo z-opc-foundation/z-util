@@ -14,7 +14,18 @@ public class CSVWriter {
     private char delimiter = ',';
     private char quoteChar = '"';
     private boolean includeHeader = true;
-    private boolean includeIndex = true;
+    /**
+     * 是否写出索引列 —— <b>默认 false</b>
+     * <p>
+     * 以前默认是 true，于是写出的 CSV 第一列叫 {@code index}，
+     * 而 {@link CSVReader} 没有与之对应的开关，会把它当成一个普通数据列读回来：
+     * 2 列的 DataFrame 往返一次变成 3 列（多出来的全列 NaN）。
+     * 写和读必须对称，所以默认不写索引列；确实需要时调 {@link #includeIndex(boolean)}。
+     * <p>
+     * ⚠️ 已知缺口：打开本开关后，{@code CSVReader} 目前仍无法把这列还原成行标签，
+     * 会把它当普通列读入。
+     */
+    private boolean includeIndex = false;
     private String encoding = "UTF-8";
     private String lineEnding = "\n";
     private boolean quoteAll = false;

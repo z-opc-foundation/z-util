@@ -45,7 +45,6 @@ public class HttpServerRequestHandlerTest {
         assertNotNull(handler);
     }
 
-    @Ignore
     @Test
     /**
      * testGetMappingInfo方法。
@@ -60,7 +59,27 @@ public class HttpServerRequestHandlerTest {
         requestLine.setUrl("/test");
         definition.setHttpRequestLine(requestLine);
 
-        // This will throw because the method mapping isn't found, but it shows the code works
+        // ⚠️ 这里<b>不会</b>因为 "/api" 前缀而找不到：HttpServerRequestHandler 的路由键
+        // 用的是方法注解里的原始路径（getPath() 返回 "/test"），
+        // 它不像 HttpServerBuilder 那样把 @RestController 的值拼进键。
+        // 所以 GET /test 是能路由到 testMethod 的，直接断言返回值。
+        assertEquals("test", handler.handleRequest(definition));
+    }
+
+    @Test
+    /**
+     * testHandleRequestWithUnknownPath方法。
+     */
+    public void testHandleRequestWithUnknownPath() {
+        TestController controller = new TestController();
+        HttpServerRequestHandler handler = new HttpServerRequestHandler(controller);
+
+        HttpRequestDefinition definition = new HttpRequestDefinition();
+        HttpRequestLine requestLine = new HttpRequestLine();
+        requestLine.setRequestMethod(RequestMethod.GET);
+        requestLine.setUrl("/not-registered");
+        definition.setHttpRequestLine(requestLine);
+
         try {
             handler.handleRequest(definition);
             fail("Expected RuntimeException");

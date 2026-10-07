@@ -2,10 +2,11 @@ package com.zifang.util.pandas.matrix;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 /**
  * Matrix 类测试
@@ -138,14 +139,16 @@ public class MatrixTest {
     /**
      * testSliceNotImplemented方法。
      */
-    public void testSliceNotImplemented() {
+    public void testSlice() {
         Matrix matrix = new Matrix();
         matrix.set(1.0, 2.0, 3.0);
         matrix.set(4.0, 5.0, 6.0);
 
-        // 当前方法为空实现
         List<List<Double>> result = matrix.slice();
-        assertNull(result);
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(Arrays.asList(1.0, 2.0, 3.0), result.get(0));
+        assertEquals(Arrays.asList(4.0, 5.0, 6.0), result.get(1));
     }
 
     @Test

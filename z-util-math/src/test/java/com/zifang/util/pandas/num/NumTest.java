@@ -137,7 +137,6 @@ public class NumTest {
         assertEquals(9, num.size());
     }
 
-    @Ignore
     @Test
     /**
      * testToString方法。
@@ -188,7 +187,6 @@ public class NumTest {
         assertEquals(1, num.nDim());
     }
 
-    @Ignore
     @Test
     /**
      * testJaggedArray方法。

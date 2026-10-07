@@ -34,7 +34,6 @@ public class StringAccessorTest {
         numericSeries = new Series(nums);
     }
 
-    @Ignore
     @Test
     /**
      * testLength方法。
@@ -46,7 +45,7 @@ public class StringAccessorTest {
         assertEquals(5, result.length());
         assertEquals(11.0, result.toArray()[0], 0.001);  // "Hello World"
         assertEquals(16.0, result.toArray()[1], 0.001); // "JAVA Programming"
-        assertEquals(16.0, result.toArray()[2], 0.001); // "  Test String  "
+        assertEquals(15.0, result.toArray()[2], 0.001); // "  Test String  " = 2+11+2
     }
 
     @Test
@@ -110,7 +109,6 @@ public class StringAccessorTest {
         assertNotNull(result);
     }
 
-    @Ignore
     @Test
     /**
      * testContains方法。

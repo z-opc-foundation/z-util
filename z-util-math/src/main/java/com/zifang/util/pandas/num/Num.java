@@ -133,12 +133,19 @@ public class Num {
     /**
      * 创建单位矩阵，类似于 numpy.eye()
      *
-     * @param i 矩阵维度
-     * @return 单位矩阵
-     * @throws RuntimeException 暂未实现
+     * @param i 矩阵维度（方阵边长）
+     * @return 单位矩阵：主对角线上为 1.0，其余为 0.0
+     * @throws IllegalArgumentException 如果维度为负
      */
     public static Num eye(int i) {
-        throw new RuntimeException();
+        if (i < 0) {
+            throw new IllegalArgumentException("矩阵维度不能为负: " + i);
+        }
+        double[][] matrix = new double[i][i];
+        for (int r = 0; r < i; r++) {
+            matrix[r][r] = 1.0;
+        }
+        return new Num(matrix);
     }
 
     // ==================== 算术运算 ====================
@@ -458,7 +465,41 @@ public class Num {
      * @return String类型返回值
      */
     public String toString() {
-        return "Num(shape=" + Arrays.toString(shape) + ", dtype=" + dType + ", data=" + Arrays.deepToString((Object[]) array) + ")";
+        return "Num(shape=" + Arrays.toString(shape) + ", dtype=" + dType + ", data=" + deepToString(array) + ")";
+    }
+
+    /**
+     * 递归打印任意维度的数组
+     * <p>
+     * ⚠️ 这里<b>不能</b>用 {@code Arrays.deepToString((Object[]) array)}：
+     * Java 的数组协变只对引用类型成立，{@code int[]} 是基本类型数组，
+     * <b>不是</b> {@code Object[]} 的子类型，强转会抛
+     * {@code ClassCastException: [I cannot be cast to [Ljava.lang.Object;}。
+     * {@code Arrays.deepToString} 又只接受 {@code Object[]}，
+     * 所以基本类型数组（含 {@code double[]}）同样进不去。
+     * <p>
+     * 改用反射逐元素读：{@link java.lang.reflect.Array#get(Object, int)}
+     * 对引用数组和基本类型数组都成立，且返回的元素会装箱，
+     * 于是递归时又落回 {@code String.valueOf}。
+     * <p>
+     * 注：{@code char[]} 会打印成 {@code [a, b]} 而不是 {@code ab} —— 按 numpy 语义处理。
+     *
+     * @param arr 待打印的数组（不保证是数组，不是数组时直接 {@code toString}）
+     * @return 形如 {@code [1.0, 2.0]} 或 {@code [[1.0], [2.0]]} 的文本
+     */
+    private static String deepToString(Object arr) {
+        if (arr == null || !arr.getClass().isArray()) {
+            return String.valueOf(arr);
+        }
+        int length = java.lang.reflect.Array.getLength(arr);
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(deepToString(java.lang.reflect.Array.get(arr, i)));
+        }
+        return sb.append(']').toString();
     }
 
     /**
@@ -534,11 +575,33 @@ public class Num {
         return result;
     }
 
+    /**
+     * 元素总数：<b>递归数出实际元素个数</b>，而不是各维长度相乘
+     * <p>
+     * 两者只在矩形数组上相等。对不规则（jagged）数组
+     * {@code {{1,2,3},{4,5},{6}}}：
+     * <ul>
+     *   <li>相乘：首行 3、长度 3 ⇒ 3×3 = <b>9</b>，凭空多出 3 个不存在的元素</li>
+     *   <li>实际：3+2+1 = <b>6</b></li>
+     * </ul>
+     * {@link #computeShape()} 只沿第 0 个元素下钻，对不规则数组取到的就是首行的长度，
+     * 所以不能再拿 shape 去乘。
+     */
     private int computeSize() {
-        if (shape.length == 0) return 0;
-        int total = 1;
-        for (int dim : shape) {
-            total *= dim;
+        return countElements(array);
+    }
+
+    /**
+     * 递归统计数组里的叶子元素个数；非数组对象算 1 个元素
+     */
+    private static int countElements(Object arr) {
+        if (arr == null || !arr.getClass().isArray()) {
+            return 1;
+        }
+        int length = java.lang.reflect.Array.getLength(arr);
+        int total = 0;
+        for (int i = 0; i < length; i++) {
+            total += countElements(java.lang.reflect.Array.get(arr, i));
         }
         return total;
     }

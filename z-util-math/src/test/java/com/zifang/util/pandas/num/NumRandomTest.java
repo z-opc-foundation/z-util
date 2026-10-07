@@ -51,7 +51,6 @@ public class NumRandomTest {
         // 应该返回空数组或 null
     }
 
-    @Ignore
     @Test
     /**
      * testRandWithNegativeSize方法。

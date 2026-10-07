@@ -87,7 +87,6 @@ public class ExampleTest {
         assertEquals(15.0, sums.get(1), 0.001);
     }
 
-    @Ignore
     @Test
     /**
      * testLinearAlgebra方法。
@@ -126,7 +125,6 @@ public class ExampleTest {
         assertEquals(1.0, sumSquares.mean(), 0.001);
     }
 
-    @Ignore
     @Test
     /**
      * testRandomNumbers方法。
@@ -140,7 +138,11 @@ public class ExampleTest {
         assertEquals(10, rand.size());
 
         // 生成正态分布
-        Num normal = Nums.random.normal(0, 1, 1000);
+        // ⚠️ 必须写 0.0/1.0：写成 normal(0, 1, 1000) 三个 int 字面量会被解析到
+        // normal(int... shape) 而不是 normal(double loc, double scale, int... shape)
+        // —— varargs 适用性比较里 (int,int,int) 比 (double,double,int) 更具体。
+        // 那样 shape 会变成 {0, 1, 1000}，直接撞 "Shape dimensions > 2"。
+        Num normal = Nums.random.normal(0.0, 1.0, 1000);
         assertEquals(1000, normal.size());
 
         // 均值的期望值接近 0
