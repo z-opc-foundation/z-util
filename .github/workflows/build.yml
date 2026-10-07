@@ -32,14 +32,21 @@ concurrency:
 jobs:
   build:
     name: JDK 8 compile + test
-    runs-on: ubuntu-latest
+    # ⚠️ 刻意**固定** ubuntu-26.04，不用 ubuntu-latest。
+    # 官方 runner-images 公告：`ubuntu-latest` 将切到 Ubuntu 26.04
+    # （公告写 November 2026，CI 的 annotation 写 October 19，两处日期不一致），
+    # 而 Ubuntu 22.04 基础镜像已于 9/17 起进入 deprecation。
+    # 与其到那天被动挨打，不如现在就钉住版本并把「26.04 上到底能不能跑」
+    # 这件事**验证掉**——JDK 8 与 xvfb 都与 26.04 有过兼容问题的传闻。
+    # 切换动作：把 ubuntu-latest 改成 ubuntu-26.04 即可，记得重跑一次确认。
+    runs-on: ubuntu-26.04
     timeout-minutes: 40
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: corretto
           java-version: '8'
