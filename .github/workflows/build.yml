@@ -1,0 +1,77 @@
+# 全量构建 + 单元测试。
+#
+# 为什么需要它：z-util 曾在 main 上带着一个 JGit 5.13.4 坏件
+# （class major 全是 52，却含 JDK 9 才有的协变签名 ByteBuffer.mark()Ljava/nio/ByteBuffer;），
+# 导致 z-util-devops-git 及其**下游全部模块**长期处于未测状态 ——
+# 而本仓此前**没有任何 CI**，坏依赖因此静悄悄留在 main 上。
+# 该缺陷能通过任何基于 class major 的 Java 8 兼容性检查，只有一跑就现形。
+#
+# 命令选型：
+#   - 不带 -Pcentral：central profile 会开启 gpg 签名与 javadoc 附件，CI 不需要
+#   - 不带 -P sandbox：z-util-zex 是练习代码（含 SocketTest001 等），默认不参与构建
+#   - 不加 -T   ：单线程日志可读，出错时上下文不会被并行交错打散
+#
+# ⚠️ 本 CI **抓不到被 @Ignore 掩盖的既有缺陷**：
+# z-util 现有 21 处 @Ignore（展开成 33 个跳过用例），其中作者自己写明原因的包括
+# 「Num.sum/multiply 实现 bug」「DockerCommandResult 实现 bug」
+# 「findPooledObject 是 stub，返回 null」「KeyedObjectPool.getNumIdle 逻辑问题」。
+# 这些用例永远跳过，构建永远绿。CI 只能拦住**新的**坏依赖与**新引入的**失败。
+
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: JDK 8 compile + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '8'
+          cache: maven
+
+      - name: Build (compile + unit test)
+        run: mvn -B clean install
+
+      # 口径说明：只认 surefire XML，不认日志行求和。
+      # 原因有二 ——
+      #   1) 日志里「单测试类行」与「模块汇总行」混在一起，累加会重复计数
+      #      （曾据此报出 11934，真值 5827）；
+      #   2) 聚合模块的 target/ 下会同时出现子模块的报告，同名测试类要取
+      #      **模块路径更深**的那份，否则重复统计。
+      - name: Test summary
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          best = {}
+          for x in glob.glob('**/target/surefire-reports/TEST-*.xml', recursive=True):
+              try:
+                  r = ET.parse(x).getroot()
+              except Exception:
+                  continue
+              mod = x.split('/target/')[0]
+              key = r.get('name')
+              if key not in best or len(mod) > len(best[key][0]):
+                  best[key] = (mod, r)
+          def tot(a):
+              return sum(int(r.get(a, 0)) for _, r in best.values())
+          print("测试类 %d / 用例 %d / 失败 %d / 错误 %d / 跳过 %d"
+                % (len(best), tot('tests'), tot('failures'), tot('errors'), tot('skipped')))
+          PY
