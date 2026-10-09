@@ -97,3 +97,7 @@
 /.cache/
 **/__pycache__/
 *.pyc
+
+# 前端 node_modules / dist
+_frontend/**/node_modules/
+_frontend/**/dist/
