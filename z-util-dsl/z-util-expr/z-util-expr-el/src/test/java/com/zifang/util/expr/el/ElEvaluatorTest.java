@@ -67,6 +67,26 @@ public class ElEvaluatorTest {
         assertEquals(6, ((Number) result).intValue());
     }
 
+    /**
+     * R2-P0-2：除法遇整型自动提升小数。{@code 7 / 2 = 3} 在 SQL/AI 管线里是 KPI 比率陷阱，
+     * 老 EL 求值是整除 3，消费方被迫手写 {@code 7*1.0/2}。这里回归点：除法必须以真除小数落地。
+     */
+    @Test
+    public void r2_p0_2_integerDivisionPromotesToDouble() {
+        Object result = evaluator.eval("7 / 2");
+        assertTrue("整数相除应得小数, 实际: " + result.getClass() + "=" + result,
+                result instanceof Double);
+        assertEquals(3.5d, (Double) result, 1e-9);
+
+        Object sumOverCount = evaluator.eval("100 / 4");
+        assertTrue(sumOverCount instanceof Double);
+        assertEquals(25.0d, (Double) sumOverCount, 1e-9);
+
+        Object nested = evaluator.eval("((10 + 5) / 2) - 5");
+        assertTrue(nested instanceof Double);
+        assertEquals(2.5d, (Double) nested, 1e-9);
+    }
+
     @Test
     public void testEvalNegativeNumbers() {
         Object result = evaluator.eval("-5 + 10");

@@ -84,14 +84,10 @@ public class DialectSqlTest {
         assertEquals(" LIMIT 20", mysql.limitClause(0, 20));
         assertEquals(" LIMIT 20 OFFSET 40", mysql.limitClause(40, 20));
         assertEquals("", mysql.limitClause(0, -1));
+        // offset 缺省（负值）= 不拼 OFFSET，不再报错；调用方不必每次手动归零。
+        assertEquals(" LIMIT 10", mysql.limitClause(-1, 10));
         assertEquals("SELECT COUNT(*) FROM (SELECT * FROM t) z_cnt", mysql.countSql("SELECT * FROM t"));
         assertEquals("SELECT 1", mysql.validationQuery());
-        try {
-            mysql.limitClause(-1, 10);
-            fail("负 offset 应报错");
-        } catch (IllegalArgumentException expected) {
-            assertTrue(expected.getMessage().contains("offset"));
-        }
     }
 
     @Test

@@ -306,30 +306,80 @@ public final class SqlFunctions {
     // ===================== 日期/时间函数 =====================
 
     @SqlFunction("NOW")
-    public static Object now(Map<String, Object> row, Object... fmt) {
-        LocalDateTime ldt = LocalDateTime.now();
-        if (fmt != null && fmt.length > 0 && fmt[0] != null) {
-            return ldt.format(DateTimeFormatter.ofPattern(fmt[0].toString()));
+    public static Object now(Map<String, Object> row, Object... args) {
+        java.time.ZoneId zone = resolveZone(safeArg(args, 0));
+        java.time.LocalDateTime ldt = LocalDateTime.now(zone);
+        Object fmtArg = safeArg(args, 1);
+        if (fmtArg != null) {
+            return ldt.format(DateTimeFormatter.ofPattern(fmtArg.toString()));
         }
         return ldt;
     }
 
+    /**
+     * 当前时刻的 epoch 毫秒数（Long）。配合 EL 的 {@code /} 自动提升小数，
+     * 数值时间戳列可直接 {@code WHERE ts >= NOW_MS() - 7*86400000}。
+     */
+    @SqlFunction("NOW_MS")
+    public static Object now_ms(Map<String, Object> row, Object... args) {
+        java.time.ZoneId zone = resolveZone(safeArg(args, 0));
+        return java.time.ZonedDateTime.now(zone).toInstant().toEpochMilli();
+    }
+
+    /**
+     * {@code DATE_SUB(d, 7, 'DAY')} 与 {@link #date_add} 同义；语义上保留减号更直观。
+     */
+    @SqlFunction("DATE_SUB")
+    public static Object date_sub(Map<String, Object> row, Object date, Object interval, Object unit) {
+        if (interval == null) return date;
+        long n = Long.parseLong(interval.toString());
+        return date_add(row, date, -n, unit);
+    }
+
     @SqlFunction("CURDATE")
-    public static Object curdate(Map<String, Object> row, Object... fmt) {
-        LocalDate ld = LocalDate.now();
-        if (fmt != null && fmt.length > 0 && fmt[0] != null) {
-            return ld.format(DateTimeFormatter.ofPattern(fmt[0].toString()));
+    public static Object curdate(Map<String, Object> row, Object... args) {
+        java.time.ZoneId zone = resolveZone(safeArg(args, 0));
+        java.time.LocalDate ld = LocalDate.now(zone);
+        Object fmtArg = safeArg(args, 1);
+        if (fmtArg != null) {
+            return ld.format(DateTimeFormatter.ofPattern(fmtArg.toString()));
         }
         return ld;
     }
 
+    @SqlFunction("TODAY")
+    public static Object today(Map<String, Object> row, Object... args) {
+        return curdate(row, args);
+    }
+
     @SqlFunction("CURTIME")
-    public static Object curtime(Map<String, Object> row, Object... fmt) {
-        LocalTime lt = LocalTime.now();
-        if (fmt != null && fmt.length > 0 && fmt[0] != null) {
-            return lt.format(DateTimeFormatter.ofPattern(fmt[0].toString()));
+    public static Object curtime(Map<String, Object> row, Object... args) {
+        java.time.ZoneId zone = resolveZone(safeArg(args, 0));
+        java.time.LocalTime lt = LocalTime.now(zone);
+        Object fmtArg = safeArg(args, 1);
+        if (fmtArg != null) {
+            return lt.format(DateTimeFormatter.ofPattern(fmtArg.toString()));
         }
         return lt;
+    }
+
+    private static Object safeArg(Object[] args, int index) {
+        return args != null && args.length > index ? args[index] : null;
+    }
+
+    private static java.time.ZoneId resolveZone(Object arg) {
+        if (arg == null) {
+            return java.time.ZoneId.systemDefault();
+        }
+        String s = arg.toString().trim();
+        if (s.isEmpty()) {
+            return java.time.ZoneId.systemDefault();
+        }
+        try {
+            return java.time.ZoneId.of(s);
+        } catch (Exception e) {
+            return java.time.ZoneId.systemDefault();
+        }
     }
 
     @SqlFunction("YEAR")
@@ -459,9 +509,26 @@ public final class SqlFunctions {
     public static Object date_add(Map<String, Object> row, Object date, Object interval, Object unit) {
         if (date == null) return null;
         try {
-            LocalDateTime ldt = date instanceof LocalDateTime ? (LocalDateTime) date : LocalDateTime.parse(date.toString());
             long amount = Long.parseLong(interval.toString());
             String u = unit.toString().toUpperCase();
+            if (date instanceof LocalDate) {
+                LocalDate ld = (LocalDate) date;
+                switch (u) {
+                    case "DAY":
+                        return ld.plusDays(amount);
+                    case "MONTH":
+                        return ld.plusMonths(amount);
+                    case "YEAR":
+                        return ld.plusYears(amount);
+                    case "HOUR":
+                    case "MINUTE":
+                    case "SECOND":
+                        return ld.atStartOfDay().plus(amount, java.time.temporal.ChronoUnit.valueOf(u));
+                    default:
+                        return ld.plusDays(amount);
+                }
+            }
+            LocalDateTime ldt = date instanceof LocalDateTime ? (LocalDateTime) date : LocalDateTime.parse(date.toString());
             switch (u) {
                 case "DAY":
                     return ldt.plusDays(amount);
@@ -481,6 +548,70 @@ public final class SqlFunctions {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * 时间分桶一等公民：{@code BUCKET(date_col, 'DAY'|'HOUR'|'WEEK'|'MONTH'|'YEAR'|'MINUTE')}。
+     * 产出字符串桶键，可直接 {@code GROUP BY BUCKET(ts, 'DAY')}；比对 {@code DATE_FORMAT} + 各种标量函数别名更稳。
+     */
+    @SqlFunction("BUCKET")
+    public static Object bucket(Map<String, Object> row, Object date, Object unit) {
+        if (date == null || unit == null) {
+            return null;
+        }
+        String u = unit.toString().toUpperCase();
+        switch (u) {
+            case "YEAR":
+                return String.valueOf(toLocalDateTime(date).getYear());
+            case "MONTH":
+                return toLocalDateTime(date).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            case "WEEK": {
+                java.time.LocalDate ld = toLocalDate(date);
+                java.time.temporal.WeekFields wf = java.time.temporal.WeekFields.ISO;
+                int yr = ld.get(wf.weekBasedYear());
+                int wk = ld.get(wf.weekOfWeekBasedYear());
+                return String.format("%d-W%02d", yr, wk);
+            }
+            case "DAY":
+                return toLocalDate(date).toString();
+            case "HOUR":
+                return toLocalDateTime(date).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
+            case "MINUTE":
+                return toLocalDateTime(date).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            default:
+                return toLocalDateTime(date).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+    }
+
+    private static java.time.LocalDateTime toLocalDateTime(Object v) {
+        if (v instanceof java.time.LocalDateTime) {
+            return (java.time.LocalDateTime) v;
+        }
+        if (v instanceof java.time.LocalDate) {
+            return ((java.time.LocalDate) v).atStartOfDay();
+        }
+        if (v instanceof java.util.Date) {
+            return ((java.util.Date) v).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+        }
+        String s = v.toString();
+        if (s.length() == 10) {
+            return java.time.LocalDate.parse(s).atStartOfDay();
+        }
+        return java.time.LocalDateTime.parse(s);
+    }
+
+    private static java.time.LocalDate toLocalDate(Object v) {
+        if (v instanceof java.time.LocalDate) {
+            return (java.time.LocalDate) v;
+        }
+        if (v instanceof java.time.LocalDateTime) {
+            return ((java.time.LocalDateTime) v).toLocalDate();
+        }
+        if (v instanceof java.util.Date) {
+            return ((java.util.Date) v).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        }
+        String s = v.toString();
+        return java.time.LocalDate.parse(s.length() >= 10 ? s.substring(0, 10) : s);
     }
 
     // ===================== 条件/空值函数 =====================

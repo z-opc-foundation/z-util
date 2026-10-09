@@ -71,7 +71,7 @@
              （expr-sql 八项消费方反馈）先占下中央槽位（2026-10-04T17:38Z PUBLISHED），而中央
              版本不可覆盖 ⇒ 只能另发新版。核对凭据：repo1 的 z-util-parser-json-1.0.18-sources.jar
              里 BeautifyJsonUtils 无 escape、JsonUtil 比 main 少 200 行。 -->
-        <revision>1.0.19</revision>
+        <revision>1.0.20</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，

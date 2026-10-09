@@ -214,10 +214,21 @@ public final class ElExpression {
 
     private static Object subtract(Object l, Object r) { return arith(l, r, '-'); }
     private static Object multiply(Object l, Object r) { return arith(l, r, '*'); }
-    private static Object divide(Object l, Object r) { return arith(l, r, '/'); }
+    /**
+     * 除法始终走小数：两整数相除 SQL/AI 管线里期望得到真除（{@code a/b} 小数），
+     * 整除会把 {@code SUM(x)/COUNT(*)} 这种 KPI 比率悄悄截掉。其它运算符保留整型优先。
+     */
+    private static Object divide(Object l, Object r) {
+        if (l == null || r == null) {
+            return null;
+        }
+        double a = toDouble(l), b = toDouble(r);
+        return b == 0d ? null : a / b;
+    }
 
     /**
      * 类型保留算术：整数 + 整数 = 整数（long），其他 = double。
+     * 除法与取模自己走专用路径。
      */
     private static Object arith(Object l, Object r, char op) {
         if (isInteger(l) && isInteger(r)) {
@@ -228,7 +239,6 @@ public final class ElExpression {
                 case '+': res = a + b; break;
                 case '-': res = a - b; break;
                 case '*': res = a * b; break;
-                case '/': res = a / b; break;
                 default: throw new ElException("Unknown op: " + op);
             }
             if (res >= Integer.MIN_VALUE && res <= Integer.MAX_VALUE) return (int) res;
@@ -239,7 +249,6 @@ public final class ElExpression {
             case '+': return a + b;
             case '-': return a - b;
             case '*': return a * b;
-            case '/': return a / b;
             default: throw new ElException("Unknown op: " + op);
         }
     }

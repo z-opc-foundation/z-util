@@ -50,12 +50,12 @@ public abstract class AbstractDialect implements Dialect {
         if (limit < 0) {
             return "";
         }
-        if (offset < 0) {
-            throw new IllegalArgumentException("offset 不能为负: " + offset);
-        }
+        // offset < 0 一律视作「未设置」（Query 类字段的缺省值就是 -1），直接当成 0 处理，
+        // 省得调用方每次都把 offset 显式归零；只有真正 > 0 时才拼 OFFSET。
+        long effectiveOffset = Math.max(0L, offset);
         StringBuilder sb = new StringBuilder(" LIMIT ").append(limit);
-        if (offset > 0) {
-            sb.append(" OFFSET ").append(offset);
+        if (effectiveOffset > 0) {
+            sb.append(" OFFSET ").append(effectiveOffset);
         }
         return sb.toString();
     }

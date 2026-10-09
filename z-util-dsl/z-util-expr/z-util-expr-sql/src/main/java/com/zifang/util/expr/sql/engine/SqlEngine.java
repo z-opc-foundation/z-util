@@ -417,16 +417,48 @@ public class SqlEngine {
 
     // ==================== 隐式聚合 ====================
 
+    /**
+     * 递归扫描一个表达式树里是否出现聚合函数。
+     * <p>
+     * 顶层只是 {@code SUM(x)*1.0/COUNT(*)} 这种 BinaryExpr 时，原来的"只看顶层
+     * {@code FunctionCall}"会把隐式聚合漏判，逐行退化返回 N 行；这里改成深度优先。
+     */
     private boolean hasAggregateFunction(List<Expression> selectItems) {
         for (Expression item : selectItems) {
-            Expression expr = item instanceof AliasedExpr ? ((AliasedExpr) item).getExpression() : item;
-            if (expr instanceof FunctionCall) {
-                String name = ((FunctionCall) expr).getName();
-                if ("COUNT".equals(name) || "SUM".equals(name) || "AVG".equals(name)
-                        || "MAX".equals(name) || "MIN".equals(name)) {
-                    return true;
-                }
+            if (containsAggregate(item)) {
+                return true;
             }
+        }
+        return false;
+    }
+
+    private boolean containsAggregate(Expression expr) {
+        if (expr == null) {
+            return false;
+        }
+        if (expr instanceof FunctionCall) {
+            return AGGREGATE_FUNCTIONS.contains(((FunctionCall) expr).getName());
+        }
+        if (expr instanceof AliasedExpr) {
+            return containsAggregate(((AliasedExpr) expr).getExpression());
+        }
+        if (expr instanceof BinaryExpr) {
+            return containsAggregate(((BinaryExpr) expr).getLeft())
+                    || containsAggregate(((BinaryExpr) expr).getRight());
+        }
+        if (expr instanceof UnaryExpr) {
+            return containsAggregate(((UnaryExpr) expr).getOperand());
+        }
+        if (expr instanceof CastExpr) {
+            return containsAggregate(((CastExpr) expr).getExpression());
+        }
+        if (expr instanceof BetweenExpr) {
+            return containsAggregate(((BetweenExpr) expr).getExpression())
+                    || containsAggregate(((BetweenExpr) expr).getLow())
+                    || containsAggregate(((BetweenExpr) expr).getHigh());
+        }
+        if (expr instanceof InExpr) {
+            return containsAggregate(((InExpr) expr).getExpression());
         }
         return false;
     }
@@ -437,13 +469,104 @@ public class SqlEngine {
         for (Expression item : selectItems) {
             String outputName = getExprOutputName(item);
             Expression expr = item instanceof AliasedExpr ? ((AliasedExpr) item).getExpression() : item;
-            if (expr instanceof FunctionCall && isAggregateCall((FunctionCall) expr)) {
-                resultRow.put(outputName, evaluateAggregateFunction((FunctionCall) expr, rows));
-            } else {
-                resultRow.put(outputName, evaluate(expr, rows.isEmpty() ? Collections.emptyMap() : rows.get(0)));
-            }
+            resultRow.put(outputName, evaluateForImplicitAggregate(expr, rows));
         }
         return Collections.singletonList(resultRow);
+    }
+
+    /**
+     * 隐式聚合求值：表达式树里聚合函数走全集，非聚合节点走首行（同 SQL 同义）。
+     * 让 {@code SUM(x)*1.0/COUNT(*)} 这种包裹聚合整棵子树都能在隐式聚合模式下拿到单行结果。
+     */
+    private Object evaluateForImplicitAggregate(Expression expr, List<Map<String, Object>> rows) {
+        if (rows.isEmpty()) {
+            return null;
+        }
+        if (expr instanceof FunctionCall && isAggregateCall((FunctionCall) expr)) {
+            return evaluateAggregateFunction((FunctionCall) expr, rows);
+        }
+        if (expr instanceof AliasedExpr) {
+            return evaluateForImplicitAggregate(((AliasedExpr) expr).getExpression(), rows);
+        }
+        if (expr instanceof BinaryExpr) {
+            BinaryExpr bin = (BinaryExpr) expr;
+            Object l = evaluateForImplicitAggregate(bin.getLeft(), rows);
+            Object r = evaluateForImplicitAggregate(bin.getRight(), rows);
+            switch (bin.getOperator()) {
+                case "=": case "==": return numericEquals(l, r);
+                case "<>": case "!=": return !numericEquals(l, r);
+                case "<": return compareValues(l, r) < 0;
+                case ">": return compareValues(l, r) > 0;
+                case "<=": return compareValues(l, r) <= 0;
+                case ">=": return compareValues(l, r) >= 0;
+                case "AND": return toBool(l) && toBool(r);
+                case "OR": return toBool(l) || toBool(r);
+                case "+": case "-": case "*": case "/": case "%":
+                    return doArithmetic(l, bin.getOperator(), r);
+            }
+            throw new SqlException("未知的二元运算符: " + bin.getOperator());
+        }
+        if (expr instanceof UnaryExpr) {
+            UnaryExpr unary = (UnaryExpr) expr;
+            Object operand = evaluateForImplicitAggregate(unary.getOperand(), rows);
+            if ("NOT".equals(unary.getOperator())) {
+                return !toBool(operand);
+            }
+            if ("-".equals(unary.getOperator())) {
+                if (operand == null) return null;
+                if (operand instanceof Number) return -((Number) operand).doubleValue();
+                return null;
+            }
+            throw new SqlException("未知的一元运算符: " + unary.getOperator());
+        }
+        if (expr instanceof CastExpr) {
+            return castValue(evaluateForImplicitAggregate(((CastExpr) expr).getExpression(), rows),
+                    ((CastExpr) expr).getTargetType());
+        }
+        if (expr instanceof IsNullExpr) {
+            IsNullExpr isNull = (IsNullExpr) expr;
+            Object val = evaluateForImplicitAggregate(isNull.getExpression(), rows);
+            return isNull.isNegated() ? val != null : val == null;
+        }
+        if (expr instanceof BetweenExpr) {
+            BetweenExpr between = (BetweenExpr) expr;
+            Object val = evaluateForImplicitAggregate(between.getExpression(), rows);
+            Object low = evaluateForImplicitAggregate(between.getLow(), rows);
+            Object high = evaluateForImplicitAggregate(between.getHigh(), rows);
+            boolean inRange = compareValues(val, low) >= 0 && compareValues(val, high) <= 0;
+            return between.isNegated() ? !inRange : inRange;
+        }
+        if (expr instanceof InExpr) {
+            InExpr inExpr = (InExpr) expr;
+            Object val = evaluateForImplicitAggregate(inExpr.getExpression(), rows);
+            boolean found = false;
+            for (Expression v : inExpr.getValues()) {
+                if (Objects.equals(val, evaluateForImplicitAggregate(v, rows))) {
+                    found = true;
+                    break;
+                }
+            }
+            return inExpr.isNegated() ? !found : found;
+        }
+        // 非聚合叶子（列名 / 字面量 / 普通函数）：按首行求值（同 SQL 同义）。
+        Map<String, Object> firstRow = rows.get(0);
+        if (expr instanceof Literal) {
+            return ((Literal) expr).getValue();
+        }
+        if (expr instanceof ColumnRef) {
+            ColumnRef col = (ColumnRef) expr;
+            if ("*".equals(col.getColumn())) return null;
+            if (col.getTable() != null) {
+                Object val = VirtualTable.getCellValue(firstRow, col.getQualifiedName());
+                if (val != null || firstRow.containsKey(col.getQualifiedName())) return val;
+            }
+            return VirtualTable.getCellValue(firstRow, col.getColumn());
+        }
+        // 普通函数：以首行为上下文求值（与 evaluate 一致；无副作用参与聚合）
+        if (expr instanceof FunctionCall) {
+            return evaluateFunction((FunctionCall) expr, firstRow);
+        }
+        return evaluate(expr, firstRow);
     }
 
     // ==================== GROUP BY ====================
@@ -892,5 +1015,123 @@ public class SqlEngine {
             sb.append(entry.getKey()).append("=").append(entry.getValue()).append("\0");
         }
         return sb.toString();
+    }
+
+    // ==================== Schema 推断 ====================
+
+    String explainName(Expression item) {
+        if (item instanceof AliasedExpr) {
+            return ((AliasedExpr) item).getAlias();
+        }
+        if (item instanceof ColumnRef) {
+            return ((ColumnRef) item).getColumn();
+        }
+        if (item instanceof FunctionCall) {
+            return getExprOutputName(item);
+        }
+        return item.toString();
+    }
+
+    String explainType(Expression item, VirtualTable main) {
+        return inferType(item, main);
+    }
+
+    @SuppressWarnings("unchecked")
+    private String inferType(Expression expr, VirtualTable main) {
+        if (expr == null) {
+            return "UNKNOWN";
+        }
+        if (expr instanceof AliasedExpr) {
+            return inferType(((AliasedExpr) expr).getExpression(), main);
+        }
+        if (expr instanceof Literal) {
+            Object v = ((Literal) expr).getValue();
+            if (v == null) {
+                return "NULL";
+            }
+            if (v instanceof Integer) return "INTEGER";
+            if (v instanceof Long) return "LONG";
+            if (v instanceof Number) return "DOUBLE";
+            if (v instanceof Boolean) return "BOOLEAN";
+            if (v instanceof java.time.LocalDate) return "DATE";
+            if (v instanceof java.time.LocalDateTime) return "DATETIME";
+            return "STRING";
+        }
+        if (expr instanceof ColumnRef) {
+            ColumnRef col = (ColumnRef) expr;
+            if ("*".equals(col.getColumn())) {
+                return "ROW";
+            }
+            // 没有列元数据时从首行样本里拿：「dry-run 不取数」是底线，但列名已知时
+            // 直接用样本碰一下类是便宜且 100% 准的；纯内存引擎下没有这一笔就 UNKNOWN。
+            if (main != null) {
+                Map<String, Object> sample = main.getRow(0);
+                if (sample != null) {
+                    Object v = VirtualTable.getCellValue(sample, col.getColumn());
+                    if (v == null) {
+                        return "UNKNOWN";
+                    }
+                    if (v instanceof Integer) return "INTEGER";
+                    if (v instanceof Long) return "LONG";
+                    if (v instanceof Number) return "DOUBLE";
+                    if (v instanceof Boolean) return "BOOLEAN";
+                    if (v instanceof java.time.LocalDate) return "DATE";
+                    if (v instanceof java.time.LocalDateTime) return "DATETIME";
+                    return "STRING";
+                }
+            }
+            return "UNKNOWN";
+        }
+        if (expr instanceof CastExpr) {
+            String t = ((CastExpr) expr).getTargetType().toUpperCase();
+            switch (t) {
+                case "INTEGER": case "INT": return "INTEGER";
+                case "BIGINT": case "LONG": return "LONG";
+                case "DOUBLE": case "FLOAT": case "REAL": return "DOUBLE";
+                case "DECIMAL": case "NUMERIC": return "DECIMAL";
+                case "BOOLEAN": case "BOOL": return "BOOLEAN";
+                case "DATE": return "DATE";
+                case "DATETIME": case "TIMESTAMP": return "DATETIME";
+                case "STRING": case "VARCHAR": case "CHAR": return "STRING";
+                default: return t;
+            }
+        }
+        if (expr instanceof FunctionCall) {
+            String fname = ((FunctionCall) expr).getName();
+            if ("COUNT".equalsIgnoreCase(fname)) return "LONG";
+            if ("SUM".equalsIgnoreCase(fname) || "AVG".equalsIgnoreCase(fname)) return "DECIMAL";
+            if ("MAX".equalsIgnoreCase(fname) || "MIN".equalsIgnoreCase(fname)) {
+                if (!((FunctionCall) expr).getArguments().isEmpty()) {
+                    String child = inferType(((FunctionCall) expr).getArguments().get(0), main);
+                    if (!"UNKNOWN".equals(child)) return child;
+                }
+                return "UNKNOWN";
+            }
+            if (((FunctionCall) expr).getArguments().isEmpty()) {
+                return "UNKNOWN";
+            }
+            return inferType(((FunctionCall) expr).getArguments().get(0), main);
+        }
+        if (expr instanceof BinaryExpr) {
+            String op = ((BinaryExpr) expr).getOperator();
+            switch (op) {
+                case "=": case "==": case "<>": case "!=":
+                case "<": case ">": case "<=": case ">=":
+                case "AND": case "OR":
+                case "LIKE": case "IN": case "BETWEEN":
+                    return "BOOLEAN";
+                case "+": case "-": case "*": case "/": case "%":
+                    return "DOUBLE";
+                default:
+                    return "UNKNOWN";
+            }
+        }
+        if (expr instanceof IsNullExpr || expr instanceof BetweenExpr || expr instanceof InExpr) {
+            return "BOOLEAN";
+        }
+        if (expr instanceof UnaryExpr) {
+            return "DOUBLE";
+        }
+        return "UNKNOWN";
     }
 }
