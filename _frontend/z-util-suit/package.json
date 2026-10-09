@@ -6,7 +6,7 @@
   "description": "z-util 独立运行壳（lead 005 §9.1 suit：AppLayout + 鉴权 + 路由占位）。不发布 npm",
   "scripts": {"dev": "vite", "build": "vite build"},
   "dependencies": {
-    "@yuku123/z-frontend-common": "^0.1.1",
+    "@yuku123/z-frontend-common": "0.1.1",
     "@ant-design/icons": "^6.1.0",
     "@ant-design/pro-components": "^3.1.12-0",
     "antd": "^6.3.3",
