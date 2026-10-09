@@ -73,6 +73,7 @@ z-util 相比典型 Java 项目有以下特殊点：
 | `.env` | Central Token + GPG passphrase | ❌ gitignore |
 | `.gnupg/` | GPG 密钥环（含私钥） | ❌ gitignore |
 | `deploy_maven_center.sh` | 一键发布脚本 | ✅ commit |
+| `_doc/003_script/gpg-with-passphrase.sh` | maven-gpg-plugin 3.2.8 的 passphrase 注入 wrapper（pom 用 `<executable>` 接到这） | ✅ commit |
 | `RELEASE_TO_MAVEN_CENTRAL.md` | 本手册 | ✅ commit |
 | `发布指引.md` | 通用发布指引 | ✅ commit |
 
@@ -136,6 +137,28 @@ z-util 相比典型 Java 项目有以下特殊点：
     </profile>
 </profiles>
 ```
+
+### ⚠️ `maven-gpg-plugin` 3.2.8 的 passphrase 入口
+
+3.2.8 起 plugin **不读** `-Dgpg.passphrase` 与 `-Dgpg.passphraseFile`，默认走 gpg-agent；
+headless macOS 上必撞「No pinentry」。pom 用 `<executable>` 显式接到仓内 wrapper：
+
+```xml
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-gpg-plugin</artifactId>
+  <version>3.2.8</version>
+  <configuration>
+    <skip>${central.gpg.skip}</skip>
+    <executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>
+  </configuration>
+</plugin>
+```
+
+wrapper（[`_doc/003_script/gpg-with-passphrase.sh`](../../003_script/gpg-with-passphrase.sh)）只把
+`${CENTRAL_GPG_PASSPHRASE}` 注进 `gpg --passphrase`，强制 `--batch --pinentry-mode loopback`；
+本身不存 secret，passphrase 由调用方按 [[../../008_组织规范/001_凭证管理规范]]（CEE-OPS-K01）走仓根 `.env`（已 `gitignore`）。
+**不要再退回 `/tmp/gpg-wrap/gpg` 临时拼 wrapper**——接手的人没法从 git history 看到，下次必撞。
 
 ### 子模块 `<name>` 规则
 

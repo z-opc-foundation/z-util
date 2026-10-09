@@ -1172,7 +1172,7 @@
                         <version>3.2.8</version>
                         <configuration>
                             <skip>${central.gpg.skip}</skip>
-                            <executable>${maven.multiModuleProjectDirectory}/scripts/gpg-with-passphrase.sh</executable>
+                            <executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
                             <execution>

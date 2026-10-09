@@ -2,6 +2,10 @@
 #
 # gpg-with-passphrase.sh —— maven-gpg-plugin 3.2.8 的 passphrase 注入器。
 #
+# 位置：_doc/003_script/gpg-with-passphrase.sh（仓内 tracked）
+# 上游 pom：`<executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>`
+# 与 `_doc/006_release/RELEASE_TO_MAVEN_CENTRAL.md` 同步描述，避免被「scripts/」根级目录层级误导。
+#
 # 为什么需要
 # ----------
 # maven-gpg-plugin 3.2.8 不读 `-Dgpg.passphrase` 与 `-Dgpg.passphraseFile`，
@@ -11,9 +15,9 @@
 #
 # 前置
 # ----
-# `CENTRAL_GPG_PASSPHRASE` 必须在 env 里；本 wrapper 会再尝试从同目录 `.env`
-# 自加载（z-util 的 `.env` 是 600 + gitignore 存放处），但仅当变量已
-# 经空的时候；不要把它自己 export。
+# `CENTRAL_GPG_PASSPHRASE` 必须在 env 里；本 wrapper 会再尝试从仓根 `.env`
+# 自加载（z-util 的 `.env` 是 600 + gitignore 存放处），仅当变量已经
+# 空的时候；不要把它自己 export。
 #
 # 引用的 GPG binary 走 PATH（`command -v gpg`），找不到就退出；brew 默认装在
 # /opt/homebrew/bin/gpg，Intel mac 在 /usr/local/bin/gpg。
