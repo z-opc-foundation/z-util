@@ -1162,13 +1162,17 @@
                         </executions>
                     </plugin>
 
-                    <!-- GPG 签名：passphrase 通过环境变量 CENTRAL_GPG_PASSPHRASE 传入 -->
+                    <!-- GPG 签名：passphrase 通过环境变量 CENTRAL_GPG_PASSPHRASE 传入。
+                         maven-gpg-plugin 3.2.8 不读 -Dgpg.passphrase / -Dgpg.passphraseFile，
+                         默认走 gpg-agent 在 headless macOS 上必撞「No pinentry」。
+                         必须由仓内 scripts/gpg-with-passphrase.sh 预喂 passphrase；详细见脚本头注释。 -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>3.2.8</version>
                         <configuration>
                             <skip>${central.gpg.skip}</skip>
+                            <executable>${maven.multiModuleProjectDirectory}/scripts/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
                             <execution>
