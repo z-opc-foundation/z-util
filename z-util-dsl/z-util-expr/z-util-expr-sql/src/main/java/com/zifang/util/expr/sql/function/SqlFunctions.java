@@ -384,38 +384,47 @@ public final class SqlFunctions {
 
     @SqlFunction("YEAR")
     public static Object year(Map<String, Object> row, Object date) {
-        if (date == null) return null;
-        return extractTemporal(date, LocalDate.class);
+        return temporalField(date, java.time.temporal.ChronoField.YEAR);
     }
 
     @SqlFunction("MONTH")
     public static Object month(Map<String, Object> row, Object date) {
-        if (date == null) return null;
-        return extractTemporal(date, LocalDate.class);
+        return temporalField(date, java.time.temporal.ChronoField.MONTH_OF_YEAR);
     }
 
     @SqlFunction("DAY")
     public static Object day(Map<String, Object> row, Object date) {
-        if (date == null) return null;
-        return extractTemporal(date, LocalDate.class);
+        return temporalField(date, java.time.temporal.ChronoField.DAY_OF_MONTH);
     }
 
     @SqlFunction("HOUR")
     public static Object hour(Map<String, Object> row, Object date) {
-        if (date == null) return null;
-        return extractTemporal(date, LocalTime.class);
+        return temporalField(date, java.time.temporal.ChronoField.HOUR_OF_DAY);
     }
 
     @SqlFunction("MINUTE")
     public static Object minute(Map<String, Object> row, Object date) {
-        if (date == null) return null;
-        return extractTemporal(date, LocalTime.class);
+        return temporalField(date, java.time.temporal.ChronoField.MINUTE_OF_HOUR);
     }
 
     @SqlFunction("SECOND")
     public static Object second(Map<String, Object> row, Object date) {
+        return temporalField(date, java.time.temporal.ChronoField.SECOND_OF_MINUTE);
+    }
+
+    /**
+     * 按字段取日期成分。纯日期输入的时间字段按 MySQL 同义返回 0（HOUR('2026-08-21') = 0）。
+     */
+    private static Integer temporalField(Object date, java.time.temporal.ChronoField field) {
         if (date == null) return null;
-        return extractTemporal(date, LocalTime.class);
+        try {
+            if (date instanceof LocalTime) {
+                return field.isTimeBased() ? ((LocalTime) date).get(field) : null;
+            }
+            return toLocalDateTime(date).get(field);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @SqlFunction("DATE")
@@ -430,22 +439,87 @@ public final class SqlFunctions {
         return s;
     }
 
+    /**
+     * MySQL DATE_FORMAT 词法：{@code %Y-%m-%d} 等百分号词法翻译成 java pattern；
+     * 不含 % 的 pattern 按原 java DateTimeFormatter 语义透传（向后兼容）。
+     */
     @SqlFunction("DATE_FORMAT")
     public static Object date_format(Map<String, Object> row, Object date, Object fmt) {
         if (date == null || fmt == null) return null;
         String pattern = fmt.toString();
         try {
-            if (date instanceof LocalDateTime) {
-                return ((LocalDateTime) date).format(DateTimeFormatter.ofPattern(pattern));
-            } else if (date instanceof LocalDate) {
-                return ((LocalDate) date).format(DateTimeFormatter.ofPattern(pattern));
-            } else if (date instanceof LocalTime) {
-                return ((LocalTime) date).format(DateTimeFormatter.ofPattern(pattern));
+            java.time.temporal.TemporalAccessor t;
+            if (date instanceof LocalDateTime || date instanceof LocalDate || date instanceof LocalTime) {
+                t = (java.time.temporal.TemporalAccessor) date;
+            } else if (date instanceof java.util.Date) {
+                t = ((java.util.Date) date).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
             } else {
-                return LocalDateTime.parse(date.toString()).format(DateTimeFormatter.ofPattern(pattern));
+                String s = date.toString().trim();
+                t = toLocalDateTime(s);
             }
+            DateTimeFormatter f = pattern.indexOf('%') >= 0
+                    ? DateTimeFormatter.ofPattern(mysqlPatternToJava(pattern), Locale.ENGLISH)
+                    : DateTimeFormatter.ofPattern(pattern);
+            return f.format(t);
         } catch (Exception e) {
             return date.toString();
+        }
+    }
+
+    /**
+     * MySQL → java 词法映射表；未映射的字母按 java pattern 字面量引号包住，
+     * 使 {@code '%Y年%m月'} 里的中文/字母不会被误当 java pattern 词法。
+     */
+    private static String mysqlPatternToJava(String pattern) {
+        StringBuilder sb = new StringBuilder(pattern.length() + 16);
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c != '%') {
+                appendLiteralSafe(sb, c);
+                continue;
+            }
+            if (++i >= pattern.length()) {
+                sb.append('%');
+                break;
+            }
+            char m = pattern.charAt(i);
+            switch (m) {
+                case 'Y': sb.append("yyyy"); break;
+                case 'y': sb.append("yy"); break;
+                case 'm': sb.append("MM"); break;
+                case 'c': sb.append('M'); break;
+                case 'd': sb.append("dd"); break;
+                case 'e': sb.append('d'); break;
+                case 'H': sb.append("HH"); break;
+                case 'k': sb.append('H'); break;
+                case 'h': case 'I': case 'l': sb.append("hh"); break;
+                case 'i': sb.append("mm"); break;
+                case 's': case 'S': sb.append("ss"); break;
+                case 'f': sb.append("SSSSSS"); break;
+                case 'p': sb.append('a'); break;
+                case 'M': sb.append("MMMM"); break;
+                case 'b': sb.append("MMM"); break;
+                case 'W': sb.append("EEEE"); break;
+                case 'a': sb.append('E'); break;
+                case 'j': sb.append("DDD"); break;
+                case 'T': sb.append("HH:mm:ss"); break;
+                case 'r': sb.append("hh:mm:ss a"); break;
+                case '%': sb.append('\'').append('%').append('\''); break;
+                default: sb.append('\'').append('%').append(m).append('\''); break;
+            }
+        }
+        return sb.toString();
+    }
+
+    private static void appendLiteralSafe(StringBuilder sb, char c) {
+        if (Character.isLetter(c) || c == '\'') {
+            if (c == '\'') {
+                sb.append("''");
+            } else {
+                sb.append('\'').append(c).append('\'');
+            }
+        } else {
+            sb.append(c);
         }
     }
 
@@ -528,7 +602,7 @@ public final class SqlFunctions {
                         return ld.plusDays(amount);
                 }
             }
-            LocalDateTime ldt = date instanceof LocalDateTime ? (LocalDateTime) date : LocalDateTime.parse(date.toString());
+            LocalDateTime ldt = toLocalDateTime(date);
             switch (u) {
                 case "DAY":
                     return ldt.plusDays(amount);
@@ -547,6 +621,30 @@ public final class SqlFunctions {
             }
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * MySQL TIMESTAMPDIFF(unit, start, end) = end - start。
+     * unit ∈ SECOND/MINUTE/HOUR/DAY/WEEK/MONTH/QUARTER/YEAR。
+     */
+    @SqlFunction("TIMESTAMPDIFF")
+    public static Object timestampdiff(Map<String, Object> row, Object unit, Object start, Object end) {
+        if (unit == null || start == null || end == null) return null;
+        String u = unit.toString().trim().toUpperCase();
+        java.time.LocalDateTime s = toLocalDateTime(start);
+        java.time.LocalDateTime e = toLocalDateTime(end);
+        switch (u) {
+            case "SECOND": return java.time.temporal.ChronoUnit.SECONDS.between(s, e);
+            case "MINUTE": return java.time.temporal.ChronoUnit.MINUTES.between(s, e);
+            case "HOUR": return java.time.temporal.ChronoUnit.HOURS.between(s, e);
+            case "DAY": return java.time.temporal.ChronoUnit.DAYS.between(s, e);
+            case "WEEK": return java.time.temporal.ChronoUnit.WEEKS.between(s, e);
+            case "MONTH": return java.time.temporal.ChronoUnit.MONTHS.between(s, e);
+            case "QUARTER": return java.time.temporal.ChronoUnit.MONTHS.between(s, e) / 3;
+            case "YEAR": return java.time.temporal.ChronoUnit.YEARS.between(s, e);
+            default:
+                throw new SqlException("TIMESTAMPDIFF 不支持的单位: " + u);
         }
     }
 
@@ -583,6 +681,10 @@ public final class SqlFunctions {
         }
     }
 
+    /**
+     * 宽松日期串解析：'2026-08-21'（纯日期→当日零点）与
+     * '2026-08-21 11:00:26'（空格分隔，MySQL 习惯）都接受。
+     */
     private static java.time.LocalDateTime toLocalDateTime(Object v) {
         if (v instanceof java.time.LocalDateTime) {
             return (java.time.LocalDateTime) v;
@@ -593,9 +695,12 @@ public final class SqlFunctions {
         if (v instanceof java.util.Date) {
             return ((java.util.Date) v).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
         }
-        String s = v.toString();
+        String s = v.toString().trim();
         if (s.length() == 10) {
             return java.time.LocalDate.parse(s).atStartOfDay();
+        }
+        if (s.length() > 10 && s.charAt(10) == ' ') {
+            s = s.substring(0, 10) + 'T' + s.substring(11);
         }
         return java.time.LocalDateTime.parse(s);
     }
@@ -822,23 +927,5 @@ public final class SqlFunctions {
         if (cond instanceof Boolean) return (Boolean) cond;
         String s = cond.toString().toLowerCase();
         return "true".equals(s) || "1".equals(s) || "yes".equals(s) || "t".equals(s);
-    }
-
-    private static Integer extractTemporal(Object date, Class<?> targetType) {
-        try {
-            if (date instanceof LocalDateTime) {
-                LocalDateTime ldt = (LocalDateTime) date;
-                return targetType == LocalDate.class ? ldt.toLocalDate().getYear() : ldt.toLocalTime().getHour();
-            } else if (date instanceof LocalDate) {
-                LocalDate ld = (LocalDate) date;
-                return targetType == LocalDate.class ? ld.getYear() : ld.getMonthValue();
-            } else if (date instanceof LocalTime) {
-                LocalTime lt = (LocalTime) date;
-                return targetType == LocalTime.class ? lt.getHour() : lt.getMinute();
-            } else if (targetType == LocalDate.class) {
-                return LocalDate.parse(date.toString().substring(0, 10)).getYear();
-            }
-        } catch (Exception e) { /* fallthrough */ }
-        return null;
     }
 }

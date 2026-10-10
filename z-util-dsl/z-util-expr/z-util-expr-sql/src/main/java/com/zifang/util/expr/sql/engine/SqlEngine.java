@@ -24,7 +24,7 @@ public class SqlEngine {
      * 其余一律按标量表达式对组代表行求值（MySQL 宽松语义）。
      */
     private static final Set<String> AGGREGATE_FUNCTIONS = new HashSet<>(
-            Arrays.asList("COUNT", "SUM", "AVG", "MAX", "MIN"));
+            Arrays.asList("COUNT", "SUM", "AVG", "MAX", "MIN", "GROUP_CONCAT"));
 
     private final TableRegistry registry;
     private final AtomicLong derivedTableCounter = new AtomicLong();
@@ -42,12 +42,138 @@ public class SqlEngine {
     public List<Map<String, Object>> execute(SelectStmt stmt) {
         List<String> derivedTables = new ArrayList<>();
         try {
-            return executePlan(materializeSubqueries(stmt, derivedTables));
+            stmt = materializeSubqueries(stmt, derivedTables);
+            stmt = materializeInSubqueries(stmt);
+            return executePlan(stmt);
         } finally {
             for (String name : derivedTables) {
                 registry.unregister(name);
             }
         }
+    }
+
+    /**
+     * 把 WHERE/HAVING/SELECT 里的 {@code IN (SELECT …)} 子查询各执行一次，
+     * 物化成字面量列表（每查询一次，不做逐行重放）。
+     */
+    private SelectStmt materializeInSubqueries(SelectStmt stmt) {
+        boolean changed = false;
+        List<Expression> newSelectItems = stmt.getSelectItems();
+        for (int i = 0; i < newSelectItems.size(); i++) {
+            Expression replaced = replaceInSubqueries(newSelectItems.get(i));
+            if (replaced != newSelectItems.get(i)) {
+                if (newSelectItems == stmt.getSelectItems()) {
+                    newSelectItems = new ArrayList<>(newSelectItems);
+                }
+                newSelectItems.set(i, replaced);
+                changed = true;
+            }
+        }
+        Expression newWhere = replaceInSubqueries(stmt.getWhereClause());
+        Expression newHaving = replaceInSubqueries(stmt.getHavingClause());
+        changed |= newWhere != stmt.getWhereClause() || newHaving != stmt.getHavingClause();
+        if (!changed) {
+            return stmt;
+        }
+        SelectStmt copy = new SelectStmt();
+        copy.setDistinct(stmt.isDistinct());
+        copy.setSelectItems(newSelectItems);
+        copy.setTableName(stmt.getTableName());
+        copy.setTableAlias(stmt.getTableAlias());
+        copy.setWhereClause(newWhere);
+        copy.setGroupBy(stmt.getGroupBy());
+        copy.setHavingClause(newHaving);
+        copy.setOrderBy(stmt.getOrderBy());
+        copy.setLimit(stmt.getLimit());
+        copy.setOffset(stmt.getOffset());
+        copy.setJoins(stmt.getJoins());
+        return copy;
+    }
+
+    private Expression replaceInSubqueries(Expression expr) {
+        if (expr == null) {
+            return null;
+        }
+        if (expr instanceof InExpr) {
+            InExpr in = (InExpr) expr;
+            if (in.getSubquery() == null) {
+                return in;
+            }
+            List<Map<String, Object>> rows = execute(in.getSubquery());
+            List<Expression> values = new ArrayList<>(rows.size());
+            for (Map<String, Object> subRow : rows) {
+                Object v = subRow.isEmpty() ? null : subRow.values().iterator().next();
+                values.add(new Literal(v));
+            }
+            return new InExpr(in.getExpression(), values, in.isNegated());
+        }
+        if (expr instanceof AliasedExpr) {
+            AliasedExpr a = (AliasedExpr) expr;
+            Expression inner = replaceInSubqueries(a.getExpression());
+            return inner == a.getExpression() ? a : new AliasedExpr(inner, a.getAlias());
+        }
+        if (expr instanceof BinaryExpr) {
+            BinaryExpr b = (BinaryExpr) expr;
+            Expression l = replaceInSubqueries(b.getLeft());
+            Expression r = replaceInSubqueries(b.getRight());
+            return (l == b.getLeft() && r == b.getRight()) ? b : new BinaryExpr(l, b.getOperator(), r);
+        }
+        if (expr instanceof UnaryExpr) {
+            UnaryExpr u = (UnaryExpr) expr;
+            Expression inner = replaceInSubqueries(u.getOperand());
+            return inner == u.getOperand() ? u : new UnaryExpr(u.getOperator(), inner);
+        }
+        if (expr instanceof CastExpr) {
+            CastExpr c = (CastExpr) expr;
+            Expression inner = replaceInSubqueries(c.getExpression());
+            return inner == c.getExpression() ? c : new CastExpr(inner, c.getTargetType());
+        }
+        if (expr instanceof IsNullExpr) {
+            IsNullExpr c = (IsNullExpr) expr;
+            Expression inner = replaceInSubqueries(c.getExpression());
+            return inner == c.getExpression() ? c : new IsNullExpr(inner, c.isNegated());
+        }
+        if (expr instanceof BetweenExpr) {
+            BetweenExpr b = (BetweenExpr) expr;
+            Expression e1 = replaceInSubqueries(b.getExpression());
+            Expression e2 = replaceInSubqueries(b.getLow());
+            Expression e3 = replaceInSubqueries(b.getHigh());
+            return (e1 == b.getExpression() && e2 == b.getLow() && e3 == b.getHigh())
+                    ? b : new BetweenExpr(e1, e2, e3, b.isNegated());
+        }
+        if (expr instanceof CaseExpr) {
+            CaseExpr c = (CaseExpr) expr;
+            boolean same = true;
+            Expression operand = replaceInSubqueries(c.getOperand());
+            same &= operand == c.getOperand();
+            List<Expression> conds = new ArrayList<>(c.getConditions().size());
+            List<Expression> results = new ArrayList<>(c.getResults().size());
+            for (Expression cond : c.getConditions()) {
+                Expression r = replaceInSubqueries(cond);
+                same &= r == cond;
+                conds.add(r);
+            }
+            for (Expression res : c.getResults()) {
+                Expression r = replaceInSubqueries(res);
+                same &= r == res;
+                results.add(r);
+            }
+            Expression elseR = replaceInSubqueries(c.getElseResult());
+            same &= elseR == c.getElseResult();
+            return same ? c : new CaseExpr(operand, conds, results, elseR);
+        }
+        if (expr instanceof FunctionCall) {
+            FunctionCall f = (FunctionCall) expr;
+            boolean same = true;
+            List<Expression> args = new ArrayList<>(f.getArguments().size());
+            for (Expression arg : f.getArguments()) {
+                Expression r = replaceInSubqueries(arg);
+                same &= r == arg;
+                args.add(r);
+            }
+            return same ? f : new FunctionCall(f.getName(), args, f.isDistinct());
+        }
+        return expr;
     }
 
     /**
@@ -123,24 +249,29 @@ public class SqlEngine {
             rows = applyWhere(rows, stmt.getWhereClause(), mainTable);
         }
 
-        // 5. GROUP BY
+        // 5. GROUP BY（HAVING 在分组结果行上过滤，聚合调用先物化进行内）
         boolean hasGroupBy = !stmt.getGroupBy().isEmpty();
+        boolean aggregated = false;
         if (hasGroupBy) {
-            rows = applyGroupBy(rows, stmt.getGroupBy(), stmt.getSelectItems());
-        }
-
-        // 6. HAVING
-        if (stmt.getHavingClause() != null) {
+            rows = applyGroupBy(rows, stmt.getGroupBy(), stmt.getSelectItems(), stmt.getHavingClause());
+            aggregated = true;
+        } else if (hasAggregateFunction(stmt.getSelectItems())) {
+            // 6. HAVING（隐式聚合：聚合调用对全集求值）
+            rows = applyImplicitAggregate(rows, stmt.getSelectItems());
+            if (stmt.getHavingClause() != null && !rows.isEmpty()) {
+                if (!toBool(evaluateForImplicitAggregate(stmt.getHavingClause(), rows))) {
+                    rows = Collections.emptyList();
+                }
+            }
+            aggregated = true;
+        } else if (stmt.getHavingClause() != null) {
             rows = applyWhere(rows, stmt.getHavingClause(), null);
         }
 
-        // 7. SELECT (投影)
-        if (hasGroupBy) {
-            // GROUP BY 已经计算了 SELECT 列，跳过投影
-        } else if (hasAggregateFunction(stmt.getSelectItems())) {
-            rows = applyImplicitAggregate(rows, stmt.getSelectItems());
-        } else {
-            rows = applySelect(rows, stmt.getSelectItems(), stmt.isDistinct());
+        // 7. SELECT (投影)，窗口函数列先整体预计算
+        if (!aggregated) {
+            Map<WindowFuncExpr, List<Object>> windowValues = computeWindowValues(rows, stmt.getSelectItems());
+            rows = applySelect(rows, stmt.getSelectItems(), stmt.isDistinct(), windowValues);
         }
 
         // 8. ORDER BY
@@ -368,14 +499,16 @@ public class SqlEngine {
 
     private List<Map<String, Object>> applySelect(List<Map<String, Object>> rows,
                                                    List<Expression> selectItems,
-                                                   boolean distinct) {
+                                                   boolean distinct,
+                                                   Map<WindowFuncExpr, List<Object>> windowValues) {
         if (selectItems.size() == 1 && selectItems.get(0) instanceof ColumnRef
                 && "*".equals(((ColumnRef) selectItems.get(0)).getColumn())) {
             return rows;
         }
 
         List<Map<String, Object>> result = new ArrayList<>(rows.size());
-        for (Map<String, Object> row : rows) {
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            Map<String, Object> row = rows.get(rowIndex);
             LinkedHashMap<String, Object> projected = new LinkedHashMap<>();
             for (Expression item : selectItems) {
                 String outputName;
@@ -392,11 +525,128 @@ public class SqlEngine {
                     outputName = item.toString();
                     expr = item;
                 }
-                projected.put(outputName, evaluate(expr, row));
+                if (expr instanceof WindowFuncExpr) {
+                    List<Object> vals = windowValues.get(expr);
+                    projected.put(outputName, vals != null ? vals.get(rowIndex) : null);
+                } else {
+                    projected.put(outputName, evaluate(expr, row));
+                }
             }
             result.add(projected);
         }
         return result;
+    }
+
+    // ==================== 窗口函数 ====================
+
+    /**
+     * 对 SELECT 列表里的窗口函数做整体预计算，返回每个窗口调用对应当前行序的取值列。
+     * 窗口在 WHERE/GROUP 之后、投影之前的行集上求值；行序保持原样，
+     * 窗口内部的 ORDER BY 只影响编号分配，不改变输出行序（同 SQL 语义）。
+     */
+    private Map<WindowFuncExpr, List<Object>> computeWindowValues(List<Map<String, Object>> rows,
+                                                                  List<Expression> selectItems) {
+        List<WindowFuncExpr> windows = new ArrayList<>();
+        for (Expression item : selectItems) {
+            Expression expr = item instanceof AliasedExpr ? ((AliasedExpr) item).getExpression() : item;
+            if (expr instanceof WindowFuncExpr) {
+                windows.add((WindowFuncExpr) expr);
+            }
+        }
+        if (windows.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<WindowFuncExpr, List<Object>> out = new IdentityHashMap<>();
+        for (WindowFuncExpr w : windows) {
+            out.put(w, evaluateWindow(w, rows));
+        }
+        return out;
+    }
+
+    private List<Object> evaluateWindow(WindowFuncExpr w, List<Map<String, Object>> rows) {
+        int n = rows.size();
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) order[i] = i;
+        final List<Map<String, Object>> finalRows = rows;
+        final List<Expression> partitionBy = w.getPartitionBy();
+        final List<SortKey> orderByKeys = w.getOrderBy();
+        Arrays.sort(order, (a, b) -> {
+            for (Expression p : partitionBy) {
+                int cmp = compareValues(evaluate(p, finalRows.get(a)), evaluate(p, finalRows.get(b)));
+                if (cmp != 0) return cmp;
+            }
+            for (SortKey key : orderByKeys) {
+                int cmp = compareValues(evaluate(key.getExpression(), finalRows.get(a)),
+                        evaluate(key.getExpression(), finalRows.get(b)));
+                if (cmp != 0) return key.isDescending() ? -cmp : cmp;
+            }
+            return a - b; // 稳定：同键保持原行序
+        });
+
+        String funcName = w.getName().toUpperCase();
+        List<Object> values = new ArrayList<>(Collections.nCopies(n, null));
+        int pos = 0;
+        while (pos < n) {
+            // 逐分区处理
+            int start = pos;
+            while (pos < n && !partitionChanged(partitionBy, finalRows.get(order[start]), finalRows.get(order[pos]))) {
+                pos++;
+            }
+            int end = pos;
+            long rank = 0;
+            long denseRank = 0;
+            for (int i = start; i < end; i++) {
+                int rowIdx = order[i];
+                if (i == start) {
+                    rank = 1;
+                    denseRank = 1;
+                } else {
+                    int prev = order[i - 1];
+                    boolean tied = orderKeysEqual(orderByKeys, finalRows.get(prev), finalRows.get(rowIdx));
+                    if (!tied) {
+                        rank = i - start + 1;
+                        denseRank++;
+                    }
+                }
+                switch (funcName) {
+                    case "ROW_NUMBER":
+                        values.set(rowIdx, (long) (i - start + 1));
+                        break;
+                    case "RANK":
+                        values.set(rowIdx, rank);
+                        break;
+                    case "DENSE_RANK":
+                        values.set(rowIdx, denseRank);
+                        break;
+                    default:
+                        throw new SqlException("不支持的窗口函数: " + w.getName()
+                                + "（当前支持 ROW_NUMBER / RANK / DENSE_RANK）");
+                }
+            }
+        }
+        return values;
+    }
+
+    private boolean partitionChanged(List<Expression> partitionBy, Map<String, Object> a, Map<String, Object> b) {
+        for (Expression p : partitionBy) {
+            Object va = evaluate(p, a);
+            Object vb = evaluate(p, b);
+            if (!numericEquals(va, vb)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean orderKeysEqual(List<SortKey> orderByKeys, Map<String, Object> a, Map<String, Object> b) {
+        for (SortKey key : orderByKeys) {
+            Object va = evaluate(key.getExpression(), a);
+            Object vb = evaluate(key.getExpression(), b);
+            if (compareValues(va, vb) != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private List<Map<String, Object>> applyOrderBy(List<Map<String, Object>> rows, List<SortKey> sortKeys) {
@@ -459,6 +709,19 @@ public class SqlEngine {
         }
         if (expr instanceof InExpr) {
             return containsAggregate(((InExpr) expr).getExpression());
+        }
+        if (expr instanceof CaseExpr) {
+            CaseExpr c = (CaseExpr) expr;
+            if (containsAggregate(c.getOperand()) || containsAggregate(c.getElseResult())) {
+                return true;
+            }
+            for (Expression cond : c.getConditions()) {
+                if (containsAggregate(cond)) return true;
+            }
+            for (Expression res : c.getResults()) {
+                if (containsAggregate(res)) return true;
+            }
+            return false;
         }
         return false;
     }
@@ -573,7 +836,8 @@ public class SqlEngine {
 
     private List<Map<String, Object>> applyGroupBy(List<Map<String, Object>> rows,
                                                     List<Expression> groupByExprs,
-                                                    List<Expression> selectItems) {
+                                                    List<Expression> selectItems,
+                                                    Expression havingClause) {
         Map<String, List<Map<String, Object>>> groups = new LinkedHashMap<>();
         for (Map<String, Object> row : rows) {
             String key = computeGroupKey(groupByExprs, row);
@@ -598,9 +862,76 @@ public class SqlEngine {
                 }
             }
 
+            // HAVING 里的聚合调用（含 SELECT 未出现的）先物化到组结果行，
+            // 再走普通行级求值——HAVING SUM(x) 直接引用与别名引用都可达。
+            if (havingClause != null) {
+                for (FunctionCall agg : collectAggregateCalls(havingClause)) {
+                    String key = getExprOutputName(agg);
+                    if (!resultRow.containsKey(key)) {
+                        resultRow.put(key, evaluateAggregateFunction(agg, groupRows));
+                    }
+                }
+                if (!evaluateBool(havingClause, resultRow)) {
+                    continue;
+                }
+            }
+
             result.add(resultRow);
         }
         return result;
+    }
+
+    /**
+     * 收集表达式树里所有的聚合函数调用（去重按实例）。
+     */
+    private List<FunctionCall> collectAggregateCalls(Expression expr) {
+        List<FunctionCall> out = new ArrayList<>();
+        collectAggregateCalls(expr, out);
+        return out;
+    }
+
+    private void collectAggregateCalls(Expression expr, List<FunctionCall> out) {
+        if (expr == null) {
+            return;
+        }
+        if (expr instanceof FunctionCall) {
+            FunctionCall f = (FunctionCall) expr;
+            if (isAggregateCall(f)) {
+                out.add(f);
+                return;
+            }
+            for (Expression arg : f.getArguments()) {
+                collectAggregateCalls(arg, out);
+            }
+            return;
+        }
+        if (expr instanceof AliasedExpr) {
+            collectAggregateCalls(((AliasedExpr) expr).getExpression(), out);
+        } else if (expr instanceof BinaryExpr) {
+            collectAggregateCalls(((BinaryExpr) expr).getLeft(), out);
+            collectAggregateCalls(((BinaryExpr) expr).getRight(), out);
+        } else if (expr instanceof UnaryExpr) {
+            collectAggregateCalls(((UnaryExpr) expr).getOperand(), out);
+        } else if (expr instanceof CastExpr) {
+            collectAggregateCalls(((CastExpr) expr).getExpression(), out);
+        } else if (expr instanceof IsNullExpr) {
+            collectAggregateCalls(((IsNullExpr) expr).getExpression(), out);
+        } else if (expr instanceof BetweenExpr) {
+            collectAggregateCalls(((BetweenExpr) expr).getExpression(), out);
+            collectAggregateCalls(((BetweenExpr) expr).getLow(), out);
+            collectAggregateCalls(((BetweenExpr) expr).getHigh(), out);
+        } else if (expr instanceof InExpr) {
+            collectAggregateCalls(((InExpr) expr).getExpression(), out);
+            for (Expression v : ((InExpr) expr).getValues()) {
+                if (v != null) collectAggregateCalls(v, out);
+            }
+        } else if (expr instanceof CaseExpr) {
+            CaseExpr c = (CaseExpr) expr;
+            collectAggregateCalls(c.getOperand(), out);
+            for (Expression cond : c.getConditions()) collectAggregateCalls(cond, out);
+            for (Expression res : c.getResults()) collectAggregateCalls(res, out);
+            collectAggregateCalls(c.getElseResult(), out);
+        }
     }
 
     private String computeGroupKey(List<Expression> groupByExprs, Map<String, Object> row) {
@@ -707,6 +1038,35 @@ public class SqlEngine {
                     }
                 }
                 return min;
+            }
+            case "GROUP_CONCAT": {
+                List<Expression> gArgs = func.getArguments();
+                if (gArgs.isEmpty()) {
+                    return null;
+                }
+                Expression valueExpr = gArgs.get(0);
+                String separator = ",";
+                if (gArgs.size() == 3 && gArgs.get(1) instanceof ColumnRef
+                        && "SEPARATOR".equalsIgnoreCase(((ColumnRef) gArgs.get(1)).getColumn())) {
+                    Object sepVal = rows.isEmpty() ? null : evaluate(gArgs.get(2), rows.get(0));
+                    separator = sepVal != null ? sepVal.toString() : ",";
+                }
+                Set<Object> seen = func.isDistinct() ? new LinkedHashSet<>() : null;
+                StringBuilder joined = new StringBuilder();
+                for (Map<String, Object> row : rows) {
+                    Object val = evaluate(valueExpr, row);
+                    if (val == null) {
+                        continue;
+                    }
+                    if (seen != null && !seen.add(val)) {
+                        continue;
+                    }
+                    if (joined.length() > 0) {
+                        joined.append(separator);
+                    }
+                    joined.append(val);
+                }
+                return joined.length() == 0 ? null : joined.toString();
             }
             default:
                 throw new SqlException("未知的聚合函数: " + funcName);
@@ -827,15 +1187,50 @@ public class SqlEngine {
         if (expr instanceof InExpr) {
             InExpr inExpr = (InExpr) expr;
             Object val = evaluate(inExpr.getExpression(), row);
+            // 未预物化的子查询兜底（理论上 execute 入口已统一物化）
+            List<Object> candidates;
+            if (inExpr.getSubquery() != null) {
+                List<Map<String, Object>> subRows = execute(inExpr.getSubquery());
+                candidates = new ArrayList<>(subRows.size());
+                for (Map<String, Object> subRow : subRows) {
+                    candidates.add(subRow.isEmpty() ? null : subRow.values().iterator().next());
+                }
+            } else {
+                candidates = new ArrayList<>(inExpr.getValues().size());
+                for (Expression v : inExpr.getValues()) {
+                    candidates.add(evaluate(v, row));
+                }
+            }
             boolean found = false;
-            for (Expression v : inExpr.getValues()) {
-                Object vVal = evaluate(v, row);
-                if (Objects.equals(val, vVal)) {
+            for (Object vVal : candidates) {
+                if (numericEquals(val, vVal)) {
                     found = true;
                     break;
                 }
             }
             return inExpr.isNegated() ? !found : found;
+        }
+
+        if (expr instanceof CaseExpr) {
+            CaseExpr caseExpr = (CaseExpr) expr;
+            Object operand = caseExpr.getOperand() != null ? evaluate(caseExpr.getOperand(), row) : null;
+            for (int i = 0; i < caseExpr.getConditions().size(); i++) {
+                Expression cond = caseExpr.getConditions().get(i);
+                Expression result = caseExpr.getResults().get(i);
+                if (caseExpr.getOperand() != null) {
+                    if (numericEquals(operand, evaluate(cond, row))) {
+                        return evaluate(result, row);
+                    }
+                } else if (toBool(evaluate(cond, row))) {
+                    return evaluate(result, row);
+                }
+            }
+            return caseExpr.getElseResult() != null ? evaluate(caseExpr.getElseResult(), row) : null;
+        }
+
+        if (expr instanceof WindowFuncExpr) {
+            throw new SqlException("窗口函数 " + ((WindowFuncExpr) expr).getName()
+                    + " 仅支持在 SELECT 列表中使用（不支持 WHERE/HAVING/GROUP BY）");
         }
 
         throw new SqlException("不支持的表达式类型: " + expr.getClass().getSimpleName());
@@ -852,6 +1247,14 @@ public class SqlEngine {
         String funcName = func.getName();
         List<Expression> args = func.getArguments();
 
+        // 组结果行上已物化的聚合值直接取（HAVING/外层包裹表达式场景）
+        if (isAggregateCall(func)) {
+            String stashKey = getExprOutputName(func);
+            if (row.containsKey(stashKey)) {
+                return row.get(stashKey);
+            }
+        }
+
         switch (funcName) {
             case "COUNT":
                 if (args.size() == 1 && args.get(0) instanceof ColumnRef
@@ -862,6 +1265,7 @@ public class SqlEngine {
                 return countVal != null ? 1L : 0L;
             case "SUM":
             case "AVG":
+            case "GROUP_CONCAT":
                 return evaluate(args.get(0), row);
             case "MAX":
             case "MIN":

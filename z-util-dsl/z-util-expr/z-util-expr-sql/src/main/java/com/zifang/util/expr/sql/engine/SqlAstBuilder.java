@@ -7,6 +7,7 @@ import com.zifang.util.expr.sql.engine.ast.*;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -387,23 +388,30 @@ public class SqlAstBuilder {
             return new IsNullExpr(left, negated);
         }
 
-        // IN (...) —— 左侧必须是原子表达式，IN 是后缀
-        if (check("IN")) {
-            // 确保前面不是比较运算符的结果（IN 只能跟在列引用或括号表达式后）
-            if (left instanceof ColumnRef || left instanceof AliasedExpr || left instanceof FunctionCall) {
-                advance();
-                boolean negated = false; // NOT IN 在 NOT 层处理
-                expect("LPAREN");
-                List<Expression> values;
-                if (check("SELECT")) {
-                    // 子查询暂不支持，抛异常
-                    throw new SqlException("子查询暂不支持");
-                } else {
-                    values = parseCommaSeparatedExprs();
-                }
+        // IN (...) / NOT IN (...) —— 左侧必须是原子表达式，IN 是后缀
+        boolean inEligible = left instanceof ColumnRef || left instanceof AliasedExpr || left instanceof FunctionCall;
+        boolean inNegated = false;
+        boolean hasIn = false;
+        if (inEligible && check("IN")) {
+            hasIn = true;
+            advance();
+        } else if (inEligible && check("NOT") && pos + 1 < tokens.length
+                && "IN".equals(tokens[pos + 1].getTokenName())) {
+            hasIn = true;
+            inNegated = true;
+            advance();
+            advance();
+        }
+        if (hasIn) {
+            expect("LPAREN");
+            if (check("SELECT")) {
+                SelectStmt sub = parseSelect();
                 expect("RPAREN");
-                return new InExpr(left, values, negated);
+                return new InExpr(left, sub, inNegated);
             }
+            List<Expression> values = parseCommaSeparatedExprs();
+            expect("RPAREN");
+            return new InExpr(left, values, inNegated);
         }
 
         // 比较运算符
@@ -536,6 +544,12 @@ public class SqlAstBuilder {
             return expr;
         }
 
+        // CASE WHEN … THEN … [ELSE …] END（简单 CASE 与搜索 CASE 两种形态）
+        if ("CASE".equals(name)) {
+            advance();
+            return parseCaseExpr();
+        }
+
         // 标识符：可能是 列引用 / table.column / 函数调用 / CAST / COUNT(*) 等
         if ("ID".equals(name)) {
             return parseIdentifierOrFunction();
@@ -545,7 +559,8 @@ public class SqlAstBuilder {
         if ("COUNT".equals(name) || "SUM".equals(name) || "AVG".equals(name)
                 || "MAX".equals(name) || "MIN".equals(name)) {
             advance();
-            return parseFunctionCall(name);
+            Expression call = parseFunctionCall(name);
+            return maybeWindow(call);
         }
 
         // CAST 关键字 token
@@ -564,10 +579,21 @@ public class SqlAstBuilder {
     }
 
     /**
-     * 解析标识符开头的表达式：列引用、带表前缀的列、函数调用。
+     * 解析标识符开头的表达式：列引用、带表前缀的列、函数调用、INTERVAL 字面。
      */
     private Expression parseIdentifierOrFunction() {
         String firstName = advance().getText();
+
+        // INTERVAL n unit —— DATE_ADD/DATE_SUB 的 MySQL 间隔字面（INTERVAL 是普通 ID token）
+        if ("INTERVAL".equalsIgnoreCase(firstName) && (check("NUM") || check("MINUS"))) {
+            boolean negative = match("MINUS");
+            String amount = expect("NUM").getText();
+            String unit = expect("ID").getText().toUpperCase();
+            List<Expression> ivArgs = new ArrayList<>();
+            ivArgs.add(Literal.ofNumber(negative ? "-" + amount : amount));
+            ivArgs.add(Literal.ofString(unit));
+            return new FunctionCall("__INTERVAL", ivArgs);
+        }
 
         // table.column
         if (match("DOT")) {
@@ -583,9 +609,10 @@ public class SqlAstBuilder {
             return new ColumnRef(firstName, secondName);
         }
 
-        // 检查是否是函数调用 func(...)
+        // 检查是否是函数调用 func(...)，函数调用后可跟 OVER (…) 窗口规格
         if (check("LPAREN")) {
-            return parseFunctionCall(firstName);
+            Expression call = parseFunctionCall(firstName);
+            return maybeWindow(call);
         }
 
         // CAST(expr AS TYPE)
@@ -595,6 +622,65 @@ public class SqlAstBuilder {
 
         // 普通列引用
         return new ColumnRef(firstName);
+    }
+
+    /**
+     * 函数调用之后如果跟着 OVER (…)，包装成窗口函数节点。
+     */
+    private Expression maybeWindow(Expression call) {
+        if (!(call instanceof FunctionCall)) return call;
+        if (check("ID") && "OVER".equalsIgnoreCase(peek().getText())) {
+            advance();
+            return parseWindowSpec((FunctionCall) call);
+        }
+        return call;
+    }
+
+    /**
+     * OVER ([PARTITION BY expr, …] [ORDER BY sortKey, …])
+     */
+    private WindowFuncExpr parseWindowSpec(FunctionCall call) {
+        expect("LPAREN");
+        List<Expression> partitionBy = Collections.emptyList();
+        List<SortKey> orderBy = Collections.emptyList();
+        if (check("ID") && "PARTITION".equalsIgnoreCase(peek().getText())) {
+            advance();
+            expect("BY");
+            partitionBy = parseCommaSeparatedExprs();
+        }
+        if (check("ORDER")) {
+            advance();
+            expect("BY");
+            orderBy = parseOrderByKeys();
+        }
+        expect("RPAREN");
+        return new WindowFuncExpr(call.getName(), call.getArguments(), partitionBy, orderBy);
+    }
+
+    /**
+     * CASE [operand] WHEN c1 THEN r1 [WHEN … THEN …] [ELSE rN] END
+     */
+    private Expression parseCaseExpr() {
+        Expression operand = null;
+        if (!check("WHEN")) {
+            operand = parseExpression();
+        }
+        List<Expression> conditions = new ArrayList<>();
+        List<Expression> results = new ArrayList<>();
+        while (match("WHEN")) {
+            conditions.add(parseExpression());
+            expect("THEN");
+            results.add(parseExpression());
+        }
+        if (conditions.isEmpty()) {
+            throw new SqlException("CASE 表达式缺少 WHEN 子句");
+        }
+        Expression elseResult = null;
+        if (match("ELSE")) {
+            elseResult = parseExpression();
+        }
+        expect("END");
+        return new CaseExpr(operand, conditions, results, elseResult);
     }
 
     // ==================== 函数调用 ====================
@@ -615,9 +701,24 @@ public class SqlAstBuilder {
         if (check("RPAREN")) {
             args = Collections.emptyList();
         } else {
-            args = parseCommaSeparatedExprs();
+            args = new ArrayList<>(parseCommaSeparatedExprs());
+            // GROUP_CONCAT(expr [SEPARATOR sep])
+            if ("GROUP_CONCAT".equalsIgnoreCase(funcName)
+                    && check("ID") && "SEPARATOR".equalsIgnoreCase(peek().getText())) {
+                advance();
+                args.add(new ColumnRef("SEPARATOR"));
+                args.add(parseExpression());
+            }
         }
         expect("RPAREN");
+
+        // DATE_ADD(d, INTERVAL n unit) / DATE_SUB(d, INTERVAL n unit) 拆成三参标量形态
+        if (("DATE_ADD".equalsIgnoreCase(funcName) || "DATE_SUB".equalsIgnoreCase(funcName))
+                && args.size() == 2 && args.get(1) instanceof FunctionCall
+                && "__INTERVAL".equals(((FunctionCall) args.get(1)).getName())) {
+            FunctionCall iv = (FunctionCall) args.get(1);
+            args = new ArrayList<>(Arrays.asList(args.get(0), iv.getArguments().get(0), iv.getArguments().get(1)));
+        }
         return new FunctionCall(funcName.toUpperCase(), args, distinct);
     }
 
