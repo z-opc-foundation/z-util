@@ -6,32 +6,32 @@
         <artifactId>z-util</artifactId>
         <groupId>io.github.yuku123</groupId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: http (aggregate shell over http-core/http-proxy/http-server, kept for classpath compatibility)</name>
+    <name>z-util :: http-server (annotation-style embedded HTTP server + server-side proxy)</name>
 
-    <artifactId>z-util-http</artifactId>
+    <artifactId>z-util-http-server</artifactId>
 
     <dependencies>
-        <!-- R1 三拆（2026-10-10）：本坐标不再携带任何源码，只做聚合壳。
-             存量消费方继续引 z-util-http 可拿到全量 classpath；
-             新消费方（future-team-client 等对外 SDK）请只引 z-util-http-core，
-             传递依赖收敛在 okhttp/okhttp-sse/slf4j/z-util-parser-json，不含 z-util-core / z-util-aop。 -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-http-core</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!-- 复用 define 注解与 HttpDefinitionSolver 解析入口方法 -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
             <artifactId>z-util-http-proxy</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!-- HttpServerProxy 用 aop.proxy.ProxyUtil 织入服务端代理 -->
         <dependency>
             <groupId>io.github.yuku123</groupId>
-            <artifactId>z-util-http-server</artifactId>
+            <artifactId>z-util-aop</artifactId>
             <version>${revision}</version>
         </dependency>
     </dependencies>

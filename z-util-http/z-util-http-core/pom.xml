@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: http-core (HttpExecutor + HttpExecutionResult + SSE + curl parser + request POJOs)</name>
+
+    <artifactId>z-util-http-core</artifactId>
+
+    <dependencies>
+        <!-- OkHttp HTTP 客户端 -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+        <!-- OkHttp SSE (Server-Sent Events) -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-sse</artifactId>
+        </dependency>
+
+        <!-- SLF4J 日志门面（HttpExecutor 用 LoggerFactory） -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- JSON 处理（executeByDefinitionJson / sendUpload 解析） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-parser-json</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- R1 三拆（2026-10-10）：FT 反馈——对外 SDK 只敢引本模块，传递依赖不得含
+             z-util-core / z-util-aop；注解代理层归 z-util-http-proxy，server 层归
+             z-util-http-server，原 z-util-http 坐标保留为聚合壳做 classpath 兼容。 -->
+    </dependencies>
+</project>

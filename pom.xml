@@ -133,6 +133,11 @@
         <module>z-util-visualization</module>
         <module>z-util-jdbc</module>
         <module>z-util-http</module>
+        <!-- z-util-http 三拆 (2026-10-10, FT 反馈)：core=执行器/SSE/curl/POJO，proxy=注解代理层，server=服务端代理；
+             原 z-util-http 坐标保留为聚合壳做 classpath 兼容；三个新模块物理上置于 z-util-http/ 之下 -->
+        <module>z-util-http/z-util-http-core</module>
+        <module>z-util-http/z-util-http-proxy</module>
+        <module>z-util-http/z-util-http-server</module>
         <module>z-util-math</module>
         <module>z-util-ml</module>
         <module>z-util-monitor</module>

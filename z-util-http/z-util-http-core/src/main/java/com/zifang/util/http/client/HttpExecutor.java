@@ -65,6 +65,20 @@ public class HttpExecutor {
         this.client = DEFAULT_CLIENT;
     }
 
+    /**
+     * 自定义超时构造 - 分钟级 SSE 长流等场景用（DEFAULT_CLIENT 固定 read 60s，
+     * 长流依赖业务心跳续命，建议 readTimeout 放宽到大于服务端心跳间隔）。
+     */
+    public HttpExecutor(long connectTimeout, long readTimeout, long writeTimeout, TimeUnit unit) {
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(connectTimeout, unit)
+                .readTimeout(readTimeout, unit)
+                .writeTimeout(writeTimeout, unit)
+                .connectionPool(new ConnectionPool(20, 5, TimeUnit.MINUTES))
+                .retryOnConnectionFailure(true)
+                .build();
+    }
+
     // =================================================================
     // 4 个入口
     // =================================================================
@@ -174,9 +188,11 @@ public class HttpExecutor {
     // =================================================================
 
     /**
-     * SSE 流 - 持续回调直到连接关闭
+     * SSE 流 - 持续回调直到连接关闭。
+     * 返回 {@link com.zifang.util.http.sse.SseStreamHandle}，调用方可随时 cancel() 取消流；
+     * 回调内抛出的异常会记 log.warn（不再静默吞掉），失败/关闭事件同样经 onEvent 送达。
      */
-    public void sendSse(HttpRequestDefinition def, Consumer<HttpExecutionResult> onEvent) {
+    public com.zifang.util.http.sse.SseStreamHandle sendSse(HttpRequestDefinition def, Consumer<HttpExecutionResult> onEvent) {
         long start = System.currentTimeMillis();
         try {
             Request req = buildRequest(def);
@@ -186,7 +202,8 @@ public class HttpExecutor {
             Request sseReq = rb.build();
 
             EventSource.Factory factory = EventSources.createFactory(client);
-            factory.newEventSource(sseReq, new EventSourceListener() {
+            EventSource[] holder = new EventSource[1];
+            EventSourceListener listener = new EventSourceListener() {
                 @Override
                 public void onEvent(EventSource es, String id, String type, String data) {
                     HttpExecutionResult ev = HttpExecutionResult.sseEvent(type, data);
@@ -194,7 +211,8 @@ public class HttpExecutor {
                     ev.setSource("SSE");
                     try {
                         onEvent.accept(ev);
-                    } catch (Exception ignore) {
+                    } catch (Exception e) {
+                        log.warn("SSE onEvent callback threw, event type={}", type, e);
                     }
                 }
 
@@ -210,14 +228,18 @@ public class HttpExecutor {
                     err.setSource("SSE");
                     try {
                         onEvent.accept(err);
-                    } catch (Exception ignore) {
+                    } catch (Exception e) {
+                        log.warn("SSE onFailure callback threw", e);
                     }
                 }
-            });
+            };
+            holder[0] = factory.newEventSource(sseReq, listener);
+            return new com.zifang.util.http.sse.SseStreamHandle(holder[0]);
         } catch (Exception e) {
             HttpExecutionResult err = HttpExecutionResult.fail("SSE init failed: " + e.getMessage(), e);
             err.setSource("SSE");
             onEvent.accept(err);
+            return new com.zifang.util.http.sse.SseStreamHandle(null);
         }
     }
 

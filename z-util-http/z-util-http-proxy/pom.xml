@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>z-util :: http-proxy (annotation-driven HTTP client: define annotations + definition solver + JDK proxy)</name>
+
+    <artifactId>z-util-http-proxy</artifactId>
+
+    <dependencies>
+        <!-- 请求 POJO 与执行器本体在 core（本模块只做"接口注解 → HttpRequestDefinition"的翻译与代理） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-http-core</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- AnnotationUtil / GsonUtil / Pair：解析注解与序列化请求体 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-core</artifactId>
+        </dependency>
+    </dependencies>
+</project>

@@ -85,6 +85,16 @@ public class HttpExecutionResult {
         return success;
     }
 
+    /**
+     * HTTP 状态码语义判定（2xx = true）。
+     * <p>
+     * 与 {@link #isSuccess()} 的区别：isSuccess 表示"调用本身完成"（没抛异常、拿到 Response），
+     * 4xx/5xx 也是 true；本方法才是业务常用的"请求成功"判定。
+     */
+    public boolean isHttpStatusOk() {
+        return status >= 200 && status < 300;
+    }
+
     public void setSuccess(boolean v) {
         this.success = v;
     }
