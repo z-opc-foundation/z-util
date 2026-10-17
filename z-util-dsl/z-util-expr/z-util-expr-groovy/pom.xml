@@ -15,7 +15,7 @@
     <description>Groovy script executor module</description>
 
     <properties>
-        <groovy.version>3.0.19</groovy.version>
+        <groovy.version>3.0.25</groovy.version>
     </properties>
 
     <dependencies>
