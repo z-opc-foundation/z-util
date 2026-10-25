@@ -25,7 +25,7 @@ function NotFound() {
     )
 }
 
-// lead 008 §16：短期 hard-coded 登录（admin / 123456），CTC/SSO 接入后换共享 LoginPage loginApi
+// lead 008 §16：CTC/SSO 接入前的 mock 登录（账号由构建期 VITE_MOCK_USER / VITE_MOCK_PASSWORD 注入）
 function LoginRoute() {
     return <LoginPage />
 }

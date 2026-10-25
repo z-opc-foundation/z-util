@@ -67,7 +67,7 @@ import StatusPage from './src/StatusPage.jsx'
 
 ### 4.3 登录
 
-**mock 登录**：硬编码 `admin / 123456`，成功后写 `localStorage.token`（值形如 `mock-admin`）与
+**mock 登录**：账号由构建期注入 `VITE_MOCK_USER / VITE_MOCK_PASSWORD`（未注入时登录页提示未配置），成功后写 `localStorage.token`（值形如 `mock-admin`）与
 `localStorage.userInfo`，再整页跳 `/z-util/home`。 CTC/SSO 接入后应换共享 `LoginPage` 的 `loginApi`。
 
 ### 4.4 组件文档
@@ -89,7 +89,7 @@ import StatusPage from './src/StatusPage.jsx'
 
 - **本壳没有业务能力**：z-util 的能力在 jar 侧（分页 / JWT / 分布式 ID / 表达式 DSL / JDBC 等一堆模块），
   **没有任何 HTTP 端点**，本壳也就没有任何工具在线试用 / 配置之类的页面。菜单里目前只有首页与服务状态。
-- **登录是硬编码 mock**（`admin / 123456`），没有真实鉴权；`App.jsx` 的 `ProtectedShell` 只判断 `localStorage.token` 是否存在。
+- **登录是 mock（账号由环境变量注入）**，没有真实鉴权；`App.jsx` 的 `ProtectedShell` 只判断 `localStorage.token` 是否存在。
 - `Status` 页用相对路径 `fetch('/actuator/health')`，**要求前后端同域托管**；分域部署会 404（此时降级为 UNKNOWN）。
 - `Status` 页 10 秒轮询一次 actuator，页面常开时会持续打后端。
 - dev proxy 的 `/api` 目标 `:8888` 是平台侧通用地址，**与 z-util 仓本身无关**（本仓不起服务）。
