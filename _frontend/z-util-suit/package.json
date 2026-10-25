@@ -1,7 +1,7 @@
 {
   "name": "@yuku123/z-util-suit",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "z-util 独立运行壳（lead 005 §9.1 suit：AppLayout + 鉴权 + 路由占位）。不发布 npm",
   "scripts": {"dev": "vite", "build": "vite build"},

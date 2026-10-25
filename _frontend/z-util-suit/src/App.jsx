@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@yuku123/z-frontend-common'
 import { menuItems, routeTable, HomePage, LoginPage } from './pages-manifest'
 import { Result, Button } from 'antd'
+// 版本号只认 package.json，避免顶栏版本与发版号两处各写一遍慢慢漂移。
+import { version as appVersion } from '../package.json'
 
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { err: null } }
@@ -50,7 +52,7 @@ function ProtectedShell() {
         <AppLayout
             menuItems={menuItems}
             appTitle="util 服务台"
-            appVersion="1.0.0"
+            appVersion={appVersion}
             appUser={user}
             appIcon={{ icon: <img src="/icon.png" alt="util 服务台" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}/>, color: '#64748b', label: 'util 服务台' }}
         />
