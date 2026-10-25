@@ -2,8 +2,17 @@ import { useState } from 'react'
 import { Button, Card, Form, Input, message } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 
-/** 登录页（lead 008 §16）—— CTC/SSO 接入前短期 mockAuth（hard-coded admin/123456）。 */
-const MOCK_AUTH = { username: 'admin', password: '123456', user: { name: 'admin', role: '管理员' } }
+/**
+ * 登录页（lead 008 §16）—— CTC/SSO 接入前的 mock 登录。
+ *
+ * mock 账号不写死在仓里（001_凭证管理规范）：宿主在构建期注入
+ * VITE_MOCK_USER / VITE_MOCK_PASSWORD，未注入时页面直接说明「未配置 mock 账号」。
+ */
+const MOCK_AUTH = {
+    username: import.meta.env.VITE_MOCK_USER || '',
+    password: import.meta.env.VITE_MOCK_PASSWORD || '',
+    user: { name: import.meta.env.VITE_MOCK_USER || '', role: '管理员' },
+}
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false)
@@ -11,13 +20,17 @@ export default function LoginPage() {
     const handleSubmit = async (values) => {
         setLoading(true)
         try {
+            if (!MOCK_AUTH.username || !MOCK_AUTH.password) {
+                message.error('未配置 mock 账号（VITE_MOCK_USER / VITE_MOCK_PASSWORD）')
+                return
+            }
             if (values.username === MOCK_AUTH.username && values.password === MOCK_AUTH.password) {
                 localStorage.setItem('token', 'mock-' + MOCK_AUTH.username)
                 localStorage.setItem('userInfo', JSON.stringify(MOCK_AUTH.user))
                 message.success('登录成功（mock 模式，待 CTC/SSO 接入）')
                 window.location.href = '/z-util/home'
             } else {
-                message.error('用户名或密码错误（默认 admin/123456）')
+                message.error('用户名或密码错误')
             }
         } finally {
             setLoading(false)
@@ -53,7 +66,7 @@ export default function LoginPage() {
                         </Button>
                     </Form.Item>
                     <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 12 }}>
-                        Mock 模式：用户名 <b>{MOCK_AUTH.username}</b> / 密码 <b>{MOCK_AUTH.password}</b>
+                        Mock 模式：账号由宿主注入（VITE_MOCK_USER / VITE_MOCK_PASSWORD）
                     </div>
                 </Form>
             </Card>
