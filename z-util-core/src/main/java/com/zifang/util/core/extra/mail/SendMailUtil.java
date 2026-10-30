@@ -1,9 +1,9 @@
 package com.zifang.util.core.extra.mail;
 
-import javax.activation.DataHandler;
-import javax.activation.FileDataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
+import jakarta.activation.DataHandler;
+import jakarta.activation.FileDataSource;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;

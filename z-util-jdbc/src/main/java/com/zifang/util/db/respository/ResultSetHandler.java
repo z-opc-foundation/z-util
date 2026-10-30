@@ -2,7 +2,7 @@ package com.zifang.util.db.respository;
 
 import com.zifang.util.core.lang.converter.Converters;
 
-import javax.persistence.Column;
+import jakarta.persistence.Column;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

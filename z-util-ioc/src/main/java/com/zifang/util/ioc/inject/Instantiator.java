@@ -8,8 +8,8 @@ import com.zifang.util.ioc.exception.BeanCreationException;
 import com.zifang.util.ioc.exception.ProvisionException;
 import com.zifang.util.ioc.metadata.BeanDefinition;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.lang.reflect.Method;
 
 /**

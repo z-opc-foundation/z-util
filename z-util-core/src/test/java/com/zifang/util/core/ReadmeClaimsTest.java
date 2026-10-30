@@ -90,7 +90,7 @@ class ReadmeClaimsTest {
             {"字节码", "jol-core", "jol-core"},
             {"数据", "Druid", "druid"},
             {"数据", "mysql-connector-j", "mysql-connector-j"},
-            {"数据", "javax.persistence-api", "javax.persistence-api"},
+            {"数据", "jakarta.persistence-api", "jakarta.persistence-api"},
             {"数据", "MyBatis", "mybatis"},
             {"数据", "H2", "h2"},
             {"运维", "github-api", "github-api"},

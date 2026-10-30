@@ -40,11 +40,11 @@
             <artifactId>druid</artifactId>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/javax.persistence/javax.persistence-api -->
+        <!-- jakarta.persistence-api 3.0.0（2026-10-30 SB3 火车，原 javax.persistence-api 2.2） -->
         <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>javax.persistence-api</artifactId>
-            <version>2.2</version>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.0.0</version>
         </dependency>
 
         <dependency>

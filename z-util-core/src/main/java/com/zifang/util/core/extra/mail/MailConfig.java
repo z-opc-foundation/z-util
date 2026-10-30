@@ -1,7 +1,7 @@
 package com.zifang.util.core.extra.mail;
 
-import javax.mail.Authenticator;
-import javax.mail.PasswordAuthentication;
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 
 /**
  * 邮件配置类

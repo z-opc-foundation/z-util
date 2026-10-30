@@ -14,8 +14,8 @@ import com.zifang.util.ioc.provider.InternalProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;

@@ -1,6 +1,6 @@
 package com.zifang.util.db.test0;
 
-import javax.persistence.Table;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 import java.util.Objects;
 

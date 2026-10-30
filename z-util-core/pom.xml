@@ -38,8 +38,8 @@
              1.2-api 仅在需要兼容 log4j 1.x API 时引入，会干扰 log4j 2.x 配置加载 -->
 
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -62,7 +62,7 @@
 
         <dependency>
             <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
+            <artifactId>jakarta.mail</artifactId>
         </dependency>
 
         <!--

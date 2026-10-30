@@ -136,7 +136,7 @@
                 （jar/sources/javadoc）。模块本身留在 reactor：GeneratedCodecTest 要靠注解处理器
                 在 test 域跨 core/formats/codegen/schema 生成 codec，这是全仓唯一一处跨模块 codegen
                 集成测试，删模块等于删测试。 -->
-        <revision>1.2.10</revision>
+        <revision>1.2.11</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
@@ -153,7 +153,7 @@
         <javax.inject.version>1</javax.inject.version>
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <validation.version>2.0.1.Final</validation.version>
-        <javax.mail.version>1.6.2</javax.mail.version>
+        <javax.mail.version>2.0.1</javax.mail.version>
         <!-- 刻意留 3.1.0：Servlet 3.1 的 API 面是本仓编译底线，升 4.0.1 只是跟着容器走。 -->
         <servlet.version>3.1.0</servlet.version>
         <!-- jaxb.version / jaxb.impl.version / jaxb.core.version 已删（2026-10-13）：
@@ -515,15 +515,15 @@
             </dependency>
 
             <dependency>
-                <groupId>javax.annotation</groupId>
-                <artifactId>javax.annotation-api</artifactId>
-                <version>${javax.annotation.version}</version>
+                <groupId>jakarta.annotation</groupId>
+                <artifactId>jakarta.annotation-api</artifactId>
+                <version>2.1.1</version>
             </dependency>
 
             <dependency>
-                <groupId>javax.validation</groupId>
-                <artifactId>validation-api</artifactId>
-                <version>${validation.version}</version>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>3.0.2</version>
             </dependency>
 
             <dependency>
@@ -546,9 +546,9 @@
             </dependency>
 
             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${servlet.version}</version>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>6.0.0</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -578,7 +578,7 @@
             <!-- Mail (迁移自已弃用的 javax.mail:mail 1.4.7，修复 CVE-2007-4566 / CVE-2019-10086 等历史漏洞) -->
             <dependency>
                 <groupId>com.sun.mail</groupId>
-                <artifactId>javax.mail</artifactId>
+                <artifactId>jakarta.mail</artifactId>
                 <version>${javax.mail.version}</version>
             </dependency>
 

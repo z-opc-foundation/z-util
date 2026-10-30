@@ -1,6 +1,6 @@
 package com.zifang.util.core.meta;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 响应状态码枚举

@@ -24,7 +24,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 |------|-----|
 | **仓库** | `z-util`（org: z-opc-foundation 的基础库；远端为组织仓 `github.com:z-opc-foundation/z-util.git`） |
 | **Maven 坐标** | 根聚合 `io.github.yuku123:z-util:${revision}`（`packaging=pom`）；子件 `io.github.yuku123:z-util-<module>:${revision}`。groupId 保持 `io.github.yuku123`（已发布坐标，Central 上 1.0.2~1.2.8 全系列，2026-10-19 实测），与 GitHub 组织归属解耦 |
-| **当前版本** | `1.2.8`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
+| **当前版本** | `1.2.11`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
 | **模块数** | 根 POM `<modules>` **26** 个条目；展开后共 **70 个模块 POM = 62 个 jar + 8 个 pom**（8 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-wf`；2026-10-19 按 pom 现读订正） |
@@ -172,12 +172,12 @@ z-util/
 | JSON | 自研 `z-util-parser-json`（`.g4` + 自研 DSL 解析器，非 Jackson）；**全仓零 Jackson**（2026-10-15 起 `jackson.version` 与 4 条 DM 已撤，JSON 能力全走自研件） |
 | 解析 | ANTLR 4.13.2（runtime）、jsoup 1.23.1 与 Guava 33.6.0-jre **只在根 DM 里管着，没有任何模块引用** |
 | HTTP | OkHttp（client）、JDK `com.sun.net.httpserver`（server）；`netty-all` 只在根 DM 里管着、没有任何模块引用，**全仓无一处 `io.netty` 代码** |
-| 数据 | `z-util-jdbc`：Druid 1.2.28 + mysql-connector-j 26.7.0 + `javax.persistence-api` 2.2 + MyBatis 3.5.19（`<optional>`，只服务分页插件兼容层）+ H2 2.2.224（`test` scope） |
+| 数据 | `z-util-jdbc`：Druid 1.2.28 + mysql-connector-j 26.7.0 + `jakarta.persistence-api` 3.0.0 + MyBatis 3.5.19（`<optional>`，只服务分页插件兼容层）+ H2 2.2.224（`test` scope） |
 | Office | POI 5.5.1（+ `poi-ooxml-full`）、PDFBox 3.0.8 |
 | 字节码 | ASM 9.7（`z-util-bc` 内字面钉 + 根 DM 地板）、cglib 3.3.0、javassist 3.32.0-GA、javaparser 3.28.2、jol-core 0.17 |
 | 运维 | github-api 1.330（根 DM）、JGit 5.13.5.202508271544-r（`z-util-devops-git` 内字面钉）、Docker CLI/HTTP、Nexus REST |
-| 模块内字面版本钉（现状） | 实测仍有 10 处非 `${revision}` 的第三方字面 `<version>`：asm 9.7（bc）、pinyin4j 2.5.1（ch）、luaj-jse 3.0.1（expr-lua）、snakeyaml 2.2（parser-yaml）、mysql-connector-j 26.7.0 / javax.persistence-api 2.2 / mybatis 3.5.19 / h2 2.2.224（jdbc）、org.eclipse.jgit 5.13.5.202508271544-r（devops-git）、kryo 5.7.0（serialize-it，已钉 test scope）；expr-groovy 走 `${groovy.version}` |
-| Java EE 口径 | `javax.inject 1`、`javax.annotation 1.3.2`、`javax.servlet-api 3.1.0`、`validation 2.0.1.Final`、`javax.mail 1.6.2`（JAXB 已于 2026-10-13 全域退场，XML Bean 绑定走自研 `z-util-parser-xml`） |
+| 模块内字面版本钉（现状） | 实测仍有 10 处非 `${revision}` 的第三方字面 `<version>`：asm 9.7（bc）、pinyin4j 2.5.1（ch）、luaj-jse 3.0.1（expr-lua）、snakeyaml 2.2（parser-yaml）、mysql-connector-j 26.7.0 / jakarta.persistence-api 3.0.0 / mybatis 3.5.19 / h2 2.2.224（jdbc）、org.eclipse.jgit 5.13.5.202508271544-r（devops-git）、kryo 5.7.0（serialize-it，已钉 test scope）；expr-groovy 走 `${groovy.version}` |
+| Java EE 口径 | `javax.inject 1`（JSR-330 未迁，仍是 javax 命名空间）、`jakarta.annotation-api 2.1.1`、`jakarta.servlet-api 6.0.0`、`jakarta.validation-api 3.0.2`、`jakarta.mail 2.0.1`、`jakarta.persistence-api 3.0.0`（2026-10-30 SB3 火车整体从 javax 迁 jakarta；JAXB 已于 2026-10-13 全域退场，XML Bean 绑定走自研 `z-util-parser-xml`） |
 | 构建 | Maven + flatten-maven-plugin（CI-friendly `${revision}`）；`.env` / `.gnupg` 已被 `.gitignore` 排除 |
 
 ---
