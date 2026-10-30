@@ -4,7 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: all (umbrella pom with dependencyManagement for every z-util-* module)</name>
+<name>z-util :: all</name>
+    <description>umbrella pom with dependencyManagement for every z-util-* module</description>
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-util</artifactId>

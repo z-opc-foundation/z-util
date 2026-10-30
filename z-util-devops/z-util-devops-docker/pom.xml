@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: devops :: docker (Docker client (CLI/HTTP) + docker.dto models)</name>
+<name>z-util :: devops :: docker</name>
+    <description>Docker client (CLI/HTTP) + docker.dto models</description>
 
     <artifactId>z-util-devops-docker</artifactId>
 

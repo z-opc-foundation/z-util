@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: math (NumPy/Pandas-style data structures: NdArray/Series/DataFrame/Linalg)</name>
+<name>z-util :: math</name>
+    <description>NumPy/Pandas-style data structures: NdArray/Series/DataFrame/Linalg</description>
 
     <artifactId>z-util-math</artifactId>
 

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: sensitive (敏感识别引擎：敏感词 DFA + PII 校验位 + 脱敏)</name>
+<name>z-util :: sensitive</name>
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-util</artifactId>
@@ -13,7 +13,7 @@
     </parent>
 
     <artifactId>z-util-sensitive</artifactId>
-    <description>敏感词与敏感信息（PII）的识别、判定与脱敏。零第三方依赖。刻意不做中文分词与语义分类 —— 见 _doc/001_arch/03-sensitive-detect-engine.md 的选型论证。</description>
+<description>敏感词与敏感信息（PII）的识别、判定与脱敏。零第三方依赖。刻意不做中文分词与语义分类 —— 见 _doc/001_arch/03-sensitive-detect-engine.md 的选型论证。 / 敏感识别引擎：敏感词 DFA + PII 校验位 + 脱敏</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: core (base utilities: collection/string/io/concurrent/crypto/jwt/limiter/breaker/scheduler)</name>
+<name>z-util :: core</name>
+    <description>base utilities: collection/string/io/concurrent/crypto/jwt/limiter/breaker/scheduler</description>
 
     <artifactId>z-util-core</artifactId>
 

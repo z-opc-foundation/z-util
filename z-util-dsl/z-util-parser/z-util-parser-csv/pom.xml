@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: csv (CSV reader/writer, ANTLR based)</name>
+<name>z-util :: parser :: csv</name>
     <artifactId>z-util-parser-csv</artifactId>
-    <description>CSV file parser supporting RFC 4180 format</description>
+<description>CSV file parser supporting RFC 4180 format / CSV reader/writer, ANTLR based</description>
 
     <dependencies>
         <dependency>

@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: media (image processing, captcha, color convert, GIF encoder, QRCode codec)</name>
+<name>z-util :: media</name>
+    <description>image processing, captcha, color convert, GIF encoder, QRCode codec</description>
 
     <artifactId>z-util-media</artifactId>
 

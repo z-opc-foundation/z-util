@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: http (aggregate shell over http-core/http-proxy/http-server, kept for classpath compatibility)</name>
+<name>z-util :: http</name>
+    <description>aggregate shell over http-core/http-proxy/http-server, kept for classpath compatibility</description>
 
     <artifactId>z-util-http</artifactId>
 

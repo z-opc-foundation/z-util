@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: pattern :: visitor (GoF)</name>
+<name>z-util :: pattern :: visitor</name>
+    <description>GoF</description>
     <artifactId>z-util-pattern-visitor</artifactId>
 
     <dependencies>

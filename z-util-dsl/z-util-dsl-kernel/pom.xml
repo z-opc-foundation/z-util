@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: dsl-kernel (self-made lexer/parser/AST framework with ANTLR g4 dynamic loading)</name>
+<name>z-util :: dsl-kernel</name>
+    <description>self-made lexer/parser/AST framework with ANTLR g4 dynamic loading</description>
     <artifactId>z-util-dsl-kernel</artifactId>
 
 </project>

@@ -37,7 +37,8 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 
 ## 🧩 模块清单
 
-下表**逐条对齐**根 `pom.xml` 的 `<modules>`（**26** 条，按 POM 内声明顺序），职责取自各模块 POM 的 `<name>`。
+下表**逐条对齐**根 `pom.xml` 的 `<modules>`（**26** 条，按 POM 内声明顺序），职责取自各模块 POM 的 `<description>`
+（`<name>` 只留 `仓名 :: 模块` 短标识，不承载说明文字）。
 `z-util-dsl` / `z-util-serialize` / `z-util-devops` 是聚合 POM；`z-util-dsl` 家族收编了 `z-util-dsl-kernel`（原 `z-util-dsl` jar）+ `z-util-expr` + `z-util-parser`，子模块单列在下面子表。
 
 | 模块（`<module>` 顺序） | 类型 | 职责 | 关键入口（实测存在的类） |

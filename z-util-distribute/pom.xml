@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: distribute (Snowflake / Segment / NanoId / UUID v7 / SystemClock)</name>
+<name>z-util :: distribute</name>
+    <description>Snowflake / Segment / NanoId / UUID v7 / SystemClock</description>
 
     <artifactId>z-util-distribute</artifactId>
 

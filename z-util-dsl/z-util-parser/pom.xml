@@ -12,8 +12,8 @@
 
     <artifactId>z-util-parser</artifactId>
     <packaging>pom</packaging>
-    <name>z-util :: parser (multi-format parser aggregator: json/xml/yaml/csv/ini/properties/proto/toml)</name>
-    <description>静态文件解析分支：JSON、XML、YAML、Properties、INI、CSV、TOML、Proto</description>
+<name>z-util :: parser</name>
+<description>静态文件解析分支：JSON、XML、YAML、Properties、INI、CSV、TOML、Proto / multi-format parser aggregator: json/xml/yaml/csv/ini/properties/proto/toml</description>
 
     <modules>
         <module>z-util-parser-json</module>

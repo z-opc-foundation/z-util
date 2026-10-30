@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: parser :: tom (TOML parser, ANTLR based)</name>
+<name>z-util :: parser :: tom</name>
     <artifactId>z-util-parser-toml</artifactId>
-    <description>TOML 配置文件解析器（TOML v1.0.0 子集）</description>
+<description>TOML 配置文件解析器（TOML v1.0.0 子集） / TOML parser, ANTLR based</description>
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>

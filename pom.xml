@@ -22,7 +22,7 @@
     <!-- Maven Central 必需的 POM 元数据（缺一不可）                          -->
     <!-- 由 `central` profile 触发，确保 GitHub Packages 流程不受影响         -->
     <!-- ============================================================== -->
-    <name>z-util</name>
+<name>z-util :: root</name>
     <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/aop/dsl/parser/expr/workflow/http/jdbc/math/ml/office/media/visualization/monitor/devops/distribute/cli/ch 等）</description>
     <url>https://github.com/z-opc-foundation/z-util</url>
 

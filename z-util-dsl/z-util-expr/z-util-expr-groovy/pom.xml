@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: expr :: groovy (Groovy script executor)</name>
+<name>z-util :: expr :: groovy</name>
     <artifactId>z-util-expr-groovy</artifactId>
-    <description>Groovy script executor module</description>
+<description>Groovy script executor module</description>
 
     <properties>
         <groovy.version>3.0.19</groovy.version>

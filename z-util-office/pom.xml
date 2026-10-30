@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: office (Apache POI/PDFBox based Excel/PDF utilities)</name>
+<name>z-util :: office</name>
+    <description>Apache POI/PDFBox based Excel/PDF utilities</description>
 
     <artifactId>z-util-office</artifactId>
 

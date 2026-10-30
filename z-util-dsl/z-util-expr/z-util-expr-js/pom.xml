@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: expr :: js (self-made JS engine + PlayScript reference)</name>
+<name>z-util :: expr :: js</name>
+    <description>self-made JS engine + PlayScript reference</description>
 
     <artifactId>z-util-expr-js</artifactId>
 

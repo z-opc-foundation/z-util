@@ -9,7 +9,8 @@
     </parent>
     <artifactId>z-util-serialize-formats</artifactId>
     <packaging>jar</packaging>
-    <name>z-util :: serialize :: formats (interoperable transcoders: JSON, MsgPack, Protobuf)</name>
+<name>z-util :: serialize :: formats</name>
+    <description>interoperable transcoders: JSON, MsgPack, Protobuf</description>
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>

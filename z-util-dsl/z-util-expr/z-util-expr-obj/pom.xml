@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: expr :: obj (object shaping language: relation to arbitrary structure)</name>
+<name>z-util :: expr :: obj</name>
     <artifactId>z-util-expr-obj</artifactId>
-    <description>对象整形语言：把二维关系表整形为任意对象结构（嵌套对象、对象数组、键值映射、树、透视矩阵）</description>
+<description>对象整形语言：把二维关系表整形为任意对象结构（嵌套对象、对象数组、键值映射、树、透视矩阵） / object shaping language: relation to arbitrary structure</description>
     <dependencies>
         <dependency>
             <groupId>io.github.yuku123</groupId>

@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: bc (bytecode tools: self-made class file model + ASM weave + in-memory compile)</name>
+<name>z-util :: bc</name>
+    <description>bytecode tools: self-made class file model + ASM weave + in-memory compile</description>
 
     <artifactId>z-util-bc</artifactId>
     <packaging>jar</packaging>

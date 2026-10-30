@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: jdbc (DataSource/transaction/annotation Mapper/Repository proxy + lightweight ORM)</name>
+<name>z-util :: jdbc</name>
+    <description>DataSource/transaction/annotation Mapper/Repository proxy + lightweight ORM</description>
 
     <artifactId>z-util-jdbc</artifactId>
     <dependencies>

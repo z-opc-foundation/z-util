@@ -11,8 +11,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>z-util-ioc</artifactId>
-    <name>z-util :: ioc (lightweight IoC container, JSR-330 compatible, AOP integration)</name>
-    <description>轻量级 IOC 容器，对标 Guice / Spring IOC，无第三方 IOC 依赖</description>
+<name>z-util :: ioc</name>
+<description>轻量级 IOC 容器，对标 Guice / Spring IOC，无第三方 IOC 依赖 / lightweight IoC container, JSR-330 compatible, AOP integration</description>
 
     <dependencies>
         <dependency>

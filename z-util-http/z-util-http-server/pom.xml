@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: http-server (annotation-style embedded HTTP server + server-side proxy)</name>
+<name>z-util :: http-server</name>
+    <description>annotation-style embedded HTTP server + server-side proxy</description>
 
     <artifactId>z-util-http-server</artifactId>
 

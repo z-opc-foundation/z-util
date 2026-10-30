@@ -10,7 +10,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: http-core (HttpExecutor + HttpExecutionResult + SSE + curl parser + request POJOs)</name>
+<name>z-util :: http-core</name>
+    <description>HttpExecutor + HttpExecutionResult + SSE + curl parser + request POJOs</description>
 
     <artifactId>z-util-http-core</artifactId>
 

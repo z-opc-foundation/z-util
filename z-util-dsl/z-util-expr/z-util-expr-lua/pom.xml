@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>z-util :: expr :: lua (Lua script executor)</name>
+<name>z-util :: expr :: lua</name>
     <artifactId>z-util-expr-lua</artifactId>
-    <description>Lua 脚本执行器，基于纯 Java Luaj 实现</description>
+<description>Lua 脚本执行器，基于纯 Java Luaj 实现 / Lua script executor</description>
 
     <dependencies>
         <dependency>
