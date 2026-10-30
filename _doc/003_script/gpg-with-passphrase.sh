@@ -59,7 +59,36 @@ if [ -z "$GPG_BIN" ] || [ ! -x "$GPG_BIN" ]; then
     exit 3
 fi
 
-# 3. 转交系统 gpg
+# 3. 剔除调用方传入的 --pinentry-mode（连同它的值）
+#    ⚠ 2026-10-30 实测：maven-gpg-plugin 3.2.8 自己会传 `--pinentry-mode error`，
+#    而 gpg 对同一选项取**最后一次**出现的值 ⇒ 调用方那个 error 盖掉我们自己的
+#    loopback ⇒ gpg 拒绝走 loopback 取口令 ⇒ 报 "No pinentry" / Exit code: 2。
+#    本仓的 wrapper 早年是 2026-10-20 从 z-boot 仓照搬，那次漏抄了这段剔除逻辑，
+#    于是 1.2.11 实发第一次就死在 gpg:sign（z-boot 仓早在 2026-10-21 补上，z-team 1.0.3 同款）。
+#    所以先把入参里的 --pinentry-mode 整组剔掉，再由我们自己以 loopback 追加。
+argc=$#
+while [ "$argc" -gt 0 ]; do
+    _arg="$1"
+    shift
+    argc=$((argc - 1))
+    case "$_arg" in
+        --pinentry-mode)
+            # 丢掉紧随其后的值
+            if [ "$argc" -gt 0 ]; then
+                shift
+                argc=$((argc - 1))
+            fi
+            ;;
+        --pinentry-mode=*)
+            # 形如 --pinentry-mode=error，整条丢掉
+            ;;
+        *)
+            set -- "$@" "$_arg"
+            ;;
+    esac
+done
+
+# 4. 转交系统 gpg（loopback + 口令由本 wrapper 兜住）
 exec "$GPG_BIN" \
     --batch \
     --pinentry-mode loopback \

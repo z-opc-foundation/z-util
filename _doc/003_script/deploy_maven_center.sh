@@ -52,9 +52,28 @@ load_env() {
     # shellcheck disable=SC1091
     set -a; source .env; set +a
 
-    [[ -n "${CENTRAL_USERNAME:-}"    ]] || die ".env 缺 CENTRAL_USERNAME"
-    [[ -n "${CENTRAL_TOKEN:-}"       ]] || die ".env 缺 CENTRAL_TOKEN"
-    [[ -n "${CENTRAL_GPG_PASSPHRASE:-}" ]] || die ".env 缺 CENTRAL_GPG_PASSPHRASE（先跑 gpg-init）"
+    # 本仓 .env 里的中央凭证键名历史上是 MAVEN_CENTRAL_USERNAME / MAVEN_CENTRAL_SECRET
+    # （z-util 仓自成一派，z-boot 仓用的是 CENTRAL_USERNAME / CENTRAL_TOKEN）。
+    # 这里做键名归一，两种写法都能用。
+    if [[ -z "${CENTRAL_USERNAME:-}" && -n "${MAVEN_CENTRAL_USERNAME:-}" ]]; then
+        CENTRAL_USERNAME="$MAVEN_CENTRAL_USERNAME"
+    fi
+    if [[ -z "${CENTRAL_TOKEN:-}" && -n "${MAVEN_CENTRAL_SECRET:-}" ]]; then
+        CENTRAL_TOKEN="$MAVEN_CENTRAL_SECRET"
+    fi
+
+    [[ -n "${CENTRAL_USERNAME:-}"    ]] || die ".env 缺 CENTRAL_USERNAME（或 MAVEN_CENTRAL_USERNAME）"
+    [[ -n "${CENTRAL_TOKEN:-}"       ]] || die ".env 缺 CENTRAL_TOKEN（或 MAVEN_CENTRAL_SECRET）"
+
+    # 本仓 .env 里的口令键名历史上是 GPG_PASSPHRASE（不是 CENTRAL_GPG_PASSPHRASE），
+    # 而 gpg.passphraseEnvName 指的是**环境变量名** ⇒ 这里统一补一个
+    # CENTRAL_GPG_PASSPHRASE 出来（口令本身不进 argv，只给环境变量名）。
+    # 2026-10-30 实测：只写 GPG_PASSPHRASE 时，上面那句判空一定命中，
+    # 脚本在 load_env 就 die，压根走不到签名那一步。
+    if [[ -z "${CENTRAL_GPG_PASSPHRASE:-}" && -n "${GPG_PASSPHRASE:-}" ]]; then
+        CENTRAL_GPG_PASSPHRASE="$GPG_PASSPHRASE"
+    fi
+    [[ -n "${CENTRAL_GPG_PASSPHRASE:-}" ]] || die ".env 缺 GPG_PASSPHRASE（先跑 gpg-init）"
 
     export CENTRAL_USERNAME CENTRAL_TOKEN CENTRAL_GPG_PASSPHRASE
 }
@@ -146,11 +165,17 @@ cmd_publish() {
     # 清掉 staging 避免上次残留
     rm -rf target/central-staging target/central-publishing target/central-deferred 2>/dev/null
 
+    # 签名口令绝不进 argv：mvn 拉起的是 java 进程，同机 `ps` 上是明文。
+    # 走 gpg.passphraseEnvName（3.2.0+）时插件切到 **BcSigner**（纯 Java 签名，
+    # 不调 gpg 二进制），于是「--pinentry-mode error 盖掉 loopback」和
+    # 「--local-user default 解析不出密钥」两个根因一起绕开
+    # （2026-10-30 实测：这样发，z-util-core 1.2.11 签名 Good signature）。
+    # 口径与 z-boot 仓一致（那边 1.2.0 就是这么发成功的）。
     mvn -B deploy \
         -Pcentral \
         -pl '!z-util-all' \
         -DskipTests \
-        -Dgpg.passphrase="$CENTRAL_GPG_PASSPHRASE" \
+        -Dgpg.passphraseEnvName=CENTRAL_GPG_PASSPHRASE \
         2>&1 | tee /tmp/z-util-deploy.log | tail -100
 
     if grep -q "BUILD SUCCESS" /tmp/z-util-deploy.log; then

@@ -1230,6 +1230,24 @@
                         <version>3.2.8</version>
                         <configuration>
                             <skip>${central.gpg.skip}</skip>
+                            <!-- 2026-10-30 修 gpg 签名失败（1.2.11 实发首次撞）：
+                                 症状 = gpg: signing failed: No pinentry / No secret key / Exit code: 2。
+                                 两个独立根因，都必须堵：
+                                 ① 本仓的 wrapper 早年是照搬 z-boot 的，但**漏抄了「剔除调用方
+                                    pinentry-mode 参数」那段**。maven-gpg-plugin 3.2.8 自己会传
+                                    pinentry-mode=error，gpg 对同一选项取最后一次出现的值
+                                    ⇒ 调用方那个 error 盖掉 wrapper 自己的 loopback
+                                    ⇒ gpg 拒绝走 loopback 取口令 ⇒ No pinentry。
+                                    （z-boot 仓 2026-10-21 已补，z-team 1.0.3 同款。）
+                                 ② 插件默认用 local-user=default，而本机密钥环里**没有名为
+                                    "default" 的密钥**（只有 uid yuku123 / key A403FCCFD7EF5DA6）
+                                    ⇒ gpg 报 skipped "default": No secret key。
+                                    ⇒ 这里把 keyname 显式钉成真实 key id。
+                                 另外：口令绝不能进 argv（mvn 拉起 java 进程，同机 ps 上是明文）。
+                                 走 gpg.passphraseEnvName（CENTRAL_GPG_PASSPHRASE 环境变量名）
+                                 时插件切到 **BcSigner**（纯 Java 签名，不调 gpg 二进制），
+                                 ①② 两个根因一起绕开 —— z-boot 仓 1.2.0 就是这么发成功的。 -->
+                            <keyname>A403FCCFD7EF5DA6</keyname>
                             <executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>
                         </configuration>
                         <executions>
