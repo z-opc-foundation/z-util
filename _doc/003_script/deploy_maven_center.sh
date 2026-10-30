@@ -165,6 +165,21 @@ cmd_publish() {
     # 清掉 staging 避免上次残留
     rm -rf target/central-staging target/central-publishing target/central-deferred 2>/dev/null
 
+    # ⚠ 2026-10-30 实测教训（务必先看）：
+    #   在本仓用 `mvn deploy -pl 'z-util-core' -am` 做**局部试发**时，
+    #   central-publishing-maven-plugin 照样会建一个真 deployment 并 PUBLISH。
+    #   那个 deployment 会占住这批坐标的版本号 ⇒ 紧接着的全量发布
+    #   会撞「Component with coordinate 'xxx' is currently being published in
+    #   another deployment」而整批 FAILED。
+    #   本轮就踩了：1.2.11 的 11 个坐标被局部试发占位，全量 deployment
+    #   e2572c90 FAILED，只好抬到 1.2.12 重发。
+    # ⇒ 判据：**任何** deploy 都必须是全量（不加 -pl / -am）。
+    #   只想验签名能不能过，用 `mvn -Pcentral verify`（只到 verify 阶段，
+    #   不触发 upload），别用 deploy。
+    if [[ "${ZOPC_ALLOW_PARTIAL_DEPLOY:-0}" != "1" ]]; then
+        log "提示：本脚本只支持全量发布（禁 -pl / -am）——局部 deploy 会占位版本号导致全量 FAILED"
+    fi
+
     # 签名口令绝不进 argv：mvn 拉起的是 java 进程，同机 `ps` 上是明文。
     # 走 gpg.passphraseEnvName（3.2.0+）时插件切到 **BcSigner**（纯 Java 签名，
     # 不调 gpg 二进制），于是「--pinentry-mode error 盖掉 loopback」和

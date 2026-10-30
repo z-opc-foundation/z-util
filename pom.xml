@@ -136,7 +136,7 @@
                 （jar/sources/javadoc）。模块本身留在 reactor：GeneratedCodecTest 要靠注解处理器
                 在 test 域跨 core/formats/codegen/schema 生成 codec，这是全仓唯一一处跨模块 codegen
                 集成测试，删模块等于删测试。 -->
-        <revision>1.2.11</revision>
+        <revision>1.2.12</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
