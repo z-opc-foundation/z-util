@@ -28,7 +28,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
 | **模块数** | 根 POM `<modules>` **26** 个条目；展开后共 **70 个模块 POM = 62 个 jar + 8 个 pom**（8 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-wf`；2026-10-19 按 pom 现读订正） |
-| **运行口径** | Java 8（`compile.version=8`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；产物可直接被 Spring Boot 2.7 系消费） |
+| **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.0 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
 | **最近更新** | 2026-09-30 |
@@ -166,7 +166,7 @@ z-util/
 
 | 层级 | 技术（版本取自根 POM `<properties>` 与各模块 POM 实测） |
 |------|------|
-| 语言 / 运行时 | Java 8（`compile.version=8`） |
+| 语言 / 运行时 | Java 17（`compile.version=17`） |
 | 版本口径 | **无父链**：全部第三方版本由本仓根 POM 的 `<properties>` + `<dependencyManagement>` 自供，另含 25 条传递依赖连贯性锚点（把上游 pom 自己带的传递件按坐标钉死） |
 | 关键第三方版本 | `log4j 2.26.1`、`slf4j 2.0.16`（`log4j-slf4j2-impl` 只认 SLF4J 2.x 的绑定机制）、`junit 5.11.4`、`okhttp 4.12.0`、`netty 4.1.138.Final`、`protobuf-java 3.25.5` |
 | 测试 | JUnit Jupiter 5.11.4 + `junit-vintage-engine`（跑历史 JUnit4 用例）；surefire / failsafe 在根 POM `<pluginManagement>` 钉 `2.22.2`，jar `3.3.0`、resources `3.3.1` |

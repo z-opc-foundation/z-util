@@ -141,7 +141,7 @@
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
              下面的 maven-compiler-plugin 和 central profile 的 maven-javadoc-plugin 都读 ${compile.version}。 -->
-        <compile.version>8</compile.version>
+        <compile.version>17</compile.version>
 
         <!-- ==================== 第三方依赖版本集中管理 ==================== -->
         <!-- 每一格都是本仓自己的口径（不参照任何外部 parent/BOM）；改动理由写在原地。 -->
