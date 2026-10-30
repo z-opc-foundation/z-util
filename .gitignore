@@ -104,3 +104,9 @@
 # 前端 node_modules / dist
 _frontend/**/node_modules/
 _frontend/**/dist/
+
+# ============ vite 构建旧产物（沙箱删除闸 ⇒ 只移不删，遗留带时间戳的兄弟目录） ============
+dist.stale-*/
+**/dist.stale-*/
+dist.bak-*/
+**/dist.bak-*/
