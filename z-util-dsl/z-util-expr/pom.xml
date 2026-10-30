@@ -12,8 +12,8 @@
 
     <artifactId>z-util-expr</artifactId>
     <packaging>pom</packaging>
-<name>z-util :: expr</name>
-<description>脚本表达式执行分支：JS、SQL、Groovy、Lua、EL，以及把二维表整形为任意结构的对象语言 OBJ / expression engine aggregator: EL/Groovy/JS/Lua/SQL/Obj</description>
+    <name>z-util :: expr</name>
+    <description>脚本表达式执行分支：JS、SQL、Groovy、Lua、EL，以及把二维表整形为任意结构的对象语言 OBJ / expression engine aggregator: EL/Groovy/JS/Lua/SQL/Obj</description>
 
     <modules>
         <module>z-util-expr-js</module>

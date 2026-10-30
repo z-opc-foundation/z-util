@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: http-proxy</name>
+    <name>z-util :: http-proxy</name>
     <description>annotation-driven HTTP client: define annotations + definition solver + JDK proxy</description>
 
     <artifactId>z-util-http-proxy</artifactId>

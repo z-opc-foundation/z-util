@@ -12,8 +12,8 @@
 
     <artifactId>z-util-devops</artifactId>
     <packaging>pom</packaging>
-<name>z-util :: devops</name>
-<description>DevOps 分支聚合件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST。按需引用子件：z-util-devops-git / z-util-devops-docker / z-util-devops-nexus。 / aggregator: git / docker / nexus</description>
+    <name>z-util :: devops</name>
+    <description>DevOps 分支聚合件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST。按需引用子件：z-util-devops-git / z-util-devops-docker / z-util-devops-nexus。 / aggregator: git / docker / nexus</description>
 
     <modules>
         <module>z-util-devops-git</module>

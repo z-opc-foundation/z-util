@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: pattern :: spi</name>
+    <name>z-util :: pattern :: spi</name>
     <description>Service Provider Interface loader</description>
     <artifactId>z-util-pattern-spi</artifactId>
 

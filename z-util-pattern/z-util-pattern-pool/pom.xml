@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: pattern :: pool</name>
+    <name>z-util :: pattern :: pool</name>
     <description>Object Pool + Monitor</description>
     <artifactId>z-util-pattern-pool</artifactId>
 

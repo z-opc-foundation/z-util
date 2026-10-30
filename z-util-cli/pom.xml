@@ -13,8 +13,10 @@
     <artifactId>z-util-cli</artifactId>
     <packaging>jar</packaging>
 
-<name>z-util :: cli</name>
-<description>Command line parsing and help formatting, full coverage of Apache Commons CLI capabilities / POSIX/GNU/Basic/Default CLI parser + OptionGroup + HelpFormatter</description>
+    <name>z-util :: cli</name>
+    <description>Command line parsing and help formatting, full coverage of Apache Commons CLI capabilities
+        POSIX/GNU/Basic/Default CLI parser + OptionGroup + HelpFormatter
+    </description>
 
     <dependencies>
         <dependency>

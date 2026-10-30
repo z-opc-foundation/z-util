@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: wf :: kernel</name>
+    <name>z-util :: wf :: kernel</name>
     <description>engine-agnostic core: DAG model + BPMN + runtime + persistence + interfaces</description>
     <artifactId>z-util-wf-kernel</artifactId>
 

@@ -9,7 +9,7 @@
     </parent>
     <artifactId>z-util-serialize-core</artifactId>
     <packaging>jar</packaging>
-<name>z-util :: serialize :: core</name>
+    <name>z-util :: serialize :: core</name>
     <description>wire format + zero-copy + reflective + codec</description>
     <dependencies>
         <dependency>

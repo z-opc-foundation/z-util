@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: parser :: json</name>
+    <name>z-util :: parser :: json</name>
     <description>JSON parser + JsonObject/JsonArray model + BeautifyJsonUtils</description>
 
     <artifactId>z-util-parser-json</artifactId>

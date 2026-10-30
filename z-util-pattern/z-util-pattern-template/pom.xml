@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: pattern :: template</name>
+    <name>z-util :: pattern :: template</name>
     <description>GoF Template Method</description>
     <artifactId>z-util-pattern-template</artifactId>
 

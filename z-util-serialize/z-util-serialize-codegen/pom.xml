@@ -9,7 +9,7 @@
     </parent>
     <artifactId>z-util-serialize-codegen</artifactId>
     <packaging>jar</packaging>
-<name>z-util :: serialize :: codegen</name>
+    <name>z-util :: serialize :: codegen</name>
     <description>annotation processor that emits zero-reflection Serializer/Deserializer</description>
 
     <dependencies>

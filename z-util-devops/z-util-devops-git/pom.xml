@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: devops :: git</name>
+    <name>z-util :: devops :: git</name>
     <description>Git (JGit/Shell) + GitHub API wrappers</description>
 
     <artifactId>z-util-devops-git</artifactId>

@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: devops :: nexus</name>
+    <name>z-util :: devops :: nexus</name>
     <description>Nexus REST component manager, OkHttp based</description>
 
     <artifactId>z-util-devops-nexus</artifactId>

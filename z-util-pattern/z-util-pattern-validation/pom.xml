@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: pattern :: validation</name>
+    <name>z-util :: pattern :: validation</name>
     <description>annotation-driven validation engine + built-in constraints</description>
 
     <artifactId>z-util-pattern-validation</artifactId>

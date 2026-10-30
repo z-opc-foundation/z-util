@@ -9,7 +9,7 @@
     </parent>
     <artifactId>z-util-serialize-it</artifactId>
     <packaging>jar</packaging>
-<name>z-util :: serialize :: it</name>
+    <name>z-util :: serialize :: it</name>
     <description>cross-module integration tests</description>
     <dependencies>
         <dependency>

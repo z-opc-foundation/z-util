@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: expr :: el</name>
+    <name>z-util :: expr :: el</name>
     <artifactId>z-util-expr-el</artifactId>
-<description>EL (Expression Language) evaluator compatible with JSP EL subset / Unified Expression Language evaluator</description>
+    <description>EL (Expression Language) evaluator compatible with JSP EL subset / Unified Expression Language evaluator</description>
 
 
     <build>

@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: aop</name>
+    <name>z-util :: aop</name>
     <description>aspect framework: @Intercept/Advise API + Aspect SPI + self-made/JDK runtime proxy + source-gen proxy</description>
 
     <artifactId>z-util-aop</artifactId>

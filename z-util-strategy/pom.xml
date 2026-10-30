@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: strategy</name>
+    <name>z-util :: strategy</name>
     <parent>
         <groupId>io.github.yuku123</groupId>
         <artifactId>z-util</artifactId>
@@ -13,7 +13,7 @@
     </parent>
 
     <artifactId>z-util-strategy</artifactId>
-<description>风控/反欺诈/内容审核场景的决策能力。零 Spring、零持久化、无新增第三方依赖（仅同 reactor 的 z-util-expr-sql + z-util-parser-json）。与 z-wf 的划界：z-wf 决定走不走这一步，z-util-strategy 决定这一步判什么。 / 决策引擎：决策包 / 灰度 / 试运行 / 对照组 / 可解释 trace</description>
+    <description>风控/反欺诈/内容审核场景的决策能力。零 Spring、零持久化、无新增第三方依赖（仅同 reactor 的 z-util-expr-sql + z-util-parser-json）。与 z-wf 的划界：z-wf 决定走不走这一步，z-util-strategy 决定这一步判什么。 / 决策引擎：决策包 / 灰度 / 试运行 / 对照组 / 可解释 trace</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

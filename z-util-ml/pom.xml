@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: ml</name>
+    <name>z-util :: ml</name>
     <description>machine learning: NN/Dense/CNN/RNN/LSTM/Transformer/RF/XGBoost/clustering/PCA/RL</description>
 
     <artifactId>z-util-ml</artifactId>

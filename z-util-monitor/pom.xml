@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-<name>z-util :: monitor</name>
+    <name>z-util :: monitor</name>
     <description>JVM/thread-pool/OS/network monitoring + metrics + HTML/JSON exporter</description>
 
     <artifactId>z-util-monitor</artifactId>
