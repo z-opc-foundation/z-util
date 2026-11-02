@@ -97,11 +97,11 @@ public class HtmlUtil {
             return EMPTY;
         }
         String html = content;
-        html = html.replaceAll("&apos;", "'");
-        html = html.replaceAll("&quot;", "\"");
-        html = html.replaceAll("&nbsp;", " ");
-        html = html.replaceAll("&lt;", "<");
-        html = html.replaceAll("&gt;", ">");
+        html = html.replace("&apos;", "'");
+        html = html.replace("&quot;", "\"");
+        html = html.replace("&nbsp;", " ");
+        html = html.replace("&lt;", "<");
+        html = html.replace("&gt;", ">");
         return html;
     }
 
@@ -118,9 +118,7 @@ public class HtmlUtil {
         try {
             value = value.replace("+", "%2B");
             value = URLDecoder.decode(value, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            // ignore
-        } catch (IllegalArgumentException e) {
+        } catch (UnsupportedEncodingException | IllegalArgumentException e) {
             // ignore
         }
 
