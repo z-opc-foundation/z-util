@@ -165,7 +165,7 @@
         <!-- jackson.version 与其 4 条 DM 已删（2026-10-15）：本仓全域零 Jackson，锚点失去消费方。 -->
         <okhttp.version>4.12.0</okhttp.version>
         <!-- netty 4.1.138.Final：2026-09-28「同坐标单版本」从 4.1.137 升上来对齐 CVE 口径。 -->
-        <netty.version>4.1.138.Final</netty.version>
+        <netty.version>4.2.19.Final</netty.version>
         <!-- protobuf-java 是给 mysql-connector-j 拉入的旧版做「强制升级 transitive」用的。 -->
         <protobuf-java.version>3.25.5</protobuf-java.version>
         <antlr.version>4.13.2</antlr.version>
