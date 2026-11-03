@@ -110,3 +110,8 @@ dist.stale-*/
 **/dist.stale-*/
 dist.bak-*/
 **/dist.bak-*/
+
+# ---- 构建产物治理（2026-11-03）----
+# 编译/打包产物一律不入库：可再生、体积大、多仓重复。
+# Rust target / 前端 node_modules / Python 缓存。
+node_modules/
