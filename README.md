@@ -28,7 +28,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
 | **模块数** | 根 POM `<modules>` **26** 个条目；展开后共 **70 个模块 POM = 62 个 jar + 8 个 pom**（8 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-wf`；2026-10-19 按 pom 现读订正） |
-| **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.1 火车口径对齐） |
+| **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.2 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
 | **最近更新** | 2026-09-30 |
