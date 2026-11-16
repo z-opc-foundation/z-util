@@ -175,7 +175,7 @@
         <jol.version>0.17</jol.version>
         <javaparser.version>3.28.2</javaparser.version>
         <pdfbox.version>3.0.8</pdfbox.version>
-        <poi.version>5.5.1</poi.version>
+        <poi.version>6.0.0</poi.version>
         <github-api.version>1.330</github-api.version>
 
         <!-- Central Portal 上传凭证（由环境变量 CENTRAL_USERNAME / CENTRAL_TOKEN 注入） -->
