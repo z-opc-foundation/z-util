@@ -171,7 +171,7 @@ z-util/
 | 关键第三方版本 | `log4j 2.26.1`、`slf4j 2.0.16`（`log4j-slf4j2-impl` 只认 SLF4J 2.x 的绑定机制）、`junit 5.11.4`、`okhttp 4.12.0`、`netty 4.1.138.Final`、`protobuf-java 3.25.5` |
 | 测试 | JUnit Jupiter 5.11.4 + `junit-vintage-engine`（跑历史 JUnit4 用例）；surefire / failsafe 在根 POM `<pluginManagement>` 钉 `2.22.2`，jar `3.3.0`、resources `3.3.1` |
 | JSON | 自研 `z-util-parser-json`（`.g4` + 自研 DSL 解析器，非 Jackson）；**全仓零 Jackson**（2026-10-15 起 `jackson.version` 与 4 条 DM 已撤，JSON 能力全走自研件） |
-| 解析 | ANTLR 4.13.2（runtime）、jsoup 1.23.1 与 Guava 33.6.0-jre **只在根 DM 里管着，没有任何模块引用** |
+| 解析 | ANTLR 4.13.2（runtime）、jsoup 1.23.2 与 Guava 33.6.0-jre **只在根 DM 里管着，没有任何模块引用** |
 | HTTP | OkHttp（client）、JDK `com.sun.net.httpserver`（server）；`netty-all` 只在根 DM 里管着、没有任何模块引用，**全仓无一处 `io.netty` 代码** |
 | 数据 | `z-util-jdbc`：Druid 1.2.28 + mysql-connector-j 26.7.0 + `jakarta.persistence-api` 3.0.0 + MyBatis 3.5.19（`<optional>`，只服务分页插件兼容层）+ H2 2.2.224（`test` scope） |
 | Office | POI 5.5.1（+ `poi-ooxml-full`）、PDFBox 3.0.8 |

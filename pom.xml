@@ -169,7 +169,7 @@
         <!-- protobuf-java 是给 mysql-connector-j 拉入的旧版做「强制升级 transitive」用的。 -->
         <protobuf-java.version>3.25.5</protobuf-java.version>
         <antlr.version>4.13.2</antlr.version>
-        <jsoup.version>1.23.1</jsoup.version>
+        <jsoup.version>1.23.2</jsoup.version>
         <!-- 3.32.0-GA：高版本默认开启 module 支持，Java 17+ 消费侧兼容。 -->
         <javassist.version>3.32.0-GA</javassist.version>
         <jol.version>0.17</jol.version>

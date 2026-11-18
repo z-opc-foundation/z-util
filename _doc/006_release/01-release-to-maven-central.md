@@ -257,7 +257,7 @@ unzip -oq z-util-parser-json-1.0.24-sources.jar && grep -n "<你要确认的改�
 > 早期文档「第 5 步改回 SNAPSHOT」的做法已不适用，照做反而会让下次发版找不到匹配的行。
 
 **消费方收口（别忘了）**：z-opc 等消费仓通过自己的 BOM 拿 z-util 版本，
-**z-util 发新版不会自动传导**。1.0.23 那次就是：z-opc 经 z-boot-parent:1.1.0
+**z-util 发新版不会自动传导**。1.0.23 那次就是：z-opc 经 z-boot-parent:1.2.4
 仍解析到 `z-util-parser-json:1.0.19`，修复不生效。要在 z-opc 根 pom 的
 `<dependencyManagement>` 里显式钉（本仓自有 DM 优先于 import 进来的 BOM）：
 
