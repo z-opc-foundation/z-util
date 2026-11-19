@@ -46,6 +46,10 @@ public sealed interface DocBlock {
         }
 
         public record Cell(List<DocBlock> blocks, int colspan, int rowspan) {
+            public Cell growRowspan() {
+                return new Cell(blocks, colspan, rowspan + 1);
+            }
+
             public static Cell of(String text) {
                 return new Cell(List.of(new Paragraph(text)), 1, 1);
             }

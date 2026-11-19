@@ -7,8 +7,19 @@
 - 容器：`CfbReader` —— OLE2/Compound File Binary：FAT / DIFAT / miniFAT / 目录 / 常规与 mini 流提取。
 - 正文：`WordBinaryParser` —— FIB（`fWhichTblStm` 选 0Table/1Table）+ CLX piece table
   （压缩 cp1252 与 UTF-16LE 双分支），保留 `\r` 段落分隔，清理字段/对象控制符。
+  **FIB 偏移已用真实 Word 文件实测校验**（fibRgLw97 基址 64：ccpText@76、ccpFtn@80、
+  ccpHdd@84、ccpAtn@92、ccpEdn@96；fcPlcfhdd@242、fcPlcfbteChpx@250、fcClx@418）。
+- 字符格式：plcfbteChpx → FKP 页 → CHPX grpprl sprm 解析（sprmCFBold 0x0835 /
+  sprmCFItalic 0x0836 / sprmCFStrikeOut 0x0837，ToggleOperand 按低位判开；其余 sprm 按
+  spra 规则跳过），正文段落内按 run 叠加粗/斜/删除线 span。
+- 页眉页脚：plcfhdd 故事 CP 边界 → `[页眉]/[页脚]` Quote 块。
+- 脚注 / 尾注 / 批注：按规范 CP 顺序（text→ftn→hdd→mcr→atn→edn）提取子文档文本为 Quote 块。
 - 元数据：`SummaryInfoParser` —— `\u0005SummaryInformation` 属性集（title/author/subject/keywords/创建与修改时间，VT_LPSTR / VT_LPWSTR / VT_FILETIME）。
 
 ## 能力边界
-- 只做文本级提取：不还原表格结构、字符样式、页眉页脚、脚注尾注（留给上层按需加）。
+- 文本级提取：不还原表格结构（TAP）、编号、图片；段落属性（PAPX）未解析，标题级别不可判。
 - 加密 doc 不支持；Word 95 及更早二进制格式未验证。
+
+## 真实文件验证
+解析器针对真实 Word 97-2025 生成文件实测（Steam 分发的 `ThirdPartyLegalNotices.doc`，
+Word 2004–2025 修订），正文提取与 FIB 字段读取全部正确。

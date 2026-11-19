@@ -24,7 +24,7 @@ class DocDocReaderTest {
         for (String p : paragraphs) {
             total += p.length() + 1; // 段尾 \r
         }
-        u32(buf, 72, total);
+        u32(buf, 76, total);
         // 正文压缩 cp1252 放在 1024，fc = 0x40000000 | 2048
         int p = 1024;
         for (String s : paragraphs) {
@@ -140,7 +140,7 @@ class DocDocReaderTest {
         u16(buf, 0, 0xA5EC);
         u16(buf, 2, 0x00C1);
         u16(buf, 0x0A, 0x0200);
-        u32(buf, 72, text.length());
+        u32(buf, 76, text.length());
         byte[] utf16 = text.getBytes(StandardCharsets.UTF_16LE);
         System.arraycopy(utf16, 0, buf, 2048, utf16.length);
         u32(buf, 418, 0);
@@ -172,6 +172,108 @@ class DocDocReaderTest {
         CfbTestBuilder cfb = new CfbTestBuilder().add("Workbook", new byte[8192]);
         byte[] file = cfb.build();
         assertFalse(reader.supports(file));
+    }
+
+    @Test
+    void chpxBoldItalicSpans() throws Exception {
+        // 正文 "Hello World"（FC 4096 起，压缩 piece），CP 6..11 加粗+斜体。
+        String text = "Hello World";
+        byte[] buf = new byte[8192];
+        u16(buf, 0, 0xA5EC);
+        u16(buf, 2, 0x00C1);
+        u16(buf, 0x0A, 0x0200);
+        u32(buf, 76, text.length());
+        System.arraycopy(text.getBytes(StandardCharsets.ISO_8859_1), 0, buf, 4096, text.length());
+        u32(buf, 418, 0);
+        // CLX：一个压缩 piece 覆盖全文
+        ByteArrayOutputStream clx = new ByteArrayOutputStream();
+        clx.write(2);
+        u32le(clx, 4 + 8 + 8);
+        u32le(clx, 0);
+        u32le(clx, text.length());
+        u16le(clx, 0);
+        u32le(clx, 0x40000000 | (4096 * 2));
+        u16le(clx, 0);
+        u32(buf, 422, clx.size());
+
+        // CHPX FKP：页 pn=1（WordDocument 偏移 512），crun=2，rgb 紧跟 rgfc。
+        byte[] fkp = new byte[512];
+        u32(fkp, 0, 4096);
+        u32(fkp, 4, 4096 + 6);
+        u32(fkp, 8, 4096 + text.length());
+        fkp[511] = 2; // crun
+        fkp[12] = 0;  // run0 无 chpx
+        fkp[13] = (byte) 250; // run1 chpx 在页内偏移 500（250*2）
+        fkp[500] = 6;  // cb：两个 sprm × 3 字节
+        fkp[501] = 0x35; fkp[502] = (byte) 0x08; fkp[503] = 0x01; // sprmCFBold = 1
+        fkp[504] = 0x36; fkp[505] = (byte) 0x08; fkp[506] = 0x01; // sprmCFItalic = 1
+        System.arraycopy(fkp, 0, buf, 512, 512);
+        // plcfbteChpx：FC 数组 [4096, 4096+len] + PM(pn=1)
+        ByteArrayOutputStream table = new ByteArrayOutputStream();
+        table.writeBytes(clx.toByteArray());
+        int bteOff = table.size();
+        u32le(table, 4096);
+        u32le(table, 4096 + text.length());
+        u32le(table, 1); // pn=1
+        buf[250] = (byte) bteOff;
+        buf[251] = (byte) (bteOff >> 8);
+        u32(buf, 254, 12);
+
+        CfbTestBuilder cfb = new CfbTestBuilder()
+                .add("WordDocument", buf)
+                .add("1Table", table.toByteArray());
+        DocDocument doc = reader.read(cfb.build());
+        assertEquals(1, doc.getBlocks().size());
+        var spans = ((com.zifang.util.doc.DocBlock.Paragraph) doc.getBlocks().get(0)).spans();
+        assertEquals(2, spans.size());
+        assertEquals("Hello ", spans.get(0).text());
+        assertFalse(spans.get(0).bold());
+        assertEquals("World", spans.get(1).text());
+        assertTrue(spans.get(1).bold());
+        assertTrue(spans.get(1).italic());
+    }
+
+    @Test
+    void headerStoryExtractedAsQuote() throws Exception {
+        String body = "Body line";
+        String header = "Header text\r";
+        int total = body.length();
+        int ccpHdd = header.length();
+        byte[] buf = new byte[8192];
+        u16(buf, 0, 0xA5EC);
+        u16(buf, 2, 0x00C1);
+        u16(buf, 0x0A, 0x0200);
+        u32(buf, 76, total);
+        u32(buf, 84, ccpHdd);
+        // 正文与页眉都放压缩区 4096 起，piece 覆盖 total+ccpHdd
+        System.arraycopy(body.getBytes(StandardCharsets.ISO_8859_1), 0, buf, 4096, body.length());
+        System.arraycopy(header.getBytes(StandardCharsets.ISO_8859_1), 0, buf, 4096 + total, header.length());
+        u32(buf, 418, 0);
+        ByteArrayOutputStream clx = new ByteArrayOutputStream();
+        clx.write(2);
+        u32le(clx, 4 + 8 + 8); // 2 CP + 1 PCD
+        u32le(clx, 0);
+        u32le(clx, total + ccpHdd);
+        u16le(clx, 0);
+        u32le(clx, 0x40000000 | (4096 * 2));
+        u16le(clx, 0);
+        u32(buf, 422, clx.size());
+        // plcfhdd：单个 CP 边界 = total（一个故事到 ccpHdd 尽头）
+        ByteArrayOutputStream table = new ByteArrayOutputStream();
+        table.writeBytes(clx.toByteArray());
+        u32le(table, total);
+        u32(buf, 242, clx.size());
+        u32(buf, 246, 4);
+
+        CfbTestBuilder cfb = new CfbTestBuilder()
+                .add("WordDocument", buf)
+                .add("1Table", table.toByteArray());
+        DocDocument doc = reader.read(cfb.build());
+        boolean hasHeader = doc.getBlocks().stream()
+                .filter(b -> b instanceof com.zifang.util.doc.DocBlock.Quote)
+                .map(b -> ((com.zifang.util.doc.DocBlock.Quote) b).spans().get(0).text())
+                .anyMatch(t -> t.contains("[页眉] Header text"));
+        assertTrue(hasHeader, "header story should be extracted as quote: " + doc.toPlainText());
     }
 
     private static void u16le(ByteArrayOutputStream out, int v) {

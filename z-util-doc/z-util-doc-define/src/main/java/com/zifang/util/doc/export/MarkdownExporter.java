@@ -6,6 +6,7 @@ import com.zifang.util.doc.DocSpan;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /** DocDocument → Markdown。 */
 public class MarkdownExporter {
@@ -35,9 +36,13 @@ public class MarkdownExporter {
         } else if (block instanceof DocBlock.Paragraph p) {
             out.append(renderSpans(p.spans())).append("\n\n");
         } else if (block instanceof DocBlock.ListItem li) {
-            out.append("  ".repeat(li.level()))
-                    .append(li.ordered() ? "1. " : "- ")
-                    .append(renderSpans(li.spans())).append("\n\n");
+            String body = renderSpans(li.spans());
+            // 解析器已注入真实编号/符号标记（如 "2.3.1 " 或 "• "）时不再叠加自身标记。
+            String prefix = li.ordered() ? "1. " : "- ";
+            if (startsMarker(body)) {
+                prefix = "";
+            }
+            out.append("  ".repeat(li.level())).append(prefix).append(body).append("\n\n");
         } else if (block instanceof DocBlock.Quote q) {
             out.append("> ").append(renderSpans(q.spans())).append("\n\n");
         } else if (block instanceof DocBlock.CodeBlock code) {
@@ -135,6 +140,17 @@ public class MarkdownExporter {
             }
         }
         return sb.toString();
+    }
+
+    private static final Pattern MARKER_PREFIX = Pattern.compile(
+            "^(\\d+(\\.\\d+)*[.)]?\\s|[-•●■◦‣⁃]\\s)");
+
+    private boolean startsMarker(String body) {
+        if (body == null) {
+            return false;
+        }
+        var m = MARKER_PREFIX.matcher(body);
+        return m.find() && m.start() == 0;
     }
 
     private String escape(String text) {
