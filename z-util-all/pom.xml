@@ -48,11 +48,6 @@
                  让消费方 import 时解析到一个 repo1 上不存在于本版本的坐标。 -->
             <dependency>
                 <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-office</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-doc-define</artifactId>
                 <version>${revision}</version>
             </dependency>

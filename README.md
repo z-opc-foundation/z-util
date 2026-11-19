@@ -1,6 +1,6 @@
 # z-util
 
-> 一人公司基座的底层 Java 工具库 —— 70 个模块 POM · Java 8 口径 · 按需引用、按需升级。
+> 一人公司基座的底层 Java 工具库 —— 84 个模块 POM · Java 8/17 口径 · 按需引用、按需升级。
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuku123/z-util-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.yuku123/z-util-core)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -27,7 +27,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **当前版本** | `1.2.12`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
-| **模块数** | 根 POM `<modules>` **28** 个条目；展开后共 **85 个模块 POM = 75 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正） |
+| **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **84 个模块 POM = 74 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正；2026-11-20 `z-util-office` 物理删除后 27 条） |
 | **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.2 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
@@ -37,14 +37,13 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 
 ## 🧩 模块清单
 
-下表**逐条对齐**根 `pom.xml` 的 `<modules>`（**26** 条，按 POM 内声明顺序），职责取自各模块 POM 的 `<description>`
+下表**逐条对齐**根 `pom.xml` 的 `<modules>`（**25** 条 jar/聚合条目，按 POM 内声明顺序），职责取自各模块 POM 的 `<description>`
 （`<name>` 只留 `仓名 :: 模块` 短标识，不承载说明文字）。
 `z-util-dsl` / `z-util-serialize` / `z-util-devops` 是聚合 POM；`z-util-dsl` 家族收编了 `z-util-dsl-kernel`（原 `z-util-dsl` jar）+ `z-util-expr` + `z-util-parser`，子模块单列在下面子表。
 
 | 模块（`<module>` 顺序） | 类型 | 职责 | 关键入口（实测存在的类） |
 |------|------|------|------|
 | `z-util-core` | jar | 基础工具：集合/字符串/IO/并发/加密/JWT/限流/熔断/调度 | `StringUtil` `CollectionUtil` `BeanUtil` `ReflectUtil` `FileUtil` `ZipUtil` `JarUtil` `XmlUtil` `Assert` `StopWatch` `EventBus`；`jwt.Jwt`/`Claims`/`HmacSha256`；`encrypt.AesUtil`/`RsaUtil`/`MD5Utils`/`Base64Utils`/`HMAC`/`ApiSignUtil`/`Base62`；`ratelimit.SlidingWindowRateLimiter`/`TokenBucketRateLimiter`；`resilience.CircuitBreaker`/`Bulkhead`/`TimeLimiter`；`meta.page.PageResult`；`lang.concurrency.NameThreadFactory`；`pattern.*`（chain/command/composite/factory/state/pool/event/spi） |
-| `z-util-office` | jar | **已下线（2026-11-19，被 z-util-doc 家族取代）**：原基于 POI / PDFBox 的 Word / Excel / PDF / PPT 工具 + 模板引擎 + 链式门面；代码暂留仓库，不再演进 | `excel.ExcelUtils`、`ExcelTemplate`；`word.U` + `WordTemplate` + `WordExtractor`；`pdf.PdfUtil` / `PdfOperator` / `PdfExtractor`；`ppt.PptUtils` + `PptTemplate`；`core.RoundTripAssert` / `core.OfficeFormat` / `core.OfficePipeline` |
 | `z-util-media` | jar | 图像处理、验证码、GIF、二维码 | `CaptchaUtil`、`GifEncoder`/`GifBuilder`、`ColorUtil`、`graph/QRCode`（encoder + decoder） |
 | `z-util-dsl` | **pom 聚合** | 语言处理家族：`z-util-dsl-kernel`（自研词法/语法/AST + **运行时动态加载 `.g4`**）+ `z-util-expr`（6 引擎）+ `z-util-parser`（8 格式） | kernel：`g4.DynamicLexer`、`DynamicParser`、`G4FileParser`、`ASTFactory`、`ASTNode`、`token.Lexer` |
 | `z-util-wf` | **pom 聚合** | 内存内工作流家族：`z-util-wf-kernel`（DAG 模型 + BPMN 解析 + runtime + persistence + interfaces）。`JavaEngine`/`PythonEngine` 两个占位实现与 `JavaHandle` 已降入 kernel 的 test 域（不发布、不挂 @Test），自注册静态块在 kernel 测试类路径上才真正触发 | kernel：`conponents.WorkFlowApplication` / `WorkFlowApplicationContext` / `Task`；`config.WorkflowNode` / `Connector` / `Engine`；`bpmn.Bpmn` / `BpmnDiagram` / `BpmnProcess` / `BpmnModelConverter` / `BpmnXmlParser`；`engine.runtime.WorkflowRuntimeEngine` / `GatewayEvaluator` / `ExecutionResult`；`engine.interfaces.EngineFactory`（自注册，无 reactor cycle）；`persistence.FileWorkflowPersistencePlugin`；`json.WorkflowConfigurationSerializer` |
@@ -152,6 +151,10 @@ Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(s
 家族内依赖：`bean` / `mapper` / `service` / `meta` → `annotations` + `core`；`it` → 全部。
 `annotations` 与 `core` 是零内部依赖（core 只依赖 javac 内部 API，不依赖任何 z-util-* 模块）。
 
+### `z-util-office` 下线（2026-11-19 标记，2026-11-20 物理删除）
+
+POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom `<modules>`、DM、`z-util-all` BOM 同步清理），版本随 1.2.13 发布后中央/本地不再有新构建；文档解析需求由 `z-util-doc` 家族（零 Apache 依赖）承接。
+
 ### `z-util-doc` 的 6 个子模块（2026-11-19）
 
 零第三方依赖：纯 JDK（zip / Inflater / DOM），**不依赖 POI / PDFBox**；统一文档模型 + Reader SPI 定义在 `-define`，
@@ -184,7 +187,7 @@ z-util/
 ├── z-util-serialize/      # 聚合 POM → 5 个编解码子模块
 ├── z-util-codegen/        # 聚合 POM → 7 个编译期代码生成子模块（Lombok 性质 + MapStruct 性质 + SPI/元模型）
 ├── z-util-doc/            # 聚合 POM → 6 个纯文件解析子模块（零 Apache 依赖：define/pdf/docx/doc/epub/txt）
-├── z-util-{math,ml,workflow,office,media,visualization,monitor,devops,distribute,ch,cli}/
+├── z-util-{math,ml,workflow,media,visualization,monitor,devops,distribute,ch,cli}/
 ├── z-util-all/            # 只有 <dependencyManagement> 的 umbrella pom（不产出 jar）
 ├── _doc/                  # 文档，见文末「文档目录」
 ├── .github/dependabot.yml # Maven + GitHub Actions 每周一自动升依赖（分组 apache-commons/jackson/log4j/spring/testing）
@@ -261,7 +264,7 @@ z-util/
 </dependencies>
 ```
 
-它的版本表实测覆盖 31 条坐标（core / monitor / parser-json / math / office / media / expr-js / wf /
+它的版本表实测覆盖 30 条坐标（core / monitor / parser-json / math / media / expr-js / wf /
 visualization / jdbc / http / ml / devops / devops-git / devops-docker / devops-nexus / pattern /
 distribute / ch / strategy / sensitive / parser-xml / dsl-kernel / cli / codegen-annotations /
 codegen-core / codegen-bean / codegen-mapper / codegen-service / codegen-meta / z-util-all）。

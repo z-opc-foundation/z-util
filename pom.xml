@@ -23,7 +23,7 @@
     <!-- 由 `central` profile 触发，确保 GitHub Packages 流程不受影响         -->
     <!-- ============================================================== -->
     <name>z-util :: root</name>
-    <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/aop/dsl/parser/expr/workflow/http/jdbc/math/ml/office/media/visualization/monitor/devops/distribute/cli/ch 等）</description>
+    <description>面向日常 Java 开发的多模块工具库集合（core/cache/ioc/aop/dsl/parser/expr/workflow/http/jdbc/math/ml/media/visualization/monitor/devops/distribute/cli/ch 等）</description>
     <url>https://github.com/z-opc-foundation/z-util</url>
 
     <licenses>
@@ -136,7 +136,7 @@
                 （jar/sources/javadoc）。模块本身留在 reactor：GeneratedCodecTest 要靠注解处理器
                 在 test 域跨 core/formats/codegen/schema 生成 codec，这是全仓唯一一处跨模块 codegen
                 集成测试，删模块等于删测试。 -->
-        <revision>1.2.12</revision>
+        <revision>1.2.13</revision>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         <!-- compile.version 自留：Maven 的标准键叫 maven.compiler.source/target，本仓不借那两个名字，
@@ -192,7 +192,6 @@
 
     <modules>
         <module>z-util-core</module>
-        <module>z-util-office</module>
         <module>z-util-media</module>
         <module>z-util-dsl</module>
         <!-- z-util-parser / z-util-expr 已收编进 z-util-dsl 家族 (2026-10-02) -->
@@ -351,7 +350,7 @@
 
             <!-- ↓↓↓ 「消费模型」步骤 4：自家 reactor 的 jar 模块**逐个**钉在本仓 DM 里。
                  上面那 16 条只覆盖了 reactor 的一部分（dsl / http / ml / devops / source / ch / cli /
-                 validation / ioc / office / media / workflow / visualization / 8 个 parser-* /
+                 validation / ioc / media / workflow / visualization / 8 个 parser-* /
                  5 个 expr-* / serialize-benchmarks / serialize-it 共 27 格是缺的，子模块一直靠
                  自己在 <dependency> 上写 ${revision} 顶着）。
                  这一格不是装饰：继承来的 fleet 里 z-util 那一格钉的是 repo1 的 **1.0.13**，
@@ -361,11 +360,6 @@
                  本仓 flatten 是 `resolveCiFriendliesOnly`（见下面 build/plugins 的注释），它只展开
                  revision/sha1/changelist，**不会**展开 `${project.version}` ⇒ 后者会原样发进中央 pom，
                  消费方按**它们自己的**版本去解析（z-boot README 记着同一形状的实测 404）。 -->
-            <dependency>
-                <groupId>io.github.yuku123</groupId>
-                <artifactId>z-util-office</artifactId>
-                <version>${revision}</version>
-            </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-media</artifactId>
@@ -829,9 +823,10 @@
                 <artifactId>commons-collections4</artifactId>
                 <version>4.6.0</version>
             </dependency>
-            <!-- ⚠ 迁前这三格 commons-* 在本仓内部就是**分叉**的：devops 经 jgit/github-api 拿
-                 commons-io 2.16.1、commons-codec 1.11、commons-logging 1.2；office 经 poi/pdfbox 拿
-                 2.21.0 / 1.20.0 / 1.4.0。一条全局 DM 只能表达一个值 ⇒ 取**较高**那一格：
+            <!-- ⚠ 这三格 commons-* 曾经在本仓内部分叉：devops 经 jgit/github-api 拿
+                 commons-io 2.16.1、commons-codec 1.11、commons-logging 1.2；office（已于
+                 2026-11-20 物理下线）经 poi/pdfbox 拿 2.21.0 / 1.20.0 / 1.4.0。一条全局 DM
+                 只能表达一个值 ⇒ 取较高那一格：
                  谁都不被降到自己上游库声明之下；代价是 devops 侧这三行往上漂 ——
                  这是明确认账的改动（commons-io 2.16.1→2.21.0、commons-codec 1.11→1.20.0、
                  commons-logging 1.2→1.4.0），不是漂移。 -->
