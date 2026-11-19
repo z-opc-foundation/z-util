@@ -81,10 +81,12 @@ public class MetricsRegistry {
                         entry.getName(),
                         value,
                         entry.getDescription(),
-                        entry.getUnit()
+                        entry.getUnit(),
+                        entry.getCategory()
                 ));
             } catch (Exception e) {
-                snapshots.add(new MetricsSnapshot(entry.getName(), "ERROR: " + e.getMessage()));
+                snapshots.add(new MetricsSnapshot(entry.getName(), "ERROR: " + e.getMessage(),
+                        null, null, entry.getCategory()));
             }
         }
         return snapshots;
@@ -107,10 +109,12 @@ public class MetricsRegistry {
                             entry.getName(),
                             value,
                             entry.getDescription(),
-                            entry.getUnit()
+                            entry.getUnit(),
+                            entry.getCategory()
                     ));
                 } catch (Exception e) {
-                    snapshots.add(new MetricsSnapshot(entry.getName(), "ERROR: " + e.getMessage()));
+                    snapshots.add(new MetricsSnapshot(entry.getName(), "ERROR: " + e.getMessage(),
+                            null, null, entry.getCategory()));
                 }
             }
         }
