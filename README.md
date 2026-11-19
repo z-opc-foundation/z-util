@@ -24,7 +24,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 |------|-----|
 | **仓库** | `z-util`（org: z-opc-foundation 的基础库；远端为组织仓 `github.com:z-opc-foundation/z-util.git`） |
 | **Maven 坐标** | 根聚合 `io.github.yuku123:z-util:${revision}`（`packaging=pom`）；子件 `io.github.yuku123:z-util-<module>:${revision}`。groupId 保持 `io.github.yuku123`（已发布坐标，Central 上 1.0.2~1.2.8 全系列，2026-10-19 实测），与 GitHub 组织归属解耦 |
-| **当前版本** | `1.2.12`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
+| **当前版本** | `1.2.13`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
 | **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **84 个模块 POM = 74 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正；2026-11-20 `z-util-office` 物理删除后 27 条） |
@@ -67,7 +67,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-serialize` | **pom 聚合** | 跨语言、schema-first、零拷贝编解码（5 个子模块） | 见下表 |
 | `z-util-codegen` | **pom 聚合** | 编译期代码生成引擎（2026-11-19）：Lombok 性质特性集 + MapStruct 性质转换集 + SPI/元模型集（7 个子模块） | 见下表 |
 | `z-util-doc` | **pom 聚合** | 纯文件解析家族（2026-11-19）：**零 Apache 依赖**（不用 POI/PDFBox，纯 JDK），每种格式一个子模块 + define 通用层；MinerU 形态的组装留给上层 | 见下表 |
-| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **31 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`） |
+| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **36 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`，2026-11-19 增 doc 家族六件） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
 
@@ -264,12 +264,13 @@ z-util/
 </dependencies>
 ```
 
-它的版本表实测覆盖 30 条坐标（core / monitor / parser-json / math / media / expr-js / wf /
+它的版本表实测覆盖 36 条坐标（core / monitor / parser-json / math / media / expr-js / wf /
 visualization / jdbc / http / ml / devops / devops-git / devops-docker / devops-nexus / pattern /
 distribute / ch / strategy / sensitive / parser-xml / dsl-kernel / cli / codegen-annotations /
-codegen-core / codegen-bean / codegen-mapper / codegen-service / codegen-meta / z-util-all）。
+codegen-core / codegen-bean / codegen-mapper / codegen-service / codegen-meta / z-util-all /
+doc-define / doc-txt / doc-docx / doc-doc / doc-epub / doc-pdf）。
 `z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、`codegen-it`、其余 `parser-*` /
-`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **68** 个自家构件，其中 jar 件 **64** 个、聚合 pom 件 4 个）。
+`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **73** 个自家构件，其中 jar 件 **69** 个、聚合 pom 件 4 个）。
 
 ### 本地构建
 
