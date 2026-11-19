@@ -27,7 +27,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **当前版本** | `1.2.12`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
-| **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **78 个模块 POM = 69 个 jar + 9 个 pom**（9 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen`；2026-11-19 按 pom 现读订正） |
+| **模块数** | 根 POM `<modules>` **28** 个条目；展开后共 **85 个模块 POM = 75 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正） |
 | **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.2 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
@@ -44,7 +44,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | 模块（`<module>` 顺序） | 类型 | 职责 | 关键入口（实测存在的类） |
 |------|------|------|------|
 | `z-util-core` | jar | 基础工具：集合/字符串/IO/并发/加密/JWT/限流/熔断/调度 | `StringUtil` `CollectionUtil` `BeanUtil` `ReflectUtil` `FileUtil` `ZipUtil` `JarUtil` `XmlUtil` `Assert` `StopWatch` `EventBus`；`jwt.Jwt`/`Claims`/`HmacSha256`；`encrypt.AesUtil`/`RsaUtil`/`MD5Utils`/`Base64Utils`/`HMAC`/`ApiSignUtil`/`Base62`；`ratelimit.SlidingWindowRateLimiter`/`TokenBucketRateLimiter`；`resilience.CircuitBreaker`/`Bulkhead`/`TimeLimiter`；`meta.page.PageResult`；`lang.concurrency.NameThreadFactory`；`pattern.*`（chain/command/composite/factory/state/pool/event/spi） |
-| `z-util-office` | jar | 基于 POI / PDFBox 的 Word / Excel / PDF / PPT 工具 + 模板引擎 + 链式门面（详见模块 README） | `excel.ExcelUtils`（`readFirstSheet` / `readAllSheets` / `writeCell` / `writeRow`）、`ExcelTemplate`；`word.U` + `WordTemplate` + `WordExtractor`；`pdf.PdfUtil` / `PdfOperator` / `PdfExtractor`；`ppt.PptUtils` + `PptTemplate`；`core.RoundTripAssert` / `core.OfficeFormat` / `core.OfficePipeline`（2026-10-02 新增 builder：open→读→改→saveAs/toBytes） |
+| `z-util-office` | jar | **已下线（2026-11-19，被 z-util-doc 家族取代）**：原基于 POI / PDFBox 的 Word / Excel / PDF / PPT 工具 + 模板引擎 + 链式门面；代码暂留仓库，不再演进 | `excel.ExcelUtils`、`ExcelTemplate`；`word.U` + `WordTemplate` + `WordExtractor`；`pdf.PdfUtil` / `PdfOperator` / `PdfExtractor`；`ppt.PptUtils` + `PptTemplate`；`core.RoundTripAssert` / `core.OfficeFormat` / `core.OfficePipeline` |
 | `z-util-media` | jar | 图像处理、验证码、GIF、二维码 | `CaptchaUtil`、`GifEncoder`/`GifBuilder`、`ColorUtil`、`graph/QRCode`（encoder + decoder） |
 | `z-util-dsl` | **pom 聚合** | 语言处理家族：`z-util-dsl-kernel`（自研词法/语法/AST + **运行时动态加载 `.g4`**）+ `z-util-expr`（6 引擎）+ `z-util-parser`（8 格式） | kernel：`g4.DynamicLexer`、`DynamicParser`、`G4FileParser`、`ASTFactory`、`ASTNode`、`token.Lexer` |
 | `z-util-wf` | **pom 聚合** | 内存内工作流家族：`z-util-wf-kernel`（DAG 模型 + BPMN 解析 + runtime + persistence + interfaces）。`JavaEngine`/`PythonEngine` 两个占位实现与 `JavaHandle` 已降入 kernel 的 test 域（不发布、不挂 @Test），自注册静态块在 kernel 测试类路径上才真正触发 | kernel：`conponents.WorkFlowApplication` / `WorkFlowApplicationContext` / `Task`；`config.WorkflowNode` / `Connector` / `Engine`；`bpmn.Bpmn` / `BpmnDiagram` / `BpmnProcess` / `BpmnModelConverter` / `BpmnXmlParser`；`engine.runtime.WorkflowRuntimeEngine` / `GatewayEvaluator` / `ExecutionResult`；`engine.interfaces.EngineFactory`（自注册，无 reactor cycle）；`persistence.FileWorkflowPersistencePlugin`；`json.WorkflowConfigurationSerializer` |
@@ -67,6 +67,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-bc` | jar | 字节码 + 源码工具集（字节码模型/ASM 编织/内存编译；2026-10-02 收编 z-util-source 为源码面，compiler 孤岛死码随迁删除） | `bytecode.*` class 模型、`compile.CFJavaCompiler`/`MapClassLoader`、`weave.*`；`source.parser.SourceCodeParser`（javaparser）、`source.define.ByteCodeParser`/`ByteCodeGenerator`（契约）+ `parser.ByteCodeParserImpl`/`generator.ByteCodeGeneratorImpl`、`source.generator.JavaSourceGenerator` + `diff.ClassInfoDiffer`、`source.generator.info.ClassInfo`/`FieldInfo`/`MethodInfo`、`source.analyser.AnalysisContext` |
 | `z-util-serialize` | **pom 聚合** | 跨语言、schema-first、零拷贝编解码（5 个子模块） | 见下表 |
 | `z-util-codegen` | **pom 聚合** | 编译期代码生成引擎（2026-11-19）：Lombok 性质特性集 + MapStruct 性质转换集 + SPI/元模型集（7 个子模块） | 见下表 |
+| `z-util-doc` | **pom 聚合** | 纯文件解析家族（2026-11-19）：**零 Apache 依赖**（不用 POI/PDFBox，纯 JDK），每种格式一个子模块 + define 通用层；MinerU 形态的组装留给上层 | 见下表 |
 | `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **31 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
@@ -151,6 +152,21 @@ Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(s
 家族内依赖：`bean` / `mapper` / `service` / `meta` → `annotations` + `core`；`it` → 全部。
 `annotations` 与 `core` 是零内部依赖（core 只依赖 javac 内部 API，不依赖任何 z-util-* 模块）。
 
+### `z-util-doc` 的 6 个子模块（2026-11-19）
+
+零第三方依赖：纯 JDK（zip / Inflater / DOM），**不依赖 POI / PDFBox**；统一文档模型 + Reader SPI 定义在 `-define`，
+各格式子模块只依赖 `-define`。典型组装：`new DocReaders().register(new PdfDocReader(), ...).readToMarkdown(bytes)`；
+上层要组 MinerU 形态（版面分析/OCR/表格/公式识别管道）时在此家族之上叠层，z-util 不做 ML。
+
+| 子模块 | 职责与关键入口 |
+|------|------|
+| `z-util-doc-define` | 通用层：`DocDocument`/`DocMeta` + sealed `DocBlock`（Paragraph/Heading/ListItem/Quote/CodeBlock/Table/Image，嵌套 record）+ `DocSpan`；`DocReader` SPI（`supports(byte[])` 深度嗅探 + `read`）；`DocFormatDetector`（魔数：`%PDF`/OLE2/zip 容器细分/RTF/HTML）；导出器 `MarkdownExporter` / `PlainTextExporter` / `HtmlExporter` + `DocConverter` 门面；`DocReaders` 注册表（手工 register 或 `discover()` ServiceLoader） |
+| `z-util-doc-txt` | `TxtDocReader`：纯文本按空行分段，UTF-8 严格解码失败回退 GBK |
+| `z-util-doc-docx` | `DocxDocReader`：OOXML（zip+DOM，禁 DTD 防 XXE）；标题样式/numPr 列表/表格 gridSpan/图片 rels/core.xml 元数据 |
+| `z-util-doc-epub` | `EpubDocReader`：container.xml→OPF→spine 顺序解析 XHTML 章节，h1-h6/列表/表格/图片/行内样式 |
+| `z-util-doc-doc` | `DocDocReader` + `CfbReader`：OLE2/CFB 容器（FAT/miniFAT/目录）+ Word 97-2003 FIB/piece table（压缩 cp1252 与 UTF-16 双分支）+ `\u0005SummaryInformation` 元数据 |
+| `z-util-doc-pdf` | `PdfDocReader` + `PdfParser`：经典 xref + xref 流（1.5+ 对象流 + Prev 链）、Flate/LZW/ASCIIHex/ASCII85/RunLength + PNG 预测器、内容流解释器（Tj/TJ/Td/TD/Tm）、ToUnicode CMap、字号启发式版面（标题/段落/列表/简易表格）、DCTDecode 图片原样提取；加密 PDF 拒绝 |
+
 ---
 
 ## 🏗️ 项目结构
@@ -167,6 +183,7 @@ z-util/
 ├── z-util-http/           # OkHttp 客户端 + curl 解析 + JDK http server + SSE
 ├── z-util-serialize/      # 聚合 POM → 5 个编解码子模块
 ├── z-util-codegen/        # 聚合 POM → 7 个编译期代码生成子模块（Lombok 性质 + MapStruct 性质 + SPI/元模型）
+├── z-util-doc/            # 聚合 POM → 6 个纯文件解析子模块（零 Apache 依赖：define/pdf/docx/doc/epub/txt）
 ├── z-util-{math,ml,workflow,office,media,visualization,monitor,devops,distribute,ch,cli}/
 ├── z-util-all/            # 只有 <dependencyManagement> 的 umbrella pom（不产出 jar）
 ├── _doc/                  # 文档，见文末「文档目录」

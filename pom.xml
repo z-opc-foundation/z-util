@@ -226,6 +226,9 @@
         <module>z-util-serialize</module>
         <!-- 编译期代码生成引擎：Lombok 性质特性集 + MapStruct 性质转换集 (2026-11-19) -->
         <module>z-util-codegen</module>
+        <!-- 纯文件解析聚合件：零 Apache 依赖（不用 POI/PDFBox），每种格式一个子模块，
+             define 是通用文档模型 + Reader SPI + 导出器；MinerU 形态的组装留给上层 (2026-11-19) -->
+        <module>z-util-doc</module>
         <module>z-util-all</module>
 
         <module>z-util-ioc</module>
@@ -426,6 +429,36 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-sensitive</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-define</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-txt</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-docx</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-epub</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-doc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-doc-pdf</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

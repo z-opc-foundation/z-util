@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: docx</name>
+    <description></description>
+    <artifactId>z-util-doc-docx</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

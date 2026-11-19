@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: define</name>
+    <description>文档解析通用层：文档模型（DocDocument/DocBlock/DocSpan）+ DocReader SPI + 魔数嗅探 + Markdown/Text/Html 导出器。零第三方依赖。</description>
+    <artifactId>z-util-doc-define</artifactId>
+
+</project>

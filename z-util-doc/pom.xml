@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc</name>
+    <description>纯文件解析聚合件：零 Apache 依赖的文档读取与格式转换（pdf / docx / doc / epub / txt ...），MinerU 形态的组装留给上层</description>
+    <artifactId>z-util-doc</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>z-util-doc-define</module>
+        <module>z-util-doc-txt</module>
+        <module>z-util-doc-docx</module>
+        <module>z-util-doc-epub</module>
+        <module>z-util-doc-doc</module>
+        <module>z-util-doc-pdf</module>
+    </modules>
+
+</project>
