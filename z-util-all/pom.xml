@@ -143,6 +143,26 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-annotations</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-bean</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-mapper</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-cli</artifactId>
                 <version>${revision}</version>
             </dependency>

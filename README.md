@@ -5,7 +5,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuku123/z-util-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.yuku123/z-util-core)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![JDK](https://img.shields.io/badge/compile%20target-JDK%208-orange.svg)](https://adoptium.net/)
-[![Modules](https://img.shields.io/badge/modules-26-purple.svg)](#-模块清单)
+[![Modules](https://img.shields.io/badge/modules-27-purple.svg)](#-模块清单)
 
 `z-util` 是 z-opc-foundation 的**基础库**：组织内其余仓（z-boot starter 家族、z-opc、z-ctc、z-mq、z-gw…）
 要用到的字符串/集合/IO/加密/JWT、JSON 与多格式解析、表达式与对象整形 DSL、数据源与动态查询、缓存、
@@ -27,7 +27,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **当前版本** | `1.2.12`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
-| **模块数** | 根 POM `<modules>` **26** 个条目；展开后共 **70 个模块 POM = 62 个 jar + 8 个 pom**（8 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-wf`；2026-10-19 按 pom 现读订正） |
+| **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **76 个模块 POM = 67 个 jar + 9 个 pom**（9 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen`；2026-11-19 按 pom 现读订正） |
 | **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.2 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
@@ -56,7 +56,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-http/z-util-http-server` | jar | 基于 JDK `com.sun.net.httpserver` 的简易 HTTP 服务 | `server.AllPathHttpServer`/`HttpServerBuilder`/`HttpServerProxy` |
 | `z-util-math` | jar | NumPy/Pandas 风格数据结构 | `numpy.Numpy`（`zeros` 等）/`NdArray`/`Linalg`/`random`；`pandas.Pandas`（`DataFrame(...)`/`Series(...)` 工厂）/`DataFrame`/`Series`/`matrix.Linalg`/`io.CSVReader`/`CSVWriter`/`interpolate`/`discretize` |
 | `z-util-ml` | jar | 机器学习（教学/练手性质，98 个主源文件） | `nn.Sequential`/`Dense`/`Conv2d`/`LSTM`/`TransformerEncoder`；`loss.CrossEntropyLoss`、`nnet.MSELoss`；`optim.SGD`/`Adam`/`Adagrad`；`tree.DecisionTree`/`RandomForest`/`XGBoost`；`clustering.KMeans`/`DBSCAN`/`GMM`；`decomposition.PCA`/`tSNE`/`UMAP`；`rl.QLearning`；`ga`/`ensemble`/`association`/`anomaly` |
-| `z-util-monitor` | jar | JVM / 线程池 / OS / 网络监控 + 指标导出 | `JvmMonitor`/`OsMonitor`/`NetMonitor`/`ThreadMonitor`、`ExecutorManager`/`FixedMonitorableExecutor`、`MetricsRegistry`/`MetricsCollector`/`MetricsSnapshot`、`HtmlExporter`/`JsonExporter`、`AlarmService`/`LogAlarmService`/`ThreadPoolOvertimeAlarmPolicy` |
+| `z-util-monitor` | jar | JVM / 线程池 / OS / 网络监控 + 时序采样 + 指标导出 | `JvmMonitor`/`OsMonitor`/`NetMonitor`/`DiskMonitor`/`ThreadMonitor`、`sampling.Monitor`/`Sample`/`MetricDefinition`/`MetricsSampler`、`sampling.store.InMemorySampleStore`（FIFO/TTL/容量三重淘汰）/`FileSampleStore`（JSONL 落盘轮转）、`chart.TimeSeriesChart`/`ChartSeries`/`Sparkline`、`ExecutorManager`/`FixedMonitorableExecutor`、`MetricsRegistry`/`MetricsCollector`/`MetricsSnapshot`、`HtmlExporter`/`JsonExporter`/`ChartsHtmlExporter`、`AlarmService`/`LogAlarmService`/`ThreadPoolOvertimeAlarmPolicy` |
 | `z-util-devops` | **pom 聚合** | DevOps 三件：Git (JGit/Shell) + GitHub API、Docker 客户端、Nexus REST | 见下表 |
 | `z-util-distribute` | jar | 分布式 ID：Snowflake / Segment / NanoId / UUID v7 | `sequence.SnowflakeIdWorker`（`(workerId, datacenterId)` → `nextId()`）、`Sequence`、`SegmentIdGenerator`、`NanoId`（`new NanoId(size, alphabet).next()`）、`UuidV7.next()`/`fromMillis`/`toUuid`、`SystemClock` |
 | `z-util-pattern` | **pom 聚合** | GoF + 行为模式 + 校验原语聚合件（`z-util-pattern-chain`/`-command`/`-composite`/`-event`/`-factory`/`-ioc`/`-memento`/`-pool`/`-register`/`-spi`/`-state`/`-stream`/`-strategy`/`-template`/`-visitor`/`-builder`/`-cache`/`-validation` 等子件各自成坐标） | validation 面：`annotation.NotNull`/`Length`/`Pattern`/`Range`/`Email` 与同名 `*Validator`（2026-10-02 自 `z-util-validation` 降级收编，零内部依赖）；cache 面（`z-util-pattern-cache` 子件）：`MemoryCache`/`WTinyLfuCache`/`CacheBuilder`/`LoadingCache`/`CacheManager`（进程内实现，无 Redis / 远端后端） |
@@ -66,7 +66,8 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-cli` | jar | 命令行解析（Default）+ OptionGroup + HelpFormatter | `CLI`、`CommandLine`、`CommandLineParser`、`DefaultParser`、`help.HelpFormatter` |
 | `z-util-bc` | jar | 字节码 + 源码工具集（字节码模型/ASM 编织/内存编译；2026-10-02 收编 z-util-source 为源码面，compiler 孤岛死码随迁删除） | `bytecode.*` class 模型、`compile.CFJavaCompiler`/`MapClassLoader`、`weave.*`；`source.parser.SourceCodeParser`（javaparser）、`source.define.ByteCodeParser`/`ByteCodeGenerator`（契约）+ `parser.ByteCodeParserImpl`/`generator.ByteCodeGeneratorImpl`、`source.generator.JavaSourceGenerator` + `diff.ClassInfoDiffer`、`source.generator.info.ClassInfo`/`FieldInfo`/`MethodInfo`、`source.analyser.AnalysisContext` |
 | `z-util-serialize` | **pom 聚合** | 跨语言、schema-first、零拷贝编解码（5 个子模块） | 见下表 |
-| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **25 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`） |
+| `z-util-codegen` | **pom 聚合** | 编译期代码生成引擎（2026-11-19）：Lombok 性质特性集 + MapStruct 性质转换集（5 个子模块） | 见下表 |
+| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **29 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
 
@@ -129,6 +130,23 @@ Object doc = mem.shape(spec);          // spec 就是 JSON 树；new ObjEngine(s
 压缩实现目前只有 `GzipCompressor`（+ `AesGcmEncryptor`）；[`_doc/001_arch/06-wire-format.md`](_doc/001_arch/06-wire-format.md)
 里写的 zstd / lz4 仍是设计目标，代码里还没有对应类。
 
+### `z-util-codegen` 的 5 个子模块（2026-11-19）
+
+编译期代码生成引擎：标准 `javax.annotation.processing` 注解处理器 + javac AST 注入
+（TreeMaker 直改 JCClassDecl，Lombok 同款机制），运行需 `-XDaccessInternalAPI` +
+4 条 `--add-exports jdk.compiler`（见 `_doc/001_arch/09-codegen-engine.md`）。
+
+| 子模块 | 内容 |
+|--------|------|
+| `z-util-codegen-annotations` | 纯注解（`@ZData` `@ZGetter` `@ZSetter` `@ZToString` `@ZEqualsAndHashCode` `@ZNonNull` `@ZAllArgsConstructor` `@ZNoArgsConstructor` `@ZRequiredArgsConstructor` `@ZBuilder` `@ZSlf4j` `@ZMapper` `@ZMapping` `@ZMapperConfig`，全 SOURCE retention，零运行时依赖） |
+| `z-util-codegen-core` | 处理器内核：`AbstractCodegenProcessor`（SPI `CodeGenHandler` 分发）+ `ModelBuilder`（javax.lang.model → TypeModel）+ `AstMemberEmitter`（javac AST 注入成员）+ `Expr`/`Stmt`/`TypeRef` 表达式模型 + `FilerSourceEmitter`（生成新类）。模块自身 `<proc>none</proc>` |
+| `z-util-codegen-bean` | Lombok 性质特性集：7 个 handler（Accessor/ToString/EqualsHashCode/Constructor/Builder/Logger/Data），注解处理器 `ZBeanProcessor` |
+| `z-util-codegen-mapper` | MapStruct 性质转换集：`@ZMapper` → 生成 `{Interface}Impl`（同名字段映射、null 守卫、`@ZMapping` source/target/ignore/expression/constant、嵌套 mapper、unmappedTargetPolicy），注解处理器 `ZMapperProcessor` |
+| `z-util-codegen-it` | 集成测试载体（`BeanFeatureTest` 3 例 + `MapperFeatureTest` 4 例，test 域真实跑注解处理器）。`src/main` 无源码，**不对外发布**：与 `z-util-serialize-it` 同理由 central profile 的 `excludeArtifacts` 退出发布包 |
+
+家族内依赖：`bean` / `mapper` → `annotations` + `core`；`it` → 全部。`annotations` 与 `core`
+是零内部依赖（core 只依赖 javac 内部 API，不依赖任何 z-util-* 模块）。
+
 ---
 
 ## 🏗️ 项目结构
@@ -143,7 +161,8 @@ z-util/
 ├── z-util-dsl/            # 自研 lexer/parser/AST，运行时加载 .g4
 ├── z-util-jdbc/           # 数据源/方言/动态查询/内存表/ORM/分页插件/代码生成
 ├── z-util-http/           # OkHttp 客户端 + curl 解析 + JDK http server + SSE
-├── z-util-serialize/      # 聚合 POM → 6 个编解码子模块
+├── z-util-serialize/      # 聚合 POM → 5 个编解码子模块
+├── z-util-codegen/        # 聚合 POM → 5 个编译期代码生成子模块（Lombok 性质 + MapStruct 性质）
 ├── z-util-{math,ml,workflow,office,media,visualization,monitor,devops,distribute,ch,cli}/
 ├── z-util-all/            # 只有 <dependencyManagement> 的 umbrella pom（不产出 jar）
 ├── _doc/                  # 文档，见文末「文档目录」
@@ -221,11 +240,12 @@ z-util/
 </dependencies>
 ```
 
-它的版本表实测覆盖 25 条坐标（core / monitor / parser-json / math / office / media / expr-js / wf /
+它的版本表实测覆盖 29 条坐标（core / monitor / parser-json / math / office / media / expr-js / wf /
 visualization / jdbc / http / ml / devops / devops-git / devops-docker / devops-nexus / pattern /
-distribute / ch / strategy / sensitive / parser-xml / dsl-kernel / cli / z-util-all）。
-`z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、其余 `parser-*` /
-`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **62** 个自家构件，其中 jar 件 **58** 个、聚合 pom 件 4 个）。
+distribute / ch / strategy / sensitive / parser-xml / dsl-kernel / cli / codegen-annotations /
+codegen-core / codegen-bean / codegen-mapper / z-util-all）。
+`z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、`codegen-it`、其余 `parser-*` /
+`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **66** 个自家构件，其中 jar 件 **62** 个、聚合 pom 件 4 个）。
 
 ### 本地构建
 
@@ -254,6 +274,7 @@ mvn clean install -pl z-util-core -am -DskipTests   # 单模块（含其上游�
 | 二进制序列化 | `com.zifang.util.serialize.core.ZSerializer` / `ZDeserializer` + `@ZMessage` / `@ZField` |
 | 声明式 HTTP 客户端 | `com.zifang.util.http.client.HttpExecutor` / `HttpRequestInvocationHandler` |
 | 指标与导出 | `com.zifang.util.monitor.jvm.JvmMonitor` / `MetricsRegistry` / `JsonExporter` |
+| 时序采样与趋势图 | `com.zifang.util.monitor.sampling.Monitor`（定时采集 → 内存/磁盘存储 → 查询绘图）、`InMemorySampleStore` / `FileSampleStore`、`TimeSeriesChart`（服务端 SVG，零第三方依赖） |
 
 本仓**不是**服务，没有 `@RequestMapping`、没有 `application.yml`、没有 Dockerfile/compose/k8s 资产，
 所以这里不列 API 路径表与部署章节。
@@ -352,6 +373,7 @@ _Maintained by the z-opc-foundation organization._
   - [`01-pivot-handler.md`](_doc/001_arch/01-pivot-handler.md) — `engine.service.pivot` 的 `pivot` / `unpivot` 参数说明
   - [`02-resource-handler.md`](_doc/001_arch/02-resource-handler.md) — `engine.service.resourceHandler`：本地文件 / MySQL / 集群 / HDFS 读写与表映射
   - [`05-churn-target.md`](_doc/001_arch/05-churn-target.md) — `engine.service.target`：churn 的 target 生成
+  - [`09-codegen-engine.md`](_doc/001_arch/09-codegen-engine.md) — 编译期代码生成引擎：javac AST 注入机制、`-XDaccessInternalAPI` 前提、与 Lombok/MapStruct 的偏离清单
 - [`_doc/003_script/`](_doc/003_script/) — 脚本：
   - [`deploy_maven_center.sh`](_doc/003_script/deploy_maven_center.sh) — 发布入口（`gpg-init` / `publish` / `verify` / `readme` / `help`；须在仓库根目录上下文运行，凭据取 `.env`）
   - [`install-settings.sh`](_doc/003_script/install-settings.sh) — 把 `<server id="central">` 写进 `~/.m2/settings.xml`

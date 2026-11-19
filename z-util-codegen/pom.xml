@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: codegen</name>
+    <description>编译期代码生成引擎：注解处理器内核 + Lombok 性质特性集 + MapStruct 性质转换集</description>
+    <artifactId>z-util-codegen</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>z-util-codegen-annotations</module>
+        <module>z-util-codegen-core</module>
+        <module>z-util-codegen-bean</module>
+        <module>z-util-codegen-mapper</module>
+        <module>z-util-codegen-it</module>
+    </modules>
+
+</project>

@@ -224,6 +224,8 @@
         <module>z-util-bc</module>
         <!-- z-util-bridge 已合并到 z-util-bc (2026-10-02) -->
         <module>z-util-serialize</module>
+        <!-- 编译期代码生成引擎：Lombok 性质特性集 + MapStruct 性质转换集 (2026-11-19) -->
+        <module>z-util-codegen</module>
         <module>z-util-all</module>
 
         <module>z-util-ioc</module>
@@ -270,6 +272,28 @@
             <dependency>
                 <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-serialize-formats</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 编译期代码生成引擎（2026-11-19）：codegen-it 是纯测试载体、不对外发布，
+                 故不进 DM（口径与 z-util-serialize-it 一致：DM 集合 = 已发布集合）。 -->
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-annotations</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-bean</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-mapper</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -1288,9 +1312,12 @@
                                  上去。它是纯 test 载体（GeneratedCodecTest 靠注解处理器在 test 域生成
                                  三个 codec，跨 core/formats/codegen 三模块），模块必须留在 reactor，
                                  但产物对消费者没有任何价值。excludeArtifacts 按 artifactId 匹配，
-                                 写在父级即对全 reactor 生效、只命中这一个模块。 -->
+                                 写在父级即对全 reactor 生效、只命中这一个模块。
+                                 z-util-codegen-it（2026-11-19）同理：纯注解处理集成测试载体，
+                                 src/main 无源码，jar 同样是空壳，一并退出发布。 -->
                             <excludeArtifacts>
                                 <excludeArtifact>z-util-serialize-it</excludeArtifact>
+                                <excludeArtifact>z-util-codegen-it</excludeArtifact>
                             </excludeArtifacts>
                         </configuration>
                     </plugin>

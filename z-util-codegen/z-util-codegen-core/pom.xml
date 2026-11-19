@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-codegen</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: codegen :: core</name>
+    <description>编译期代码生成引擎内核：类型模型、handler SPI、AST 成员注入、源码生成</description>
+    <artifactId>z-util-codegen-core</artifactId>
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <!-- 本模块是注解处理器内核自身：SPI 文件在 process-resources 阶段就进了
+                         target/classes，javac 从 classpath 发现它时类尚未编译，clean 后必然报
+                         Provider not found。与 z-util-serialize-codegen 同因。 -->
+                    <proc>none</proc>
+                    <compilerArgs combine.children="append">
+                        <!-- 引擎要读写 javac 的 AST（往目标类里注入成员），这些包在 JDK 9+
+                             被限定导出给 jdk.javadoc/jdk.jshell，编译期必须显式开洞。
+                             运行期由消费方传 -XDaccessInternalAPI 打开（见 README）。 -->
+                        <arg>--add-exports</arg>
+                        <arg>jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                        <arg>--add-exports</arg>
+                        <arg>jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                        <arg>--add-exports</arg>
+                        <arg>jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                        <arg>--add-exports</arg>
+                        <arg>jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
