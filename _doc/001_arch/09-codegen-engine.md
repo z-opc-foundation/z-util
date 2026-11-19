@@ -54,6 +54,33 @@ DataHandler（组合展开为以上全部）。
 嵌套映射（同轮扫描其它 `@ZMapper` 生成 `private final {Impl} field = new {Impl}()` 委托）、
 `@ZMapperConfig` + `@ZMapper(unmappedTargetPolicy)` 的 ERROR/WARN/IGNORE 未映射报告。
 
+### 2.4 SPI 注册集（z-util-codegen-service，2026-11-19 晚）
+
+对标 Google AutoService：`@ZAutoService({接口...})` 标在 provider 类上，
+编译期生成/合并 `META-INF/services/{接口}`。要点：
+- 注册表跨注解处理轮次累积，`processingOver` 统一落盘（`ZServiceProcessor` 覆写 `process`
+  补 flush——内核基类在最后一轮直接返回，这是对内核约定的第一处例外）；
+- 落盘前先用 `filer.getResource` 读回旧文件合并去重，增量构建不产生重复行；
+- provider 未实现（`Types.isAssignable` 校验）声明接口直接 ERROR，把错误钉在编译期；
+- 注解值是 `Class<?>[]`，走 `AnnotationSpec` 的镜像摊平通道读（直接 `getAnnotation` 会
+  撞 MirroredTypeException）。
+
+### 2.5 不可变值集（z-util-codegen-bean 内，@ZImmutable）
+
+对标 AutoValue：标在抽象类或接口上，Filer 通道生成 `Immutable{SimpleName}`——
+全 final 字段、全参构造、静态 `of` 工厂、equals/getClass 严格语义 + `Objects.hash`、
+`Immutable{Xxx}{k=v}` toString。属性 = 无参抽象方法，`getX()` / `isX()`（boolean）/
+record 风格 `x()` 三种命名都认。这是 bean 家族第一个纯 Filer 通道的 handler：
+IDEA 开注解处理即零爆红，与 AST 注入特性形成互补。
+
+### 2.6 元模型集（z-util-codegen-meta，@ZMetaModel）
+
+对标 JPA Metamodel / QueryDSL 字段引用：`@ZMetaModel` 标在实体类上，
+生成同包 `{SimpleName}_`——每个实例字段一个 `public static final String`
+（常量名 UPPER_SNAKE_CASE，值 = 字段名，camelCase 与 URL 连写两种形态都处理），
+外加 `ENTITY`（类全名）与 `ALL`（按声明序的全字段名数组）。给 `z-util-jdbc`
+的动态查询用：`QueryUser_.USER_NAME` 代替裸 `"userName"`，字段改名即编译错。
+
 ## 3. 模块与依赖
 
 ```
@@ -61,10 +88,12 @@ z-util-codegen-annotations   纯注解，SOURCE retention，零依赖
 z-util-codegen-core          内核；仅依赖 jdk.compiler 内部 API，零 z-util-* 依赖
 z-util-codegen-bean          → annotations + core + slf4j-api
 z-util-codegen-mapper        → annotations + core
+z-util-codegen-service       → annotations + core
+z-util-codegen-meta          → annotations + core
 z-util-codegen-it            test 载体，src/main 无源码；不发布（excludeArtifacts）
 ```
 
-发布口径与 serialize-it 同款：DM 集合 = 已发布集合，四个 jar 进根 DM 与 `z-util-all` BOM，
+发布口径与 serialize-it 同款：DM 集合 = 已发布集合，六个 jar 进根 DM 与 `z-util-all` BOM，
 codegen-it 由 central profile `excludeArtifacts` 退出发布。
 
 ## 4. 运行前提（消费者必须知道的一条）
@@ -83,9 +112,13 @@ AST 注入触碰 `com.sun.tools.javac.{tree,util,code,processing}` 内部包，�
 
 ## 5. 测试证据
 
-`z-util-codegen-it`：`BeanFeatureTest` 3 例（data 全家桶 + `@ZNonNull` NPE、builder）、
-`MapperFeatureTest` 4 例（同名映射、null 透传、嵌套映射、显式规则），test 域真实跑注解处理器，
-2026-11-19 全绿（7/7，BUILD SUCCESS）。
+`z-util-codegen-it`（2026-11-19 全绿，14/14）：
+`BeanFeatureTest` 3 例（data 全家桶 + `@ZNonNull` NPE、builder）、
+`MapperFeatureTest` 4 例（同名映射、null 透传、嵌套映射、显式规则）、
+`ServiceFeatureTest` 3 例（ServiceLoader 发现双 provider、单 provider 多 service、
+注册文件合并去重）、`ImmutableFeatureTest` 2 例（抽象类型多态 + 值语义）、
+`MetaModelFeatureTest` 2 例（常量与字段名对应、ALL 全覆盖）——
+全部 test 域真实跑注解处理器。
 
 注意增量编译陷阱：改了处理器之后必须 `mvn clean` 掉 IT 模块再测——
 增量编译发现注解处理器 jar 未变时会跳过重跑，留下旧版本生成物。

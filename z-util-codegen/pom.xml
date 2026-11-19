@@ -18,6 +18,8 @@
         <module>z-util-codegen-core</module>
         <module>z-util-codegen-bean</module>
         <module>z-util-codegen-mapper</module>
+        <module>z-util-codegen-service</module>
+        <module>z-util-codegen-meta</module>
         <module>z-util-codegen-it</module>
     </modules>
 

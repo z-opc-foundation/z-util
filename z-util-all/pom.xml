@@ -163,6 +163,16 @@
             </dependency>
             <dependency>
                 <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-service</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
+                <artifactId>z-util-codegen-meta</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.yuku123</groupId>
                 <artifactId>z-util-cli</artifactId>
                 <version>${revision}</version>
             </dependency>

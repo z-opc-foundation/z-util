@@ -34,6 +34,16 @@
             <artifactId>z-util-codegen-mapper</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-codegen-service</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-codegen-meta</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- slf4j-api：@ZSlf4j 生成的 logger 字段要落到真实类型上 -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -77,6 +87,16 @@
                         <path>
                             <groupId>io.github.yuku123</groupId>
                             <artifactId>z-util-codegen-mapper</artifactId>
+                            <version>${revision}</version>
+                        </path>
+                        <path>
+                            <groupId>io.github.yuku123</groupId>
+                            <artifactId>z-util-codegen-service</artifactId>
+                            <version>${revision}</version>
+                        </path>
+                        <path>
+                            <groupId>io.github.yuku123</groupId>
+                            <artifactId>z-util-codegen-meta</artifactId>
                             <version>${revision}</version>
                         </path>
                     </annotationProcessorPaths>

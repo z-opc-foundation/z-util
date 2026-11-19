@@ -21,6 +21,7 @@ public class ZBeanProcessor extends AbstractCodegenProcessor {
                 new ConstructorHandler(),
                 new BuilderHandler(),
                 new LoggerHandler(),
-                new DataHandler());
+                new DataHandler(),
+                new ImmutableValueHandler());
     }
 }
