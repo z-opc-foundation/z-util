@@ -52,6 +52,69 @@ public class MarkdownExporter {
             appendTable(out, table);
         } else if (block instanceof DocBlock.Image image) {
             appendImage(out, image);
+        } else if (block instanceof DocBlock.Sheet sheet) {
+            appendSheet(out, sheet);
+        } else if (block instanceof DocBlock.Slides slides) {
+            appendSlides(out, slides);
+        }
+    }
+
+    private void appendSheet(StringBuilder out, DocBlock.Sheet sheet) {
+        if (sheet.name() != null && !sheet.name().isEmpty()) {
+            out.append("### ").append(escape(sheet.name())).append("\n\n");
+        }
+        if (sheet.rows().isEmpty()) {
+            return;
+        }
+        int cols = sheet.rows().stream()
+                .flatMap(r -> r.cells().stream())
+                .mapToInt(DocBlock.Sheet.SheetCell::column)
+                .max().orElse(-1) + 1;
+        for (int i = 0; i < sheet.rows().size(); i++) {
+            List<DocBlock.Sheet.SheetCell> cells = sheet.rows().get(i).cells();
+            out.append("|");
+            for (int c = 0; c < cols; c++) {
+                String text = "";
+                for (DocBlock.Sheet.SheetCell cell : cells) {
+                    if (cell.column() == c) {
+                        text = sheetCellText(cell);
+                        break;
+                    }
+                }
+                out.append(' ').append(text.isEmpty() ? " " : text).append(" |");
+            }
+            out.append('\n');
+            if (i == 0) {
+                out.append("|");
+                for (int c = 0; c < cols; c++) {
+                    out.append(" --- |");
+                }
+                out.append('\n');
+            }
+        }
+        out.append('\n');
+    }
+
+    private String sheetCellText(DocBlock.Sheet.SheetCell cell) {
+        String text = cell.text();
+        if (text == null || text.isEmpty()) {
+            text = cell.formula() == null ? "" : "=" + cell.formula();
+        }
+        return text.replace("|", "\\|");
+    }
+
+    private void appendSlides(StringBuilder out, DocBlock.Slides slides) {
+        for (DocBlock.Slides.Slide slide : slides.slides()) {
+            out.append("## ");
+            if (slide.title() != null && !slide.title().isEmpty()) {
+                out.append(escape(slide.title()));
+            } else {
+                out.append("Slide ").append(slide.index());
+            }
+            out.append("\n\n");
+            for (DocBlock block : slide.blocks()) {
+                appendBlock(out, block);
+            }
         }
     }
 

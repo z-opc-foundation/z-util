@@ -20,6 +20,8 @@
         <module>z-util-doc-epub</module>
         <module>z-util-doc-doc</module>
         <module>z-util-doc-pdf</module>
+        <module>z-util-doc-xlsx</module>
+        <module>z-util-doc-pptx</module>
     </modules>
 
 </project>

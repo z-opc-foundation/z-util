@@ -32,6 +32,47 @@ public class PlainTextExporter {
                 out.append('\n');
             } else if (block instanceof DocBlock.Image image) {
                 out.append("[image: ").append(image.name()).append("]\n\n");
+            } else if (block instanceof DocBlock.Sheet sheet) {
+                if (sheet.name() != null && !sheet.name().isEmpty()) {
+                    out.append(sheet.name()).append('\n');
+                }
+                for (DocBlock.Sheet.SheetRow row : sheet.rows()) {
+                    int cols = row.cells().stream()
+                            .mapToInt(DocBlock.Sheet.SheetCell::column).max().orElse(-1) + 1;
+                    StringBuilder line = new StringBuilder();
+                    for (int c = 0; c < cols; c++) {
+                        if (c > 0) {
+                            line.append('\t');
+                        }
+                        for (DocBlock.Sheet.SheetCell cell : row.cells()) {
+                            if (cell.column() == c) {
+                                line.append(cell.text().isEmpty() && cell.formula() != null
+                                        ? "=" + cell.formula() : cell.text());
+                                break;
+                            }
+                        }
+                    }
+                    out.append(line).append('\n');
+                }
+                out.append('\n');
+            } else if (block instanceof DocBlock.Slides slides) {
+                for (DocBlock.Slides.Slide slide : slides.slides()) {
+                    out.append(slide.title() == null || slide.title().isEmpty()
+                            ? "Slide " + slide.index() : slide.title()).append('\n');
+                    for (DocBlock b : slide.blocks()) {
+                        if (b instanceof DocBlock.Paragraph p) {
+                            out.append(render(p.spans())).append('\n');
+                        } else if (b instanceof DocBlock.Table table) {
+                            for (DocBlock.Table.Row row : table.rows()) {
+                                out.append(row.cells().stream().map(this::cellText)
+                                        .reduce((a, b2) -> a + "\t" + b2).orElse("")).append('\n');
+                            }
+                        } else if (b instanceof DocBlock.Image image) {
+                            out.append("[image: ").append(image.name()).append("]\n");
+                        }
+                    }
+                    out.append('\n');
+                }
             }
         }
         return out.toString().stripTrailing() + "\n";

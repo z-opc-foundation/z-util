@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: xlsx</name>
+    <description>Excel 2007+（OOXML xlsx）读写器：零第三方依赖（JDK Zip + DOM），支持共享字符串、内联字符串、公式、日期序列号、合并单元格、隐藏工作表。</description>
+    <artifactId>z-util-doc-xlsx</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

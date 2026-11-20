@@ -73,6 +73,68 @@ public class HtmlExporter {
             out.append("<img alt=\"").append(escape(image.name() == null ? "image" : image.name()))
                     .append("\" src=\"data:").append(image.mimeType()).append(";base64,")
                     .append(Base64.getEncoder().encodeToString(image.data())).append("\"/>\n");
+        } else if (block instanceof DocBlock.Sheet sheet) {
+            appendSheet(out, sheet);
+        } else if (block instanceof DocBlock.Slides slides) {
+            appendSlides(out, slides);
+        }
+    }
+
+    private void appendSheet(StringBuilder out, DocBlock.Sheet sheet) {
+        if (sheet.name() != null && !sheet.name().isEmpty()) {
+            out.append("<h3>").append(escape(sheet.name())).append("</h3>\n");
+        }
+        int cols = sheet.rows().stream()
+                .flatMap(r -> r.cells().stream())
+                .mapToInt(DocBlock.Sheet.SheetCell::column)
+                .max().orElse(-1) + 1;
+        out.append("<table>\n");
+        for (int i = 0; i < sheet.rows().size(); i++) {
+            List<DocBlock.Sheet.SheetCell> cells = sheet.rows().get(i).cells();
+            out.append(i == 0 ? "<thead><tr>" : "<tr>");
+            for (int c = 0; c < cols; c++) {
+                out.append("<td");
+                for (DocBlock.Sheet.SheetCell cell : cells) {
+                    if (cell.column() == c) {
+                        out.append(" data-type=\"").append(cell.type().name()).append('"');
+                        if (cell.formula() != null) {
+                            out.append(" data-formula=\"").append(escape(cell.formula())).append('"');
+                        }
+                        break;
+                    }
+                }
+                out.append('>').append(escape(sheetCellText(cells, c))).append("</td>");
+            }
+            out.append(i == 0 ? "</tr></thead>\n" : "</tr>\n");
+        }
+        out.append("</table>\n");
+    }
+
+    private String sheetCellText(List<DocBlock.Sheet.SheetCell> cells, int column) {
+        for (DocBlock.Sheet.SheetCell cell : cells) {
+            if (cell.column() == column) {
+                if (cell.text() != null && !cell.text().isEmpty()) {
+                    return cell.text();
+                }
+                return cell.formula() == null ? "" : "=" + cell.formula();
+            }
+        }
+        return "";
+    }
+
+    private void appendSlides(StringBuilder out, DocBlock.Slides slides) {
+        for (DocBlock.Slides.Slide slide : slides.slides()) {
+            out.append("<section class=\"slide\">\n<h2>");
+            if (slide.title() != null && !slide.title().isEmpty()) {
+                out.append(escape(slide.title()));
+            } else {
+                out.append("Slide ").append(slide.index());
+            }
+            out.append("</h2>\n");
+            for (DocBlock block : slide.blocks()) {
+                appendBlock(out, block);
+            }
+            out.append("</section>\n");
         }
     }
 

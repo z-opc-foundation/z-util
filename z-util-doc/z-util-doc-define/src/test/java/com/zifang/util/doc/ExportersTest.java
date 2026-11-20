@@ -73,4 +73,45 @@ class ExportersTest {
     void converterFacadeWorks() {
         assertEquals(new MarkdownExporter().export(sample()), DocConverter.toMarkdown(sample()));
     }
+
+    @Test
+    void sheetRendersAsTypedTable() {
+        DocDocument doc = new DocDocument();
+        doc.add(new DocBlock.Sheet("Sheet1", List.of(
+                new DocBlock.Sheet.SheetRow(1, List.of(
+                        DocBlock.Sheet.SheetCell.of(0, DocBlock.Sheet.CellType.STRING, "name"),
+                        DocBlock.Sheet.SheetCell.of(1, DocBlock.Sheet.CellType.NUMBER, "42"))),
+                new DocBlock.Sheet.SheetRow(2, List.of(
+                        DocBlock.Sheet.SheetCell.of(0, DocBlock.Sheet.CellType.STRING, "tot"),
+                        DocBlock.Sheet.SheetCell.formula(1, "SUM(B1:B1)", "42")))), false));
+
+        String md = new MarkdownExporter().export(doc);
+        assertTrue(md.contains("### Sheet1"), md);
+        assertTrue(md.contains("| name | 42 |"), md);
+        assertTrue(md.contains("| tot | 42 |"), md);
+
+        String html = new com.zifang.util.doc.export.HtmlExporter().export(doc);
+        assertTrue(html.contains("<h3>Sheet1</h3>"), html);
+        assertTrue(html.contains("data-type=\"NUMBER\""), html);
+        assertTrue(html.contains("data-formula=\"SUM(B1:B1)\""), html);
+
+        String text = new com.zifang.util.doc.export.PlainTextExporter().export(doc);
+        assertTrue(text.contains("name\t42"), text);
+    }
+
+    @Test
+    void slidesRenderAsSections() {
+        DocDocument doc = new DocDocument();
+        doc.add(new DocBlock.Slides(List.of(
+                new DocBlock.Slides.Slide(1, "封面", List.of(new DocBlock.Paragraph("hello"))),
+                new DocBlock.Slides.Slide(2, null, List.of(new DocBlock.Paragraph("body"))))));
+
+        String md = new MarkdownExporter().export(doc);
+        assertTrue(md.contains("## 封面"), md);
+        assertTrue(md.contains("## Slide 2"), md);
+
+        String html = new com.zifang.util.doc.export.HtmlExporter().export(doc);
+        assertTrue(html.contains("<section class=\"slide\">"), html);
+        assertTrue(html.contains("<h2>封面</h2>"), html);
+    }
 }

@@ -9,7 +9,14 @@ public enum DocFormat {
     EPUB("epub"),
     TXT("txt"),
     RTF("rtf"),
-    HTML("html");
+    HTML("html"),
+    XLSX("xlsx"),
+    XLS("xls"),
+    PPTX("pptx"),
+    PPT("ppt"),
+    ODS("ods"),
+    ODT("odt"),
+    ODP("odp");
 
     private final String extension;
 

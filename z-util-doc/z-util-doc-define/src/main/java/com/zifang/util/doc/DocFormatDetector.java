@@ -40,29 +40,50 @@ public final class DocFormatDetector {
     }
 
     /**
-     * zip 容器的细分：docx 有 [Content_Types].xml，epub 有 mimetype=application/epub+zip。
-     * 只顺序看前几个本地文件头，不解压整个包。
+     * zip 容器的细分：docx 有 word/document.xml，xlsx 有 xl/workbook.xml，pptx 有 ppt/presentation.xml，
+     * epub/odf 看 mimetype 条目。只顺序看前若干个本地文件头，不解压整个包。
      */
     public static DocFormat detectZipContainer(byte[] data) {
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(data))) {
             ZipEntry entry;
             int scanned = 0;
-            while ((entry = zip.getNextEntry()) != null && scanned < 8) {
+            while ((entry = zip.getNextEntry()) != null && scanned < 32) {
                 scanned++;
                 String name = entry.getName();
                 if (name.equals("mimetype")) {
                     byte[] content = zip.readNBytes(64);
                     String mime = new String(content, StandardCharsets.ISO_8859_1).trim();
+                    DocFormat odf = detectOdfMime(mime);
+                    if (odf != null) {
+                        return odf;
+                    }
                     if (mime.equals("application/epub+zip")) {
                         return DocFormat.EPUB;
                     }
-                } else if (name.equals("[Content_Types].xml")) {
+                } else if (name.equals("xl/workbook.xml")) {
+                    return DocFormat.XLSX;
+                } else if (name.equals("word/document.xml")) {
                     return DocFormat.DOCX;
+                } else if (name.equals("ppt/presentation.xml")) {
+                    return DocFormat.PPTX;
                 }
                 zip.closeEntry();
             }
         } catch (IOException e) {
             // 容器损坏，交给上层按不支持处理
+        }
+        return null;
+    }
+
+    private static DocFormat detectOdfMime(String mime) {
+        if ("application/vnd.oasis.opendocument.spreadsheet".equals(mime)) {
+            return DocFormat.ODS;
+        }
+        if ("application/vnd.oasis.opendocument.text".equals(mime)) {
+            return DocFormat.ODT;
+        }
+        if ("application/vnd.oasis.opendocument.presentation".equals(mime)) {
+            return DocFormat.ODP;
         }
         return null;
     }

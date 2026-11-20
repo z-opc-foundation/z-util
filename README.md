@@ -1,6 +1,6 @@
 # z-util
 
-> 一人公司基座的底层 Java 工具库 —— 84 个模块 POM · Java 8/17 口径 · 按需引用、按需升级。
+> 一人公司基座的底层 Java 工具库 —— 86 个模块 POM · Java 8/17 口径 · 按需引用、按需升级。
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yuku123/z-util-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.yuku123/z-util-core)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -27,7 +27,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | **当前版本** | `1.2.13`（根 POM `<properties><revision>`，CI-friendly versions + flatten-maven-plugin `resolveCiFriendliesOnly`；2026-10-19 按 pom 现读订正，此前 README 写的 1.0.16 已过期） |
 | **父项目** | **无**（2026-10-03 起本仓是一棵独立的 POM 树：根 POM 不写 `<parent>`，也不 import 任何外部 BOM，发布的根 pom 在 repo1 可被独立解析） |
 | **Maven Central** | 已发布：实测 `1.0.14` 下 **46 个构件的 `.pom` 全部 HTTP 200**（根 `z-util` + 45 个 reactor 模块）。 |
-| **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **84 个模块 POM = 74 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正；2026-11-20 `z-util-office` 物理删除后 27 条） |
+| **模块数** | 根 POM `<modules>` **27** 个条目；展开后共 **86 个模块 POM = 76 个 jar + 10 个 pom**（10 个聚合件：`z-util-all` / `z-util-devops` / `z-util-dsl`（含 `-expr` / `-parser`）/ `z-util-pattern` / `z-util-serialize` / `z-util-codegen` / `z-util-doc`；2026-11-19 按 pom 现读订正；2026-11-20 `z-util-office` 物理删除后 27 条） |
 | **运行口径** | Java 17（`compile.version=17`，根 POM `maven-compiler-plugin` 钉 `source/target=${compile.version}`；与 `z-boot-parent` 1.2.2 火车口径对齐） |
 | **测试运行 JDK** | 全量 `mvn test` 需 JDK 9+，组织口径用 **JDK 17**（原因见「🧪 测试」） |
 | **默认端口** | 无（这是库，不监听端口）。`z-util-http` 的 `AllPathHttpServer` 基于 JDK `com.sun.net.httpserver`，端口由调用方传入 |
@@ -67,7 +67,7 @@ IoC/AOP/代理、二进制序列化、监控、Office、图像、数学与 ML，
 | `z-util-serialize` | **pom 聚合** | 跨语言、schema-first、零拷贝编解码（5 个子模块） | 见下表 |
 | `z-util-codegen` | **pom 聚合** | 编译期代码生成引擎（2026-11-19）：Lombok 性质特性集 + MapStruct 性质转换集 + SPI/元模型集（7 个子模块） | 见下表 |
 | `z-util-doc` | **pom 聚合** | 纯文件解析家族（2026-11-19）：**零 Apache 依赖**（不用 POI/PDFBox，纯 JDK），每种格式一个子模块 + define 通用层；MinerU 形态的组装留给上层 | 见下表 |
-| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **36 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`，2026-11-19 增 doc 家族六件） |
+| `z-util-all` | **pom（umbrella）** | 只含 `<dependencyManagement>`，**没有任何 `<dependencies>`、不产出 jar** | 版本表（`<dependencyManagement>`）覆盖 **38 条**坐标（含 `z-util-all` 自身；不是"全部模块"：2026-10-03 删除了已收编的 `z-util-proxy`，2026-10-13 增 `z-util-strategy` 与 `z-util-sensitive`，2026-11-19 增 doc 家族六件） |
 | `z-util-ioc` | jar | 轻量 IoC 容器（Guice 形接口 + JSR-330 注解）+ AOP 集成 | `Injector`/`Module`/`Scopes`、`binder.Binder`/`DefaultBinder`/`ConstantBindingBuilder`、`context.ClassPathApplicationContext`、`core.DefaultBeanRegistry`/`BeanDefinition`、`inject.*`、`aop.AopModule`/`AopProxyPostProcessor`/`ClassMatcher` |
 | `z-util-aop` | jar | `@Advise` / `Intercept` 拦截器 + `ProxyFactory`（零内部依赖） | `Advise`、`Intercept`、`ProxyFactory` |
 
@@ -168,6 +168,8 @@ POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom
 | `z-util-doc-docx` | `DocxDocReader`：OOXML（zip+DOM，禁 DTD 防 XXE）；标题样式/numPr 列表/表格 gridSpan/图片 rels/core.xml 元数据 |
 | `z-util-doc-epub` | `EpubDocReader`：container.xml→OPF→spine 顺序解析 XHTML 章节，h1-h6/列表/表格/图片/行内样式 |
 | `z-util-doc-doc` | `DocDocReader` + `CfbReader`：OLE2/CFB 容器（FAT/miniFAT/目录）+ Word 97-2003 FIB/piece table（压缩 cp1252 与 UTF-16 双分支）+ `\u0005SummaryInformation` 元数据 |
+| `z-util-doc-xlsx` | `XlsxDocReader` + `XlsxWriter`：OOXML 表格读写（共享字符串/内联字符串/公式/日期序列号/合并单元格/隐藏表）；写入器零依赖产出 Excel/WPS 可开的工作簿 |
+| `z-util-doc-pptx` | `PptxDocReader`：OOXML 演示文稿（sldIdLst 顺序、形状文本与加粗斜体、a:tbl 表格、p:pic 图片、备注页） |
 | `z-util-doc-pdf` | `PdfDocReader` + `PdfParser`：经典 xref + xref 流（1.5+ 对象流 + Prev 链）、Flate/LZW/ASCIIHex/ASCII85/RunLength + PNG 预测器、内容流解释器（Tj/TJ/Td/TD/Tm）、ToUnicode CMap、字号启发式版面（标题/段落/列表/简易表格）、DCTDecode 图片原样提取；加密 PDF 拒绝 |
 
 ---
@@ -264,13 +266,13 @@ z-util/
 </dependencies>
 ```
 
-它的版本表实测覆盖 36 条坐标（core / monitor / parser-json / math / media / expr-js / wf /
+它的版本表实测覆盖 38 条坐标（core / monitor / parser-json / math / media / expr-js / wf /
 visualization / jdbc / http / ml / devops / devops-git / devops-docker / devops-nexus / pattern /
 distribute / ch / strategy / sensitive / parser-xml / dsl-kernel / cli / codegen-annotations /
 codegen-core / codegen-bean / codegen-mapper / codegen-service / codegen-meta / z-util-all /
-doc-define / doc-txt / doc-docx / doc-doc / doc-epub / doc-pdf）。
+doc-define / doc-txt / doc-docx / doc-doc / doc-epub / doc-pdf / doc-xlsx / doc-pptx）。
 `z-util-cache`（已降 `z-util-pattern-cache`）、`z-util-ioc`、`z-util-aop`、`z-util-validation`（已降 `z-util-pattern-validation`）与各 `serialize-*`、`codegen-it`、其余 `parser-*` /
-`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **73** 个自家构件，其中 jar 件 **69** 个、聚合 pom 件 4 个）。
+`expr-*` 子模块**不在** `z-util-all` 里 —— 引这些要么显式写版本，要么直接用根 `z-util` POM 的 DM（那里覆盖 **75** 个自家构件，其中 jar 件 **71** 个、聚合 pom 件 4 个）。
 
 ### 本地构建
 
