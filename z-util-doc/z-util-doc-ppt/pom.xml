@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: ppt</name>
+    <description>PowerPoint 97-2003（HSLF 二进制 ppt）读取器：零第三方依赖（不用 POI/HSLF），OLE/CFB 容器 + HSLF 记录流自研解析，覆盖播放顺序还原、标题占位符、形状文本与段落切分、备注页。</description>
+    <artifactId>z-util-doc-ppt</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-ole</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

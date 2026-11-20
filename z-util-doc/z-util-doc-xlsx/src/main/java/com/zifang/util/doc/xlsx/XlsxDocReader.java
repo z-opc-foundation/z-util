@@ -192,7 +192,7 @@ public final class XlsxDocReader implements DocReader {
         double number = parseDouble(raw);
         if (XlsxSupport.isDateFormat(fmt == null ? 0 : fmt.numFmtId(), formatCode)) {
             LocalDateTime dateTime = XlsxSupport.serialToDateTime(number);
-            boolean timeOnly = XlsxSupport.isTimeOnly(formatCode);
+            boolean timeOnly = XlsxSupport.isTimeOnly(fmt == null ? 0 : fmt.numFmtId(), formatCode);
             String text = XlsxSupport.formatDate(dateTime, timeOnly);
             return new DocBlock.Sheet.SheetCell(column,
                     timeOnly ? DocBlock.Sheet.CellType.TIME : DocBlock.Sheet.CellType.DATE, text, formula);
