@@ -276,6 +276,18 @@ class DocDocReaderTest {
         assertTrue(hasHeader, "header story should be extracted as quote: " + doc.toPlainText());
     }
 
+    @Test
+    void fieldInstructionIsDroppedAndResultKept() throws Exception {
+        String[] paras = {"See \u0013HYPERLINK \"http://example.com\"\u0014the link\u0015 end"};
+        byte[] table = tableWithClx(paras);
+        CfbTestBuilder cfb = new CfbTestBuilder()
+                .add("WordDocument", wordDocument(paras, true, table.length))
+                .add("1Table", table);
+        String text = reader.read(cfb.build()).toPlainText();
+        assertTrue(text.contains("See the link end"), text);
+        assertFalse(text.contains("HYPERLINK"), text);
+    }
+
     private static void u16le(ByteArrayOutputStream out, int v) {
         out.write(v & 0xFF);
         out.write((v >> 8) & 0xFF);

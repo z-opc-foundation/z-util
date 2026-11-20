@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: ole</name>
+    <description>OLE2 / Compound File Binary 容器读取层：FAT / DIFAT / miniFAT / 目录 / 流提取，零第三方依赖。供 doc（Word 97-2003）与 xls（Excel 97-2003）共用。</description>
+    <artifactId>z-util-doc-ole</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -22,6 +22,10 @@
         <module>z-util-doc-pdf</module>
         <module>z-util-doc-xlsx</module>
         <module>z-util-doc-pptx</module>
+        <module>z-util-doc-ole</module>
+        <module>z-util-doc-xls</module>
+        <module>z-util-doc-rtf</module>
+        <module>z-util-doc-odf</module>
     </modules>
 
 </project>

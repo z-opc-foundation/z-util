@@ -143,6 +143,19 @@ class DocxRealWorldTest {
     }
 
     @Test
+    void commentsAreExtractedWithAuthor() throws Exception {
+        DocDocument doc = reader.read(corpus("comments.docx"));
+        List<String> quotes = doc.getBlocks().stream()
+                .filter(b -> b instanceof DocBlock.Quote)
+                .map(b -> spans(((DocBlock.Quote) b).spans()))
+                .toList();
+        assertEquals(2, quotes.size(), quotes.toString());
+        assertTrue(quotes.get(0).contains("[批注 Michael Williamson]"), quotes.toString());
+        assertTrue(quotes.get(0).contains("A tachyon walks into a bar."), quotes.toString());
+        assertTrue(quotes.get(1).contains("Fin."), quotes.toString());
+    }
+
+    @Test
     void picturesCorpusYieldsImageBlocks() throws Exception {
         assertTrue(reader.read(corpus("tiny-picture.docx")).getBlocks().stream()
                 .anyMatch(b -> b instanceof DocBlock.Image), "tiny-picture.docx should contain an image");

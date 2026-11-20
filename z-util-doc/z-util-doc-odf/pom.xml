@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: odf</name>
+    <description>OpenDocument 家族读取器（odt / ods / odp）：零第三方依赖（JDK Zip + DOM），按 content.xml 的命名空间无关遍历解析正文、表格、幻灯片与图片。</description>
+    <artifactId>z-util-doc-odf</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

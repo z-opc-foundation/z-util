@@ -8,9 +8,12 @@ import com.zifang.util.doc.DocFormat;
 import com.zifang.util.doc.DocFormatDetector;
 import com.zifang.util.doc.DocReader;
 import com.zifang.util.doc.DocSpan;
+import com.zifang.util.doc.ole.CfbReader;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 /** 二进制 Word（.doc, Word 97-2003）读取器：CFB 容器 + FIB/piece table/CHPX，纯 JDK。 */
@@ -121,17 +124,36 @@ public class DocDocReader implements DocReader {
         }
     }
 
-    /** 区间内控制字符清理：0x1E→'-'，字段/引用/对象控制符剔除。 */
+    /**
+     * 区间内控制字符清理：0x1E→'-'，字段/引用/对象控制符剔除。
+     * 域（0x13 域开始 / 0x14 分隔符 / 0x15 域结束）里的指令文本整段丢弃，
+     * 只保留分隔符之后的显示结果，避免 HYPERLINK、页码、TOC 等域指令混进正文。
+     */
     private String cleanInline(String text, int from, int to) {
         StringBuilder sb = new StringBuilder(to - from);
+        Deque<Boolean> fieldStack = new ArrayDeque<>();
+        boolean inInstruction = false;
         for (int i = from; i < to && i < text.length(); i++) {
             char c = text.charAt(i);
             switch (c) {
-                case '\u001E' -> sb.append('-');
-                case '\u0001', '\u0002', '\u0004', '\u0005', '\u0008',
-                        '\u0013', '\u0014', '\u0015', '\u001F' -> {
+                case '\u0013' -> {
+                    fieldStack.push(inInstruction);
+                    inInstruction = true;
                 }
-                default -> sb.append(c);
+                case '\u0014' -> inInstruction = false;
+                case '\u0015' -> inInstruction = fieldStack.isEmpty() ? false : fieldStack.pop();
+                case '\u001E' -> {
+                    if (!inInstruction) {
+                        sb.append('-');
+                    }
+                }
+                case '\u0001', '\u0002', '\u0004', '\u0005', '\u0008', '\u001F' -> {
+                }
+                default -> {
+                    if (!inInstruction) {
+                        sb.append(c);
+                    }
+                }
             }
         }
         return sb.toString();

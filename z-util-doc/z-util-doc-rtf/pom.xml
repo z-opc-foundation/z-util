@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: rtf</name>
+    <description>RTF 读取器：零第三方依赖（纯 JDK 字符级解析），支持段落切分、粗斜删除线、Unicode 与 ANSI 转义、跳过字体表/样式表等目的地。</description>
+    <artifactId>z-util-doc-rtf</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

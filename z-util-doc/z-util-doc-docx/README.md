@@ -16,12 +16,15 @@ DOCX（OOXML）读取器，`z-util-doc` 家族成员，零第三方依赖（JDK 
 - **文本框**：drawing/pict 内 `w:txbxContent` 段落提取为正常块（不丢文本框正文）。
 - **图片三路径**：`a:blip r:embed`、VML `v:imagedata r:id`、`w:object` 内嵌图，均走 rels → media；EMU 尺寸（wp:extent）换算像素。
 - **行内样式**：b/i/strike/dstrike、rFonts 等宽字体判定（Consolas/Courier/Menlo/Sarasa…）、hyperlink（外部 rel 目标与内部 `w:anchor` → `#锚点`）、tab/br/cr/noBreakHyphen。
+- **批注**：`word/comments.xml` 解析作者 / 缩写 / 时间 / 正文，正文里 `commentReference` 锚定的段落末尾
+  输出 `[批注 作者] 内容` 的 Quote 块（每条批注只输出一次）。
+- **修订标记**：`w:ins` 插入内容正常进入正文；`w:del` 删除内容保留为删除线 span，不静默丢弃。
 - 元数据：docProps/core.xml（title/creator/subject/keywords/created/modified）。
 
 ## 能力边界
 - 禁 DTD/外部实体（防 XXE）。
 - 外部引用图片（TargetMode=External，包内无字节）不产出 Image 块。
-- 域代码（fldChar/instrText）跳过，fldSimple 取其显示内容；批注（comments.xml）不读取。
+- 域代码（fldChar/instrText）跳过，fldSimple 取其显示内容；TOC 域不展开。
 - rStyle 字符样式、纵向文本方向、OMML 公式不做转换。
 
 ## 回归语料

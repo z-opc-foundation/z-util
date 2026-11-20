@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>z-util-doc</artifactId>
+        <groupId>io.github.yuku123</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <name>z-util :: doc :: xls</name>
+    <description>Excel 97-2003（BIFF8 二进制 xls）读取器：零第三方依赖（不用 POI/HSSF），OLE/CFB 容器 + BIFF 记录流自研解析，覆盖共享字符串、公式缓存值、数字/布尔/错误、日期格式、隐藏工作表。</description>
+    <artifactId>z-util-doc-xls</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-define</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-doc-ole</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

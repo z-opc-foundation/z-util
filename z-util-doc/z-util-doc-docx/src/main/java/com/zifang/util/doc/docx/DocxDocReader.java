@@ -20,8 +20,10 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -58,6 +60,7 @@ public class DocxDocReader implements DocReader {
         ctx.numbering = parseNumbering(entries.get("word/numbering.xml"));
         ctx.notes = parseNotes(entries.get("word/footnotes.xml"), "footnote");
         ctx.notes.putAll(parseNotes(entries.get("word/endnotes.xml"), "endnote"));
+        ctx.comments = parseComments(entries.get("word/comments.xml"));
         ctx.entries = entries;
         DocDocument doc = new DocDocument();
         ctx.doc = doc;
@@ -132,7 +135,8 @@ public class DocxDocReader implements DocReader {
             }
         }
         walkRuns(p, spans, extra, ctx, null);
-        if (spans.isEmpty() && extra.isEmpty()) {
+        List<DocBlock> commentBlocks = commentBlocks(p, ctx);
+        if (spans.isEmpty() && extra.isEmpty() && commentBlocks.isEmpty()) {
             return List.of();
         }
         int heading = outline != null && outline >= 0 && outline <= 8
@@ -147,7 +151,28 @@ public class DocxDocReader implements DocReader {
         } else if (!spans.isEmpty()) {
             out.add(new DocBlock.Paragraph(spans));
         }
+        out.addAll(commentBlocks);
         return out;
+    }
+
+    /** 段落里引用到的批注：以 Quote 块输出，每条批注只输出一次。 */
+    private List<DocBlock> commentBlocks(Element p, Ctx ctx) {
+        List<DocBlock> blocks = new ArrayList<>();
+        for (Element ref : descendantsByLocal(p, "commentReference")) {
+            String id = attr(ref, "id");
+            if (id == null) {
+                continue;
+            }
+            Comment comment = ctx.comments.get(id);
+            if (comment == null || !ctx.emittedComments.add(id)) {
+                continue;
+            }
+            String label = comment.author == null || comment.author.isBlank()
+                    ? "[批注] "
+                    : "[批注 " + comment.author + "] ";
+            blocks.add(new DocBlock.Quote(List.of(DocSpan.plain(label + comment.text))));
+        }
+        return blocks;
     }
 
     /** 编号标记作为首 span 注入（真实 lvlText 渲染，如 "2.3.1"）；无标记原样返回。 */
@@ -176,6 +201,7 @@ public class DocxDocReader implements DocReader {
                     walkRuns(e, spans, extra, ctx, target != null ? target : link);
                 }
                 case "smartTag", "ins", "sdtContent", "fldSimple" -> walkRuns((Element) node, spans, extra, ctx, link);
+                case "del" -> deletedText((Element) node, spans);
                 case "drawing", "pict", "object" -> media(node, spans, extra, ctx);
                 case "sdt" -> {
                     Element content = descendantByLocal(node, "sdtContent");
@@ -243,6 +269,20 @@ public class DocxDocReader implements DocReader {
                     }
                 }
                 default -> {
+                }
+            }
+        }
+    }
+
+    /** 修订标记里的删除文本：保留内容并加删除线，不静默丢弃。 */
+    private void deletedText(Element del, List<DocSpan> spans) {
+        for (Node run : elements(del)) {
+            if (!local(run).equals("r")) {
+                continue;
+            }
+            for (Node t : elements((Element) run)) {
+                if (local(t).equals("delText")) {
+                    addSpan(spans, t.getTextContent(), false, false, true, false, null);
                 }
             }
         }
@@ -545,6 +585,36 @@ public class DocxDocReader implements DocReader {
         return notes;
     }
 
+    /** comments.xml：批注 id → 作者 / 缩写 / 时间 / 正文。 */
+    private Map<String, Comment> parseComments(byte[] xml) {
+        Map<String, Comment> comments = new LinkedHashMap<>();
+        Element root = documentElement(xml, null);
+        if (root == null) {
+            return comments;
+        }
+        for (Node node : elements(root)) {
+            if (!local(node).equals("comment")) {
+                continue;
+            }
+            Element e = (Element) node;
+            String id = attr(e, "id");
+            if (id == null) {
+                continue;
+            }
+            StringBuilder text = new StringBuilder();
+            for (Node p : elements(e)) {
+                if (local(p).equals("p")) {
+                    for (DocBlock b : buildParagraph((Element) p, ctx())) {
+                        text.append(blockText(b)).append(' ');
+                    }
+                }
+            }
+            comments.put(id, new Comment(id, attr(e, "author"), attr(e, "initials"), attr(e, "date"),
+                    text.toString().strip()));
+        }
+        return comments;
+    }
+
     /** parseNotes 需要一个 Ctx 来构建段落（编号/样式都还没生效，用独立轻量 Ctx）。 */
     private Ctx ctx() {
         Ctx c = new Ctx();
@@ -840,6 +910,22 @@ public class DocxDocReader implements DocReader {
         return null;
     }
 
+    /** 深度优先收集所有 local-name 匹配的后代元素。 */
+    private List<Element> descendantsByLocal(Node node, String local) {
+        List<Element> result = new ArrayList<>();
+        collectDescendants(node, local, result);
+        return result;
+    }
+
+    private void collectDescendants(Node node, String local, List<Element> result) {
+        for (Node child : elements(node)) {
+            if (local(child).equals(local)) {
+                result.add((Element) child);
+            }
+            collectDescendants(child, local, result);
+        }
+    }
+
     private String local(Node node) {
         String name = node.getLocalName();
         return name != null ? name : node.getNodeName();
@@ -910,8 +996,27 @@ public class DocxDocReader implements DocReader {
         Numbering numbering = new Numbering();
         Map<String, byte[]> entries = Map.of();
         Map<String, Note> notes = new LinkedHashMap<>();
+        Map<String, Comment> comments = new LinkedHashMap<>();
+        Set<String> emittedComments = new LinkedHashSet<>();
         List<String> headerFooterRefs = new ArrayList<>();
         DocDocument doc;
+    }
+
+    /** 批注（word/comments.xml）。 */
+    private static final class Comment {
+        final String id;
+        final String author;
+        final String initials;
+        final String date;
+        final String text;
+
+        Comment(String id, String author, String initials, String date, String text) {
+            this.id = id;
+            this.author = author;
+            this.initials = initials;
+            this.date = date;
+            this.text = text;
+        }
     }
 
     private static final class Note {
