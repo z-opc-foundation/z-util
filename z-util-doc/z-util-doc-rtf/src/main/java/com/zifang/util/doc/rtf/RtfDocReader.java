@@ -24,10 +24,10 @@ public final class RtfDocReader implements DocReader {
 
     /** 需要整段跳过的目的地（控制字后跟这些目的地名）。 */
     private static final Set<String> SKIP_DESTINATIONS = Set.of(
-            "fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "themedata",
+            "fonttbl", "colortbl", "stylesheet", "info", "object", "themedata",
             "colorschememapping", "latentstyles", "datastore", "listtable", "listoverridetable",
             "rsidtbl", "generator", "filetbl", "xmlnstbl", "mmathPr", "wgrffmtfilter",
-            "pn", "falt", "shppict", "nonshppict", "bkmkstart", "bkmkend",
+            "pn", "falt", "bkmkstart", "bkmkend",
             "atnid", "atnauthor", "annotation", "atrfstart", "atrfend", "atndate",
             "atnref", "atntime", "atnicn", "chatn", "company", "operator");
 
@@ -81,6 +81,15 @@ public final class RtfDocReader implements DocReader {
         private final List<DocSpan> cellSpans = new ArrayList<>();
         private boolean inTableRow;
 
+        /** 图片捕获状态：\pict 组内的十六进制/原始字节，组关闭时整体产出。 */
+        private final java.io.ByteArrayOutputStream pictBytes = new java.io.ByteArrayOutputStream();
+        private final List<DocBlock.Image> images = new ArrayList<>();
+        private int pictNibble = -1;
+        private String pictMime;
+        /** 当前组嵌套深度与 \pict 捕获组的起始深度（-1 = 不在捕获中）。 */
+        private int groupDepth;
+        private int pictStartDepth = -1;
+
         Parser(String src, DocDocument doc) {
             this.src = src;
             this.doc = doc;
@@ -105,12 +114,17 @@ public final class RtfDocReader implements DocReader {
                 char c = src.charAt(pos);
                 if (c == '{') {
                     pos++;
+                    groupDepth++;
                     pushGroup();
                     continue;
                 }
                 if (c == '}') {
                     pos++;
+                    groupDepth--;
                     popGroup();
+                    if (pictStartDepth >= 0 && groupDepth < pictStartDepth) {
+                        finalizePict();
+                    }
                     continue;
                 }
                 if (c == '\\') {
@@ -126,6 +140,12 @@ public final class RtfDocReader implements DocReader {
             }
             flushParagraph();
             flushTable();
+            if (pictStartDepth >= 0) {
+                finalizePict();
+            }
+            for (DocBlock.Image image : images) {
+                doc.add(image);
+            }
         }
 
         private State copyOf(State s) {
@@ -238,11 +258,33 @@ public final class RtfDocReader implements DocReader {
                 }
                 case "uc" -> {
                 }
-                case "fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "themedata",
+                case "pict" -> beginPict();
+                case "nonshppict" -> state.destinationSkip = true; // 旧格式回退副本，避免重复出图
+                case "pngblip" -> pictMime = "image/png";
+                case "jpegblip" -> pictMime = "image/jpeg";
+                case "emfblip" -> pictMime = "image/x-emf";
+                case "wmetafile" -> pictMime = "image/x-wmf";
+                case "bin" -> {
+                    // \binN：其后 N 字节是原始二进制（可能是图片数据）
+                    if (param == Long.MIN_VALUE || param <= 0) {
+                        return;
+                    }
+                    int end = (int) Math.min(src.length(), pos + param);
+                    if (pictStartDepth >= 0 && state.destinationSkip) {
+                        pos = end;
+                        return;
+                    }
+                    if (pictStartDepth >= 0 && end > pos) {
+                        byte[] raw = src.substring(pos, end).getBytes(StandardCharsets.ISO_8859_1);
+                        pictBytes.write(raw, 0, raw.length);
+                    }
+                    pos = end;
+                }
+                case "fonttbl", "colortbl", "stylesheet", "info", "object", "themedata",
                         "colorschememapping", "latentstyles", "datastore", "listtable",
                         "listoverridetable", "rsidtbl", "generator", "filetbl", "xmlnstbl",
-                        "mmathPr", "wgrffmtfilter", "pn", "falt", "shppict",
-                        "nonshppict", "company", "operator", "chatn" -> state.destinationSkip = true;
+                        "mmathPr", "wgrffmtfilter", "pn", "falt",
+                        "company", "operator", "chatn" -> state.destinationSkip = true;
                 case "header", "footer" -> {
                 }
                 default -> {
@@ -281,6 +323,12 @@ public final class RtfDocReader implements DocReader {
             if (state.destinationSkip || text.isEmpty()) {
                 return;
             }
+            if (pictStartDepth >= 0) {
+                for (int i = 0; i < text.length(); i++) {
+                    captureHex(text.charAt(i));
+                }
+                return;
+            }
             if (state.listTextCapture) {
                 listLabel.append(text);
                 return;
@@ -302,6 +350,79 @@ public final class RtfDocReader implements DocReader {
                 }
                 spans.add(span);
             }
+        }
+
+        /** \pict 组开始：记住当前组深度，清空捕获缓冲与类型关键字。 */
+        private void beginPict() {
+            pictStartDepth = groupDepth;
+            pictBytes.reset();
+            pictNibble = -1;
+            pictMime = null;
+        }
+
+        /** \pict 组结束：把捕获到的字节产出为图片块。 */
+        private void finalizePict() {
+            pictStartDepth = -1;
+            byte[] data = pictBytes.toByteArray();
+            pictBytes.reset();
+            pictNibble = -1;
+            if (data.length == 0) {
+                return;
+            }
+            if (pictMime == null) {
+                pictMime = sniff(data);
+            }
+            images.add(new DocBlock.Image("picture", pictMime, data, null, null));
+            pictMime = null;
+        }
+
+        /** 十六进制流捕获：两位合成一字节，非 hex 字符丢弃当前半字节。 */
+        private void captureHex(char c) {
+            int value = hexDigit(c);
+            if (value < 0) {
+                pictNibble = -1;
+                return;
+            }
+            if (pictNibble < 0) {
+                pictNibble = value;
+                return;
+            }
+            pictBytes.write(pictNibble * 16 + value);
+            pictNibble = -1;
+        }
+
+        private static int hexDigit(char c) {
+            if (c >= '0' && c <= '9') {
+                return c - '0';
+            }
+            if (c >= 'a' && c <= 'f') {
+                return c - 'a' + 10;
+            }
+            if (c >= 'A' && c <= 'F') {
+                return c - 'A' + 10;
+            }
+            return -1;
+        }
+
+        /** 无 blip 关键字时按字节签名猜格式。 */
+        private static String sniff(byte[] data) {
+            if (data.length >= 4 && (data[0] & 0xFF) == 0x89 && (data[1] & 0xFF) == 'P'
+                    && (data[2] & 0xFF) == 'N' && (data[3] & 0xFF) == 'G') {
+                return "image/png";
+            }
+            if (data.length >= 3 && (data[0] & 0xFF) == 0xFF && (data[1] & 0xFF) == 0xD8
+                    && (data[2] & 0xFF) == 0xFF) {
+                return "image/jpeg";
+            }
+            if (data.length >= 4 && (data[0] & 0xFF) == 0xD8 && (data[1] & 0xFF) == 0xCD
+                    && (data[2] & 0xFF) == 0xC6 && (data[3] & 0xFF) == 0x9A) {
+                return "image/x-wmf";
+            }
+            if (data.length >= 40 && data[40] == ' ' && data[41] == 'E' && data[42] == 'M'
+                    && data[43] == 'F') {
+                return "image/x-emf";
+            }
+            return "image/x-wmf";
         }
 
         private void flushParagraph() {

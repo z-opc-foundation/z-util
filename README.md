@@ -173,7 +173,7 @@ POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom
 | `z-util-doc-ppt` | `PptDocReader` + `HslfDocument`：PowerPoint 97-2003 二进制（HSLF）自研解析，零 POI 依赖；覆盖增量保存链（UserEditAtom→持久化目录）、播放顺序还原（SlideListWithText 顺序表）、绘图文本 + 大纲文本双来源、占位符标题判定、备注页、Pictures 流内嵌图片 |
 | `z-util-doc-ole` | `CfbReader`：OLE2 / Compound File Binary 容器读取（FAT / DIFAT / miniFAT / 目录 / 流提取），doc 与 xls 共用 |
 | `z-util-doc-xls` | `XlsDocReader` + `BiffWorkbook`：Excel 97-2003 二进制（BIFF）自研解析，零 POI 依赖；覆盖 BOUNDSHEET/SST(含 CONTINUE)/LABELSST/RK/MULRK/FORMULA 缓存值/XF-FORMAT 日期判定，BIFF2-4 裸流降级支持 |
-| `z-util-doc-rtf` | `RtfDocReader`：RTF 字符级解析（分组栈、\par 段落、\b/\i/\strike 样式、U+ 与 ANSI 转义、表格（\trowd/\cell/\row）、列表（\listtext 标签 + \ilvl 层级）、字体表/颜色表/样式表等目的地跳过） |
+| `z-util-doc-rtf` | `RtfDocReader`：RTF 字符级解析（分组栈、\par 段落、\b/\i/\strike 样式、U+ 与 ANSI 转义、表格（\trowd/\cell/\row）、列表（\listtext 标签 + \ilvl 层级）、\pict 图片（hex/\bin、blip 定型与签名嗅探）、字体表/颜色表/样式表等目的地跳过） |
 | `z-util-doc-pdf` | `PdfDocReader` + `PdfParser`：经典 xref + xref 流（1.5+ 对象流 + Prev 链）、Flate/LZW/ASCIIHex/ASCII85/RunLength + PNG 预测器、内容流解释器（Tj/TJ/Td/TD/Tm + 表单 XObject）、ToUnicode CMap、Type3 字体字宽、字号启发式版面（标题/段落/列表/简易表格）、图片解码（DCT 原样 + Flate 位图封装 PNG + SMask alpha）；加密 PDF 拒绝 |
 | `z-util-doc-odf` | `OdtDocReader` / `OdsDocReader` / `OdpDocReader`：ODF 家族（段落/标题/列表/表格/图片/字符样式、ODS 单元格类型与公式与合并跨度、ODP 幻灯片标题与备注、master-page 页眉页脚 `[页眉]/[页脚]`） |
 

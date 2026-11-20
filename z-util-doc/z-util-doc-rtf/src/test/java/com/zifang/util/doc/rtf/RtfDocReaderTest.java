@@ -45,6 +45,54 @@ class RtfDocReaderTest {
     }
 
     @Test
+    void pictDestinationBecomesImage() throws Exception {
+        // 1x1 PNG：89504E47 0D0A1A0A + IHDR 头若干字节，仅验证按 hex 还原与 MIME 判定
+        byte[] png = new byte[]{(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A,
+                0, 0, 0, 0x0D, 'I', 'H', 'D', 'R', 0, 0, 0, 1};
+        StringBuilder hex = new StringBuilder();
+        for (byte b : png) {
+            hex.append(String.format("%02X", b));
+        }
+        String rtf = "{\\rtf1\\ansi before"
+                + "{\\shppict{\\pict{\\*\\picprop\\paragraph}\\pngblip " + hex + "}}"
+                + "{\\nonshppict{\\pict\\pngblip " + hex + "}}"
+                + "after}";
+        DocDocument doc = read(rtf);
+        List<DocBlock.Image> images = new java.util.ArrayList<>();
+        for (DocBlock b : doc.getBlocks()) {
+            if (b instanceof DocBlock.Image image) {
+                images.add(image);
+            }
+        }
+        // shppict 保留，nonshppict 回退副本去重
+        assertEquals(1, images.size(), "expected one image, got " + images.size());
+        assertEquals("image/png", images.get(0).mimeType());
+        org.junit.jupiter.api.Assertions.assertArrayEquals(png, images.get(0).data());
+        assertTrue(text(doc).contains("before"));
+        assertTrue(text(doc).contains("after"));
+    }
+
+    @Test
+    void binPictDataCapturedRaw() throws Exception {
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+        StringBuilder rtf = new StringBuilder("{\\rtf1\\ansi {\\pict\\jpegblip\\bin4 ");
+        for (byte b : jpeg) {
+            rtf.append((char) (b & 0xFF));
+        }
+        rtf.append("}}");
+        DocDocument doc = read(rtf.toString());
+        List<DocBlock.Image> images = new java.util.ArrayList<>();
+        for (DocBlock b : doc.getBlocks()) {
+            if (b instanceof DocBlock.Image image) {
+                images.add(image);
+            }
+        }
+        assertEquals(1, images.size());
+        assertEquals("image/jpeg", images.get(0).mimeType());
+        org.junit.jupiter.api.Assertions.assertArrayEquals(jpeg, images.get(0).data());
+    }
+
+    @Test
     void tableRowsAndCells() throws Exception {
         String rtf = "{\\rtf1\\ansi "
                 + "\\trowd\\trgaph108\\cellx2000\\cellx4000 "
