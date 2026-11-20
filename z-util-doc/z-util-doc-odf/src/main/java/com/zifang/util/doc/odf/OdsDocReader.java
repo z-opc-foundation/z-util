@@ -4,6 +4,7 @@ import com.zifang.util.doc.DocBlock;
 import com.zifang.util.doc.DocDocument;
 import com.zifang.util.doc.DocFormat;
 import com.zifang.util.doc.DocReader;
+import com.zifang.util.doc.DocSpan;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
@@ -46,6 +47,16 @@ public final class OdsDocReader implements DocReader {
         if (body != null) {
             for (Element table : OdfSupport.children(body, "table")) {
                 doc.add(readTable(table));
+            }
+        }
+        // master-page 页眉页脚（打印页眉）：[页眉]/[页脚] Quote 块
+        Map<String, OdfSupport.Style> styles = OdfSupport.parseStyles(entries, contentRoot);
+        for (OdfSupport.MasterHeaderFooter master : OdfSupport.masterHeaderFooters(entries, styles)) {
+            for (String line : master.header()) {
+                doc.add(new DocBlock.Quote(List.of(DocSpan.plain("[页眉] " + line))));
+            }
+            for (String line : master.footer()) {
+                doc.add(new DocBlock.Quote(List.of(DocSpan.plain("[页脚] " + line))));
             }
         }
         return doc;

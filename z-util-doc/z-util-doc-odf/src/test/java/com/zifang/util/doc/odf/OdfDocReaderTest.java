@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +103,25 @@ class OdfDocReaderTest {
         assertEquals("普通粗斜", plain(spans));
         assertTrue(spans.stream().anyMatch(s -> s.text().equals("粗") && s.bold()), spans.toString());
         assertTrue(spans.stream().anyMatch(s -> s.text().equals("斜") && s.italic()), spans.toString());
+    }
+
+    @Test
+    void odtReadsMasterPageHeaderFooter() throws Exception {
+        DocDocument doc = new OdtDocReader().read(corpus("header-footer.odt"));
+        List<String> quotes = new ArrayList<>();
+        for (DocBlock block : doc.getBlocks()) {
+            if (block instanceof DocBlock.Quote quote) {
+                quotes.add(plain(quote.spans()));
+            }
+        }
+        assertTrue(quotes.contains("[页眉] 章节页眉 加粗"), quotes.toString());
+        assertTrue(quotes.contains("[页眉] 第二行页眉"), quotes.toString());
+        assertTrue(quotes.contains("[页脚] 第 1 页"), quotes.toString());
+        // 正文不受影响
+        assertTrue(doc.toPlainText().contains("Plain text"), doc.toPlainText());
+        // master-page 里没有页眉页脚内容的文件不产出 Quote
+        DocDocument plainDoc = new OdtDocReader().read(corpus("simplestyles.odt"));
+        assertTrue(plainDoc.getBlocks().stream().noneMatch(b -> b instanceof DocBlock.Quote));
     }
 
     @Test
@@ -223,13 +243,18 @@ class OdfDocReaderTest {
         assertTrue(table.getBlocks().stream().anyMatch(b -> b instanceof DocBlock.Table));
 
         DocDocument ods = new OdsDocReader().read(corpus("pythagoras.ods"));
-        List<DocBlock> sheets = ods.getBlocks();
+        List<DocBlock.Sheet> sheets = ods.getBlocks().stream()
+                .filter(b -> b instanceof DocBlock.Sheet)
+                .map(b -> (DocBlock.Sheet) b)
+                .toList();
         assertEquals(3, sheets.size());
-        DocBlock.Sheet first = (DocBlock.Sheet) sheets.get(0);
+        DocBlock.Sheet first = sheets.get(0);
         assertEquals("Sheet1", first.name());
         assertEquals(4, first.rows().size());
         assertEquals("5", first.rows().get(2).cells().get(0).text());
         assertEquals("=SQRT([.A1]*[.A1]+[.A2]*[.A2])", first.rows().get(2).cells().get(0).formula());
+        // pythagoras.ods 的 master-page 带打印页眉页脚（sheet-name / 页码字段按占位文本输出）
+        assertTrue(ods.getBlocks().stream().anyMatch(b -> b instanceof DocBlock.Quote));
 
         DocDocument odp = new OdpDocReader().read(corpus("ol.odp"));
         DocBlock.Slides slides = (DocBlock.Slides) odp.getBlocks().get(0);

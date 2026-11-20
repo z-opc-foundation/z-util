@@ -49,6 +49,15 @@ public final class OdpDocReader implements DocReader {
         }
         DocDocument doc = new DocDocument();
         doc.add(new DocBlock.Slides(slides));
+        // master-page 页眉页脚：[页眉]/[页脚] Quote 块挂在幻灯片后
+        for (OdfSupport.MasterHeaderFooter master : OdfSupport.masterHeaderFooters(entries, styles)) {
+            for (String line : master.header()) {
+                doc.add(new DocBlock.Quote(List.of(DocSpan.plain("[页眉] " + line))));
+            }
+            for (String line : master.footer()) {
+                doc.add(new DocBlock.Quote(List.of(DocSpan.plain("[页脚] " + line))));
+            }
+        }
         return doc;
     }
 

@@ -300,7 +300,8 @@ final class OdfSupport {
                 }
                 case "list-item" -> appendListItem(node, out, styles, entries, listLevel);
                 case "table" -> out.add(readTable(node, styles));
-                case "section", "text-box", "custom-shape", "g", "frame" ->
+                case "section", "text-box", "custom-shape", "g", "frame",
+                        "region-left", "region-right" ->
                         appendTextBlocks(node, out, styles, entries, listLevel);
                 case "image" -> {
                     DocBlock.Image image = image(node, entries);
@@ -396,6 +397,74 @@ final class OdfSupport {
             return "image/bmp";
         }
         return "application/octet-stream";
+    }
+
+    /** master-page 的页眉/页脚段落文本（style:header 及 -left/-first 变体、style:footer 同理）。 */
+    record MasterHeaderFooter(String page, List<String> header, List<String> footer) {
+    }
+
+    /**
+     * styles.xml 的 office:master-styles → style:master-page 的页眉/页脚文本。
+     * 页眉优先取 style:header，缺省再用 -left/-first 变体；页脚同理。
+     */
+    static List<MasterHeaderFooter> masterHeaderFooters(Map<String, byte[]> entries,
+                                                        Map<String, Style> styles) {
+        byte[] xml = entries.get("styles.xml");
+        if (xml == null) {
+            return List.of();
+        }
+        List<MasterHeaderFooter> out = new ArrayList<>();
+        try {
+            Element master = XmlSupport.child(XmlSupport.parse(xml).getDocumentElement(), "master-styles");
+            for (Element page : XmlSupport.children(master, "master-page")) {
+                List<String> header = regionTexts(page, "header", styles, entries);
+                List<String> footer = regionTexts(page, "footer", styles, entries);
+                if (!header.isEmpty() || !footer.isEmpty()) {
+                    out.add(new MasterHeaderFooter(attr(page, "name"), header, footer));
+                }
+            }
+        } catch (IOException e) {
+            // 样式表损坏时按无页眉页脚处理
+        }
+        return out;
+    }
+
+    /** 页眉/页脚区域文本：默认区域为主，缺省时退回左右页与首页变体。 */
+    private static List<String> regionTexts(Element page, String region, Map<String, Style> styles,
+                                            Map<String, byte[]> entries) {
+        List<String> texts = new ArrayList<>();
+        for (String variant : new String[]{region, region + "-left", region + "-first"}) {
+            Element el = XmlSupport.child(page, variant);
+            if (el == null) {
+                continue;
+            }
+            List<DocBlock> blocks = new ArrayList<>();
+            appendTextBlocks(el, blocks, styles, entries, 0);
+            for (DocBlock block : blocks) {
+                String line = plainText(block);
+                if (line != null && !line.isBlank()) {
+                    texts.add(line);
+                }
+            }
+        }
+        return texts;
+    }
+
+    /** 段落/标题块的纯文本；其它块返回 null。 */
+    private static String plainText(DocBlock block) {
+        List<DocSpan> spans;
+        if (block instanceof DocBlock.Paragraph p) {
+            spans = p.spans();
+        } else if (block instanceof DocBlock.Heading h) {
+            spans = h.spans();
+        } else {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (DocSpan span : spans) {
+            sb.append(span.text());
+        }
+        return sb.toString();
     }
 
     /** 文本样式。 */

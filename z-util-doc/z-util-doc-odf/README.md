@@ -26,13 +26,18 @@ OpenDocument 家族读取器（`.odt` / `.ods` / `.odp`），`z-util-doc` 家族
   文本框与自定义形状的文本按段落/列表输出，组合形状（`draw:g`）递归，
   `presentation:notes` 备注页以 `[备注] …` 段落附加。
 - **图片**：`draw:image` 的 `xlink:href` 指向包内条目，按扩展名判定 MIME。
+- **页眉页脚**：`styles.xml` 的 `office:master-styles` → `style:master-page` 的
+  `style:header`（含 -left/-first 变体与 `style:region-left/right` 分区）与 `style:footer`
+  逐段提取，以 `[页眉]/[页脚]` Quote 块挂在正文后；`text:sheet-name`、页码、日期等字段
+  按占位文本原样输出。
 
 ## 能力边界
-- 不还原页眉页脚、分栏、脚注锚点、批注。
+- 页眉页脚字段不求值（占位文本原样保留），不还原分栏、脚注锚点、批注。
 - 不解析 ODF 的自动重算（`table:formula` 只给缓存值，不做公式求值）。
 - 样式只取加粗/斜体/删除线三项，不还原字号、颜色、对齐、缩进与页面布局。
 - 图表（`chart:`）与嵌入对象（`draw:object`）不解析内容。
 
 ## 回归语料
-`src/test/resources/corpus/` 收录 17 个真实 ODF 文件（odfpy 项目的 MIT 测试集）：
-ODT 9 个（含列表、表格、样式、图片、两级列表）、ODS 4 个（含公式与中文表）、ODP 3 个（含多形状与备注）。
+`src/test/resources/corpus/` 收录 18 个 ODF 文件（odfpy 项目的 MIT 测试集加 1 个手写语料）：
+ODT 10 个（含列表、表格、样式、图片、两级列表、master-page 页眉页脚）、
+ODS 4 个（含公式、中文表与打印页眉页脚）、ODP 3 个（含多形状与备注）。
