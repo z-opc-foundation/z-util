@@ -110,8 +110,37 @@ class DocRealWorldTest {
             }
         }
         assertEquals(3, items.size(), items.toString());
-        assertEquals("First item in list", items.get(0));
-        assertEquals("Third item in list", items.get(2));
+        assertEquals("1. First item in list", items.get(0));
+        assertEquals("2. Second item in list", items.get(1));
+        assertEquals("3. Third item in list", items.get(2));
+    }
+
+    @Test
+    void listNumberingRendersCounters() throws Exception {
+        // 列表表里的 Xst 是 "\u0000."（%1 占位），段落计数推进产出 1. 2. 3. 4.
+        DocDocument doc = read("lists-margins.doc");
+        List<String> items = new ArrayList<>();
+        for (DocBlock block : doc.getBlocks()) {
+            if (block instanceof DocBlock.ListItem item && item.ordered()) {
+                items.add(text(item.spans()));
+            }
+        }
+        assertEquals(4, items.size(), items.toString());
+        assertTrue(items.get(0).startsWith("1. "), items.toString());
+        assertTrue(items.get(3).startsWith("4. "), items.toString());
+    }
+
+    @Test
+    void numberingFormatVariants() {
+        assertEquals("1", DocLists.formatNumber(1, 0));
+        assertEquals("IX", DocLists.formatNumber(9, 1));
+        assertEquals("ix", DocLists.formatNumber(9, 2));
+        assertEquals("C", DocLists.formatNumber(3, 3));
+        assertEquals("c", DocLists.formatNumber(3, 4));
+        assertEquals("2nd", DocLists.formatNumber(2, 5));
+        assertEquals("21st", DocLists.formatNumber(21, 5));
+        assertEquals("", DocLists.formatNumber(1, 23));
+        assertEquals("", DocLists.formatNumber(7, 255));
     }
 
     @Test

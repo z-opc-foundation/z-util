@@ -18,8 +18,13 @@
   - 样式表 STSH（`DocStyleSheet`）解析样式名与内置样式号，sti 1..9 或 "heading N"/"标题 N" 判定标题级别；
   - 样式自带的段落属性（UPX 里的 PAPX）沿 istdBase 继承，列表层级/列表号可以来自样式而非段落本身；
   - 表内段落按 0x07 归并成单元格、行尾标记（sprmPFTtp）收拢成行。
-- 列表：`DocLists` 解析 PlfLst（LSTF + LVL 数组）与 PlfLfo（LFO → lsid），按 LVL 的 nfc
-  判定有序列表（十进制/罗马/字母）与项目符号。
+- 列表：`DocLists` 解析 PlcfLst（cLst + LSTF 数组 + 各列表 LVL 数组；LSTF 28 字节 =
+  lsid + tplc + rgistdPara + flags，简单列表 1 级、多级 9 级）与 PlcfLfo（LFO 16 字节 +
+  LFOData：cp + LFOLVL 覆盖，fFormatting 整级换格式、fStartAt 换起始值）。LVL =
+  LVLF(28 字节) + papx/chpx grpprl + Xst 编号文本（\u0000-\u0008 是各级计数器占位符）。
+  按段落顺序推进每个 ilfo 的计数器（进入更浅层级重置更深层级，fNoRestart 除外），
+  占位符按 nfc 渲染成十进制/大写小写罗马/大写小写字母/序数词，编号与项目符号文本
+  作为首个 span 注入列表段落。
 - 域代码：0x13/0x14/0x15 域结构整篇一次解析，**域指令丢弃、只留显示结果**
   （HYPERLINK、TOC、页码等不会混进正文）；域可以跨 run、跨段落，所以可见性按整篇文本统一计算。
 - 图片：`DocPictures` 解析 OfficeArt（ESCHER）图片——绘图数据 `fcDggInfo` 里的
@@ -33,7 +38,8 @@
 - 只支持 Word 97-2003（nFib ≥ 193）；Word 6/95 的旧 FIB 布局直接抛 `DocParseException`，不做猜测解析。
 - 加密 doc 不支持。
 - 不还原表格的合并单元格（纵向合并的行会被并到同一单元格），不做 TAP 的列宽/边框。
-- 列表只判定「有序 / 符号」，不渲染 Word 的编号文本（如 "1.2.3"）——编号文本在 docx 模块里是渲染的。
+- 列表编号只支持常见 nfc（十进制/罗马/字母/序数词，其余兜底十进制）；不还原缩进、
+  对齐与 grpprl 里的字体格式（编号文本按正文样式输出）。
 - 图片挂在正文之后（绘图数据里的浮动图形没有稳定的正文锚点），不还原尺寸与位置。
 - 不做字体、颜色、字号等字符级格式还原（文本整体按段落输出）。
 

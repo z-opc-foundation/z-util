@@ -167,7 +167,7 @@ POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom
 | `z-util-doc-txt` | `TxtDocReader`：纯文本按空行分段，UTF-8 严格解码失败回退 GBK |
 | `z-util-doc-docx` | `DocxDocReader`：OOXML（zip+DOM，禁 DTD 防 XXE）；标题样式/numPr 列表/表格 gridSpan/图片 rels/core.xml 元数据 |
 | `z-util-doc-epub` | `EpubDocReader`：container.xml→OPF→spine 顺序解析 XHTML 章节，h1-h6/列表/表格/图片/行内样式 |
-| `z-util-doc-doc` | `DocDocReader` + `CfbReader`：OLE2/CFB 容器（FAT/miniFAT/目录）+ Word 97-2003 FIB/piece table（压缩 cp1252 与 UTF-16 双分支）+ STSH/PAPX 还原标题与列表、表格结构、OfficeArt 图片、域代码清理、`\u0005SummaryInformation` 元数据 |
+| `z-util-doc-doc` | `DocDocReader`：二进制 Word 97-2003（FIB/CLX piece table、CHPX/PAPX sprm、STSH 样式继承、域指令丢弃、PlcfLst/PlcfLfo 列表定义与计数渲染编号文本（十进制/罗马/字母/序数词）、OfficeArt 图片、页眉页脚/脚注/批注、SummaryInformation 元数据） |
 | `z-util-doc-xlsx` | `XlsxDocReader` + `XlsxWriter`：OOXML 表格读写（共享字符串/内联字符串/公式/日期序列号/合并单元格/隐藏表）；写入器零依赖产出 Excel/WPS 可开的工作簿 |
 | `z-util-doc-pptx` | `PptxDocReader`：OOXML 演示文稿（sldIdLst 顺序、形状文本与加粗斜体、a:tbl 表格、p:pic 图片、备注页） |
 | `z-util-doc-ppt` | `PptDocReader` + `HslfDocument`：PowerPoint 97-2003 二进制（HSLF）自研解析，零 POI 依赖；覆盖增量保存链（UserEditAtom→持久化目录）、播放顺序还原（SlideListWithText 顺序表）、绘图文本 + 大纲文本双来源、占位符标题判定、备注页、Pictures 流内嵌图片 |

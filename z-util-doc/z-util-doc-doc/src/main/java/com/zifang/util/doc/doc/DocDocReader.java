@@ -187,8 +187,11 @@ public class DocDocReader implements DocReader {
             if (headingLevel > 0) {
                 doc.add(new DocBlock.Heading(headingLevel, spans));
             } else if (papx != null && papx.ilfo() != 0) {
-                doc.add(new DocBlock.ListItem(lists.ordered(papx.ilfo(), papx.ilvl()),
-                        papx.ilvl(), spans));
+                DocLists.Marker marker = lists.marker(papx.ilfo(), papx.ilvl());
+                List<DocSpan> withLabel = marker.label() == null
+                        ? spans
+                        : withLabel(spans, marker.label());
+                doc.add(new DocBlock.ListItem(marker.ordered(), papx.ilvl(), withLabel));
             } else {
                 doc.add(new DocBlock.Paragraph(spans));
             }
@@ -205,6 +208,14 @@ public class DocDocReader implements DocReader {
         if (!tableRows.isEmpty()) {
             doc.add(new DocBlock.Table(tableRows));
         }
+    }
+
+    /** 列表编号/符号作为首个 span 注入，正文照旧。 */
+    private static List<DocSpan> withLabel(List<DocSpan> body, String label) {
+        List<DocSpan> result = new ArrayList<>();
+        result.add(DocSpan.plain(label + " "));
+        result.addAll(body);
+        return result;
     }
 
     /**
