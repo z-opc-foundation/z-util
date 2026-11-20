@@ -19,6 +19,21 @@ public final class LayoutAssembler {
     private static final Pattern BULLET = Pattern.compile("^[-\\u2013\\u2014\\u2022\\u25CF\\u25CB*·>]\\s+");
     private static final Pattern NUMBERED = Pattern.compile("^(\\d{1,3})[.)、]\\s+");
 
+    /** 中日韩全角字符判定：全角文字之间不插空格。 */
+    static boolean isWide(char c) {
+        return (c >= 0x1100 && c <= 0x115F)
+                || (c >= 0x2E80 && c <= 0x303E)
+                || (c >= 0x3041 && c <= 0x33FF)
+                || (c >= 0x3400 && c <= 0x4DBF)
+                || (c >= 0x4E00 && c <= 0x9FFF)
+                || (c >= 0xA000 && c <= 0xA4CF)
+                || (c >= 0xAC00 && c <= 0xD7A3)
+                || (c >= 0xF900 && c <= 0xFAFF)
+                || (c >= 0xFE30 && c <= 0xFE6F)
+                || (c >= 0xFF00 && c <= 0xFF60)
+                || (c >= 0xFFE0 && c <= 0xFFE6);
+    }
+
     /** 单页拼装。 */
     public List<DocBlock> assemblePage(ContentExtractor.Page page) {
         List<DocBlock> out = new ArrayList<>();
@@ -123,33 +138,81 @@ public final class LayoutAssembler {
         double y;
         double maxSize;
 
+        /**
+         * 行文本：片段按 x 排序后直接拼接，词间距靠片段自身的空格字形；
+         * 没有空格字形时用「相邻片段起点间距的中位数」当字距基准，明显的空档才补空格或 tab。
+         */
         String text() {
+            List<ContentExtractor.TextPiece> ps = new ArrayList<>(pieces);
+            ps.sort(Comparator.comparingDouble(ContentExtractor.TextPiece::x));
+            double unit = typicalAdvance(ps);
             StringBuilder sb = new StringBuilder();
-            double lastEnd = Double.NaN;
-            for (ContentExtractor.TextPiece p : pieces) {
-                if (!Double.isNaN(lastEnd) && p.x() - lastEnd > maxSize * 0.35) {
-                    sb.append('\t'); // 大间隙先记 tab，供表格判定
-                } else if (!Double.isNaN(lastEnd)) {
-                    sb.append(' ');
+            for (int i = 0; i < ps.size(); i++) {
+                ContentExtractor.TextPiece p = ps.get(i);
+                if (i > 0) {
+                    ContentExtractor.TextPiece prev = ps.get(i - 1);
+                    double gap = p.x() - prev.x();
+                    boolean cjk = endsWide(prev.text()) && startsWide(p.text());
+                    if (!cjk && unit > 0) {
+                        if (gap > unit * 3.0) {
+                            sb.append('\t'); // 大间隙先记 tab，供表格判定
+                        } else if (gap > unit * 1.5 && !endsWithSpace(sb) && !startsWithSpace(p.text())) {
+                            sb.append(' ');
+                        }
+                    }
                 }
                 sb.append(p.text());
-                lastEnd = p.x() + p.text().length() * p.fontSize() * 0.5;
             }
-            return sb.toString();
+            return sb.toString().strip();
+        }
+
+        /** 相邻片段起点间距的中位数，当作这一行的字距基准。 */
+        private static double typicalAdvance(List<ContentExtractor.TextPiece> ps) {
+            if (ps.size() < 3) {
+                return 0;
+            }
+            double[] gaps = new double[ps.size() - 1];
+            for (int i = 0; i + 1 < ps.size(); i++) {
+                gaps[i] = ps.get(i + 1).x() - ps.get(i).x();
+            }
+            java.util.Arrays.sort(gaps);
+            return gaps[gaps.length / 2];
+        }
+
+        private static boolean endsWithSpace(StringBuilder sb) {
+            return sb.length() > 0 && sb.charAt(sb.length() - 1) == ' ';
+        }
+
+        private static boolean startsWithSpace(String text) {
+            return !text.isEmpty() && text.charAt(0) == ' ';
+        }
+
+        private static boolean endsWide(String text) {
+            return !text.isEmpty() && isWide(text.charAt(text.length() - 1));
+        }
+
+        private static boolean startsWide(String text) {
+            return !text.isEmpty() && isWide(text.charAt(0));
         }
 
         List<String> cells() {
             List<String> cells = new ArrayList<>();
+            List<ContentExtractor.TextPiece> ps = new ArrayList<>(pieces);
+            ps.sort(Comparator.comparingDouble(ContentExtractor.TextPiece::x));
+            double unit = typicalAdvance(ps);
             StringBuilder sb = new StringBuilder();
-            double lastEnd = Double.NaN;
-            for (ContentExtractor.TextPiece p : pieces) {
-                boolean gap = !Double.isNaN(lastEnd) && p.x() - lastEnd > maxSize * 1.5;
-                if (gap && !sb.isEmpty()) {
-                    cells.add(sb.toString().strip());
-                    sb.setLength(0);
+            for (int i = 0; i < ps.size(); i++) {
+                ContentExtractor.TextPiece p = ps.get(i);
+                if (i > 0) {
+                    ContentExtractor.TextPiece prev = ps.get(i - 1);
+                    double gap = p.x() - prev.x();
+                    boolean cjk = endsWide(prev.text()) && startsWide(p.text());
+                    if (!cjk && unit > 0 && gap > unit * 3.0 && !sb.isEmpty()) {
+                        cells.add(sb.toString().strip());
+                        sb.setLength(0);
+                    }
                 }
-                sb.append(sb.isEmpty() ? "" : " ").append(p.text());
-                lastEnd = p.x() + p.text().length() * p.fontSize() * 0.5;
+                sb.append(p.text());
             }
             if (!sb.isEmpty()) {
                 cells.add(sb.toString().strip());

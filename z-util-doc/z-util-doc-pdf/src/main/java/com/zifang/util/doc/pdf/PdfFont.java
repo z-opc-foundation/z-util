@@ -12,13 +12,15 @@ public final class PdfFont {
     private final boolean cid;
     private final ToUnicodeCMap toUnicode;
     private final double[] widths;
+    /** 字形宽度到文本空间的换算：普通字体 1/1000，Type3 用 /FontMatrix 的横向量。 */
+    private final double glyphScale;
     private final int firstChar;
     private final double defaultWidth;
     private final Map<Integer, double[]> cidWidths;
 
     private PdfFont(String name, boolean cid, ToUnicodeCMap toUnicode,
                     double[] widths, int firstChar, double defaultWidth,
-                    Map<Integer, double[]> cidWidths) {
+                    Map<Integer, double[]> cidWidths, double glyphScale) {
         this.name = name;
         this.cid = cid;
         this.toUnicode = toUnicode;
@@ -26,6 +28,12 @@ public final class PdfFont {
         this.firstChar = firstChar;
         this.defaultWidth = defaultWidth;
         this.cidWidths = cidWidths;
+        this.glyphScale = glyphScale;
+    }
+
+    /** 字形宽度换算系数：普通字体 1/1000，Type3 是 /FontMatrix 的横向缩放。 */
+    public double glyphScale() {
+        return glyphScale;
     }
 
     public String getName() {
@@ -54,7 +62,15 @@ public final class PdfFont {
             }
         }
         double dft = cid ? 1000 : 500;
-        return new PdfFont(nameOf(fontDict), cid, cmap, widths, firstChar, dft, cidW);
+        double glyphScale = 0.001;
+        if ("Type3".equals(subtype)) {
+            // Type3 的字宽在字形空间里，靠 /FontMatrix 映射到文本空间
+            List<Object> matrix = fontDict.getArray("FontMatrix");
+            if (matrix != null && !matrix.isEmpty() && matrix.get(0) instanceof Number n) {
+                glyphScale = n.doubleValue();
+            }
+        }
+        return new PdfFont(nameOf(fontDict), cid, cmap, widths, firstChar, dft, cidW, glyphScale);
     }
 
     private static String nameOf(PdfDict fontDict) {

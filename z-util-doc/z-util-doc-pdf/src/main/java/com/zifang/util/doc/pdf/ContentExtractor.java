@@ -11,8 +11,9 @@ import java.util.Map;
  */
 public final class ContentExtractor {
 
-    /** 一段定位于设备坐标的文本。 */
-    public record TextPiece(String text, double x, double y, double fontSize, String fontName) {
+    /** 一段定位于设备坐标的文本；xEnd 是这段文字结束时的设备 x（按字宽推进算出来的真实位置）。 */
+    public record TextPiece(String text, double x, double y, double fontSize, String fontName,
+                            double xEnd) {
     }
 
     public record ImagePiece(String name, String mimeType, byte[] data, double x, double y, double scale) {
@@ -87,25 +88,31 @@ public final class ContentExtractor {
         if (xobjects == null) {
             return;
         }
-        PdfDict img = parser.dict(xobjects.getRaw(name));
-        if (img == null || !"Image".equals(img.getNameValue("Subtype"))) {
-            return;
-        }
         Object v = parser.unref(xobjects.getRaw(name));
         if (!(v instanceof PdfStreamObj stream)) {
             return;
         }
-        String filter = img.getNameValue("Filter");
-        String mime = null;
-        if ("DCTDecode".equals(filter)) {
-            mime = "image/jpeg";
-        }
-        if (mime == null) {
+        PdfDict img = stream.dict;
+        if (!"Image".equals(img.getNameValue("Subtype"))) {
             return;
         }
-        byte[] data = stream.data;
-        int w = (int) img.getNumberOr("Width", 0);
-        int h = (int) img.getNumberOr("Height", 0);
+        if (PdfImage.hasUnsupportedFilter(img, parser)) {
+            return;
+        }
+        byte[] data;
+        String mime;
+        if (PdfImage.hasJpegFilter(img, parser)) {
+            // DCTDecode 解出来就是 JPEG 字节
+            data = parser.streamData(stream);
+            mime = "image/jpeg";
+        } else {
+            PdfImage.Result result = PdfImage.build(img, parser.streamData(stream), parser);
+            if (result == null) {
+                return;
+            }
+            data = result.data();
+            mime = result.mimeType();
+        }
         page.images.add(new ImagePiece(name, mime, data, ctm[4], ctm[5],
                 Math.max(Math.abs(ctm[0]), Math.abs(ctm[3]))));
     }
@@ -240,7 +247,22 @@ public final class ContentExtractor {
             }
             case "Do" -> {
                 if (!operands.isEmpty() && operands.get(operands.size() - 1) instanceof PdfName n) {
-                    handleImage(page, resources, n.name, st.ctm);
+                    PdfDict xobjects = resources == null ? null : parser.dict(resources.getRaw("XObject"));
+                    Object xobj = xobjects == null ? null : parser.unref(xobjects.getRaw(n.name));
+                    if (xobj instanceof PdfStreamObj stream) {
+                        String subtype = stream.dict.getNameValue("Subtype");
+                        if ("Form".equals(subtype)) {
+                            // 表单 XObject：用自己的资源再解释一遍内容流
+                            PdfDict formResources = parser.dict(stream.dict.getRaw("Resources"));
+                            if (formResources == null) {
+                                formResources = resources;
+                            }
+                            byte[] formData = parser.streamData(stream);
+                            interpret(new PdfParser.Reader(formData, 0), formResources, st, page);
+                        } else {
+                            handleImage(page, resources, n.name, st.ctm);
+                        }
+                    }
                 }
             }
             default -> {
@@ -255,7 +277,7 @@ public final class ContentExtractor {
                 st.fontSize, st.leading, st.charSpacing, st.wordSpacing, st.hScale, st.rise,
                 st.fontKey != null ? 1 : 0});
         // fontKey 无法进 double 栈，简单按栈序配对（q/Q 总是成对）——用独立栈
-        fontStack.push(st.fontKey);
+        fontStack.push(st.fontKey == null ? "" : st.fontKey);
     }
 
     private final java.util.ArrayDeque<String> fontStack = new java.util.ArrayDeque<>();
@@ -270,7 +292,8 @@ public final class ContentExtractor {
             st.wordSpacing = s[9];
             st.hScale = s[10];
             st.rise = s[11];
-            st.fontKey = fontStack.isEmpty() ? null : fontStack.pop();
+            String fontKey = fontStack.isEmpty() ? "" : fontStack.pop();
+            st.fontKey = fontKey.isEmpty() ? null : fontKey;
         }
     }
 
@@ -293,6 +316,7 @@ public final class ContentExtractor {
                 }
             }
         }
+        double[] startDev = applyCtm(st.tm, st.ctm);
         StringBuilder sb = new StringBuilder();
         for (Object o : items) {
             if (o instanceof byte[] codes) {
@@ -309,10 +333,11 @@ public final class ContentExtractor {
             }
         }
         String text = sb.toString();
-        if (!text.isBlank()) {
+        // 不做 strip：空格字形本身要保留，词间距靠它还原
+        if (!text.isEmpty()) {
             double[] dev = applyCtm(st.tm, st.ctm);
-            page.text.add(new TextPiece(text.strip(), dev[4], dev[5] + st.rise,
-                    st.fontSize, st.fontKey));
+            page.text.add(new TextPiece(text, startDev[4], dev[5] + st.rise,
+                    st.fontSize, st.fontKey, dev[4]));
         }
     }
 
