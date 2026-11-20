@@ -168,6 +168,25 @@ class DocRealWorldTest {
     }
 
     @Test
+    void footnoteEndnoteAnnotationExtracted() throws Exception {
+        List<String> quotes = new ArrayList<>();
+        for (DocBlock block : read("footnote.doc").getBlocks()) {
+            if (block instanceof DocBlock.Quote quote) {
+                quotes.add(text(quote.spans()));
+            }
+        }
+        assertTrue(quotes.contains("[脚注] TestFootnote"), quotes.toString());
+        assertTrue(quotes.contains("[尾注] TestEndnote"), quotes.toString());
+        assertTrue(quotes.contains("[批注] TestComment"), quotes.toString());
+    }
+
+    @Test
+    void summaryInformationMetadata() throws Exception {
+        DocDocument doc = read("documentProperties.doc");
+        assertEquals("This is user field value", doc.getMeta().getTitle());
+    }
+
+    @Test
     void oldWordFormatRejected() throws Exception {
         byte[] file = corpus("Word6.doc");
         DocParseException error = assertThrows(DocParseException.class, () -> reader.read(file));
