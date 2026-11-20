@@ -170,7 +170,7 @@ POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom
 | `z-util-doc-doc` | `DocDocReader` + `CfbReader`：OLE2/CFB 容器（FAT/miniFAT/目录）+ Word 97-2003 FIB/piece table（压缩 cp1252 与 UTF-16 双分支）+ STSH/PAPX 还原标题与列表、表格结构、OfficeArt 图片、域代码清理、`\u0005SummaryInformation` 元数据 |
 | `z-util-doc-xlsx` | `XlsxDocReader` + `XlsxWriter`：OOXML 表格读写（共享字符串/内联字符串/公式/日期序列号/合并单元格/隐藏表）；写入器零依赖产出 Excel/WPS 可开的工作簿 |
 | `z-util-doc-pptx` | `PptxDocReader`：OOXML 演示文稿（sldIdLst 顺序、形状文本与加粗斜体、a:tbl 表格、p:pic 图片、备注页） |
-| `z-util-doc-ppt` | `PptDocReader` + `HslfDocument`：PowerPoint 97-2003 二进制（HSLF）自研解析，零 POI 依赖；覆盖增量保存链（UserEditAtom→持久化目录）、播放顺序还原（SlideListWithText 顺序表）、绘图文本 + 大纲文本双来源、占位符标题判定、备注页 |
+| `z-util-doc-ppt` | `PptDocReader` + `HslfDocument`：PowerPoint 97-2003 二进制（HSLF）自研解析，零 POI 依赖；覆盖增量保存链（UserEditAtom→持久化目录）、播放顺序还原（SlideListWithText 顺序表）、绘图文本 + 大纲文本双来源、占位符标题判定、备注页、Pictures 流内嵌图片 |
 | `z-util-doc-ole` | `CfbReader`：OLE2 / Compound File Binary 容器读取（FAT / DIFAT / miniFAT / 目录 / 流提取），doc 与 xls 共用 |
 | `z-util-doc-xls` | `XlsDocReader` + `BiffWorkbook`：Excel 97-2003 二进制（BIFF）自研解析，零 POI 依赖；覆盖 BOUNDSHEET/SST(含 CONTINUE)/LABELSST/RK/MULRK/FORMULA 缓存值/XF-FORMAT 日期判定，BIFF2-4 裸流降级支持 |
 | `z-util-doc-rtf` | `RtfDocReader`：RTF 字符级解析（分组栈、\par 段落、/\i/\strike 样式、U+ 与 ANSI 转义、字体表/颜色表/样式表等目的地跳过） |

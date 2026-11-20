@@ -22,6 +22,7 @@ public final class PptDocReader implements DocReader {
 
     private static final String PPT_STREAM = "PowerPoint Document";
     private static final String CURRENT_USER_STREAM = "Current User";
+    private static final String PICTURES_STREAM = "Pictures";
 
     @Override
     public DocFormat format() {
@@ -54,6 +55,10 @@ public final class PptDocReader implements DocReader {
         }
         DocDocument doc = new DocDocument();
         doc.add(new DocBlock.Slides(slides));
+        // 内嵌图片：Pictures 流（图片与幻灯片的对应关系在 HSLF 里靠 BSE 索引，这里只按流顺序给出）
+        for (HslfPictures.Picture picture : HslfPictures.parse(cfb.readStream(PICTURES_STREAM))) {
+            doc.add(new DocBlock.Image(picture.name(), picture.mimeType(), picture.data(), null, null));
+        }
         return doc;
     }
 

@@ -25,19 +25,24 @@ PowerPoint 97-2003（二进制 .ppt / HSLF）读取器，`z-util-doc` 家族成�
 - **段落切分**：CR 分段，段内软换行（VT）转成 `\n`。
 - **备注页**：SlideAtom 的 notesID 指向幻灯片 id，据此找到 Notes 记录，
   备注文本以 `[备注] …` 段落附加在页尾（与 pptx 读取器口径一致）。
+- **内嵌图片**：Pictures 流里每张图是 8 字节头（签名/类型/长度）+ 图片数据，
+  类型是 OfficeArt 原生类型 + 0xF018（JPEG/PNG/DIB/EMF/WMF/PICT）；
+  数据前面是 UID + tag，真正的图片字节按签名定位，DIB 补 BMP 文件头。
 
 ## 能力边界
-- 不还原图片、表格、图表、SmartArt、动画与切换效果。
+- 不还原表格、图表、SmartArt、动画与切换效果。
+- 图片与幻灯片的对应关系不还原（HSLF 里靠形状属性里的 BSE 索引关联，
+  需要完整的 OfficeArt 属性表），图片按 Pictures 流顺序整体输出。
 - 不解析旧格式（PPT 4.0 及更早）的 0x07D0 绘图记录里的文本。
 - 加密 ppt（`Password_Protected-*.ppt`）不解密。
 - 不做字体、颜色、字号等字符级格式还原（文本整体按段落输出）。
 
 ## 回归语料与验证
-`src/test/resources/corpus/` 收录 29 个真实 ppt：Apache POI 项目的 MIT/Apache-2.0 测试集
+`src/test/resources/corpus/` 收录 30 个真实 ppt：Apache POI 项目的 MIT/Apache-2.0 测试集
 （26 个，含多版本增量保存、乱序、页眉页脚、中日韩文字、备注、超链接、批注）
-加 3 个用 POI 生成的对照样例。
+加 4 个用 POI 生成的对照样例（其中 `picture.png.ppt` 带一张内嵌 PNG）。
 
 验证方式：本模块的解析结果与 Apache POI 5.2.3 的 HSLF 解析逐页比对 ——
-29 个文件的标题与正文段落全部一致（差异仅三处且都是刻意的）：
+30 个文件的标题与正文段落全部一致（差异仅三处且都是刻意的）：
 标题文本单独放在标题字段而不重复进正文、组合形状内的文字本模块能取到而 POI 的形状列表不展开、
-备注单独以 `[备注]` 前缀输出。
+备注单独以 `[备注]` 前缀输出；内嵌图片的字节与 POI 的 `HSLFPictureData.getData()` 完全一致。

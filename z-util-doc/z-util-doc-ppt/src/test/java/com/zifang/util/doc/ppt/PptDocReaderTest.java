@@ -47,6 +47,31 @@ class PptDocReaderTest {
     }
 
     @Test
+    void embeddedPictureExtracted() throws Exception {
+        DocDocument doc = reader.read(corpus("picture.png.ppt"));
+        List<DocBlock.Image> images = new ArrayList<>();
+        for (DocBlock block : doc.getBlocks()) {
+            if (block instanceof DocBlock.Image image) {
+                images.add(image);
+            }
+        }
+        assertEquals(1, images.size(), "应当抽到一张内嵌图片");
+        DocBlock.Image image = images.get(0);
+        assertEquals("image/png", image.mimeType());
+        assertEquals(2313, image.data().length);
+        assertEquals((byte) 0x89, image.data()[0]);
+        assertEquals('P', image.data()[1]);
+    }
+
+    @Test
+    void deckWithoutPictureHasNoImageBlock() throws Exception {
+        DocDocument doc = reader.read(corpus("simple.ppt"));
+        for (DocBlock block : doc.getBlocks()) {
+            assertFalse(block instanceof DocBlock.Image, "simple.ppt 里没有图片");
+        }
+    }
+
+    @Test
     void formatIsPpt() {
         assertEquals(DocFormat.PPT, reader.format());
     }
