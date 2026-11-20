@@ -27,7 +27,7 @@ public final class RtfDocReader implements DocReader {
             "fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "themedata",
             "colorschememapping", "latentstyles", "datastore", "listtable", "listoverridetable",
             "rsidtbl", "generator", "filetbl", "xmlnstbl", "mmathPr", "wgrffmtfilter",
-            "pntext", "pn", "falt", "shppict", "nonshppict", "bkmkstart", "bkmkend",
+            "pn", "falt", "shppict", "nonshppict", "bkmkstart", "bkmkend",
             "atnid", "atnauthor", "annotation", "atrfstart", "atrfend", "atndate",
             "atnref", "atntime", "atnicn", "chatn", "company", "operator");
 
@@ -56,6 +56,8 @@ public final class RtfDocReader implements DocReader {
         boolean italic;
         boolean strike;
         boolean destinationSkip;
+        /** 当前组是否在捕获列表标签（\listtext 目的地）。 */
+        boolean listTextCapture;
     }
 
     private static final class Parser {
@@ -68,6 +70,16 @@ public final class RtfDocReader implements DocReader {
         private final Deque<State> states = new ArrayDeque<>();
         private State state = new State();
         private final List<DocSpan> spans = new ArrayList<>();
+
+        /** 列表标签文本（\listtext 目的地里的编号/符号）与层级。 */
+        private final StringBuilder listLabel = new StringBuilder();
+        private int listLevel;
+
+        /** 表格状态：正在收集的行、当前行的单元格、当前单元格的段落。 */
+        private final List<DocBlock.Table.Row> tableRows = new ArrayList<>();
+        private final List<DocBlock.Table.Cell> rowCells = new ArrayList<>();
+        private final List<DocSpan> cellSpans = new ArrayList<>();
+        private boolean inTableRow;
 
         Parser(String src, DocDocument doc) {
             this.src = src;
@@ -113,6 +125,7 @@ public final class RtfDocReader implements DocReader {
                 pos++;
             }
             flushParagraph();
+            flushTable();
         }
 
         private State copyOf(State s) {
@@ -121,6 +134,7 @@ public final class RtfDocReader implements DocReader {
             copy.italic = s.italic;
             copy.strike = s.strike;
             copy.destinationSkip = s.destinationSkip;
+            copy.listTextCapture = s.listTextCapture;
             return copy;
         }
 
@@ -190,6 +204,13 @@ public final class RtfDocReader implements DocReader {
         private void applyControl(String word, long param) {
             switch (word) {
                 case "par" -> flushParagraph();
+                case "trowd" -> beginRow();
+                case "cell", "nestcell" -> endCell();
+                case "row", "nestrow" -> endRow();
+                case "intbl" -> inTableRow = true;
+                case "ilvl" -> listLevel = (int) Math.max(0, param);
+                case "listtext" -> state.listTextCapture = true;
+                case "pntext" -> state.listTextCapture = true;
                 case "line" -> append("\n");
                 case "tab" -> append("\t");
                 case "pard", "sect" -> {
@@ -220,7 +241,7 @@ public final class RtfDocReader implements DocReader {
                 case "fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "themedata",
                         "colorschememapping", "latentstyles", "datastore", "listtable",
                         "listoverridetable", "rsidtbl", "generator", "filetbl", "xmlnstbl",
-                        "mmathPr", "wgrffmtfilter", "pntext", "pn", "falt", "shppict",
+                        "mmathPr", "wgrffmtfilter", "pn", "falt", "shppict",
                         "nonshppict", "company", "operator", "chatn" -> state.destinationSkip = true;
                 case "header", "footer" -> {
                 }
@@ -260,6 +281,10 @@ public final class RtfDocReader implements DocReader {
             if (state.destinationSkip || text.isEmpty()) {
                 return;
             }
+            if (state.listTextCapture) {
+                listLabel.append(text);
+                return;
+            }
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
                 if (state.destinationSkip) {
@@ -280,17 +305,80 @@ public final class RtfDocReader implements DocReader {
         }
 
         private void flushParagraph() {
-            if (spans.isEmpty()) {
+            if (inTableRow) {
+                // 表内段落属于当前单元格
+                cellSpans.addAll(spans);
+                spans.clear();
                 return;
             }
-            StringBuilder text = new StringBuilder();
-            for (DocSpan span : spans) {
-                text.append(span.text());
+            if (!spans.isEmpty()) {
+                StringBuilder text = new StringBuilder();
+                for (DocSpan span : spans) {
+                    text.append(span.text());
+                }
+                if (!text.toString().isBlank()) {
+                    flushTable();
+                    String label = listLabel.toString().strip();
+                    if (!label.isEmpty()) {
+                        doc.add(new DocBlock.ListItem(!isBullet(label), listLevel,
+                                withLabel(merge(spans), label)));
+                    } else {
+                        doc.add(new DocBlock.Paragraph(merge(spans)));
+                    }
+                }
+                spans.clear();
             }
-            if (!text.toString().isBlank()) {
-                doc.add(new DocBlock.Paragraph(merge(spans)));
-            }
+            listLabel.setLength(0);
+            listLevel = 0;
+        }
+
+        /** 列表标签作为首个 span 注入，正文照旧。 */
+        private List<DocSpan> withLabel(List<DocSpan> body, String label) {
+            List<DocSpan> result = new ArrayList<>();
+            result.add(DocSpan.plain(label + " "));
+            result.addAll(body);
+            return result;
+        }
+
+        /** 标签是项目符号还是编号。 */
+        private static boolean isBullet(String label) {
+            char c = label.isEmpty() ? ' ' : label.charAt(0);
+            return c == '\u2022' || c == '\u25cf' || c == '\u25cb' || c == '\u00b7'
+                    || c == '-' || c == '\u2013' || c == '\u2014' || c == '*' || c == 'o';
+        }
+
+        private void beginRow() {
+            inTableRow = true;
+            rowCells.clear();
+            cellSpans.clear();
+        }
+
+        private void endCell() {
+            cellSpans.addAll(spans);
             spans.clear();
+            if (!cellSpans.isEmpty()) {
+                rowCells.add(new DocBlock.Table.Cell(
+                        List.of(new DocBlock.Paragraph(merge(cellSpans))), 1, 1));
+            }
+            cellSpans.clear();
+        }
+
+        private void endRow() {
+            endCell();
+            if (!rowCells.isEmpty()) {
+                tableRows.add(new DocBlock.Table.Row(new ArrayList<>(rowCells), tableRows.isEmpty()));
+            }
+            rowCells.clear();
+            inTableRow = false;
+        }
+
+        /** 累积的行合成一个表格块。 */
+        private void flushTable() {
+            if (tableRows.isEmpty()) {
+                return;
+            }
+            doc.add(new DocBlock.Table(new ArrayList<>(tableRows)));
+            tableRows.clear();
         }
 
         /** 相邻同样格式的 span 合并，避免每字符一个 span。 */
