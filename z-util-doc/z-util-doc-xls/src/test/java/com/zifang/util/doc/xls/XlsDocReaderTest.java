@@ -3,6 +3,7 @@ package com.zifang.util.doc.xls;
 import com.zifang.util.doc.DocBlock;
 import com.zifang.util.doc.DocDocument;
 import com.zifang.util.doc.DocFormat;
+import com.zifang.util.doc.DocSpan;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -123,6 +124,19 @@ class XlsDocReaderTest {
         assertEquals("ID", cell(sheet, 1, 0).text());
         assertEquals("TOTAL", cell(sheet, 1, 1).text());
         assertEquals("DOG & CAT PRODUCTS", cell(sheet, 2, 1).text());
+    }
+
+    @Test
+    void readsCellComments() throws Exception {
+        // NOTE → OBJ → TXO 链路：objId 关联文本，作者来自 NOTE 本身（与 POI HSSFComment 口径一致）
+        DocDocument doc = reader.read(corpus("xls-comment.xls"));
+        List<String> quotes = doc.getBlocks().stream()
+                .filter(b -> b instanceof DocBlock.Quote)
+                .map(b -> (DocBlock.Quote) b)
+                .map(q -> q.spans().stream().map(DocSpan::text).reduce("", String::concat))
+                .toList();
+        assertEquals(1, quotes.size(), quotes.toString());
+        assertEquals("[批注 yuku] A1: This is a comment\nsecond line", quotes.get(0));
     }
 
     @Test

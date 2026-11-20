@@ -43,6 +43,9 @@ final class BiffWorkbook {
     private static final int REC_BOOLERR = 0x0205;
     private static final int REC_FORMULA = 0x0006;
     private static final int REC_STRING = 0x0207;
+    private static final int REC_OBJ = 0x005D;
+    private static final int REC_TXO = 0x01B6;
+    private static final int REC_NOTE = 0x001C;
 
     /** 一个工作表。 */
     static final class Sheet {
@@ -50,6 +53,11 @@ final class BiffWorkbook {
         int position;
         boolean hidden;
         List<DocBlock.Sheet.SheetRow> rows = new ArrayList<>();
+        List<CellComment> comments = new ArrayList<>();
+    }
+
+    /** 单元格批注：作者可能为空，文本来自 NOTE.objId 关联的 OBJ+TXO 记录。 */
+    record CellComment(int row, int col, String text, String author) {
     }
 
     private final byte[] data;
@@ -265,6 +273,8 @@ final class BiffWorkbook {
             Map<Integer, TreeMap<Integer, DocBlock.Sheet.SheetCell>> grid = new TreeMap<>();
             int pendingRow = -1;
             int pendingCol = -1;
+            Map<Integer, String> objTexts = new HashMap<>();
+            int pendingObjId = -1;
             sheetLoop:
             while (p + 4 <= data.length) {
                 int type = u16(p);
@@ -390,6 +400,49 @@ final class BiffWorkbook {
                             pendingCol = -1;
                         }
                     }
+                    case REC_OBJ -> {
+                        // OBJ：ft(2)+cb(2)+ot(2)+id(2)，ot=0x19 是批注对象
+                        if (end - start >= 8) {
+                            pendingObjId = u16(start + 6);
+                        }
+                    }
+                    case REC_TXO -> {
+                        // TXO：grbit(2) bit0 = UTF-16，cchText @10；文本在紧随的 CONTINUE 里
+                        if (end - start >= 12 && pendingObjId >= 0) {
+                            int cch = u16(start + 10);
+                            boolean highByte = (u16(start) & 1) != 0;
+                            String text = readTxoText(end, cch, highByte);
+                            if (text != null) {
+                                objTexts.put(pendingObjId, text);
+                            }
+                        }
+                    }
+                    case REC_NOTE -> {
+                        if (biffVersion >= 80) {
+                            // NOTE：row(2)+col(2)+options(2)+objId(2)+作者串（cch2+flag1+chars）
+                            if (end - start >= 8) {
+                                int row = u16(start);
+                                int col = u16(start + 2);
+                                int objId = u16(start + 6);
+                                int[] cursor = {start + 8};
+                                String author = readUnicodeString(cursor, end);
+                                String text = objTexts.get(objId);
+                                if (text != null) {
+                                    sheet.comments.add(new CellComment(row, col, text, author));
+                                }
+                            }
+                        } else {
+                            // BIFF5：row(2)+col(2)+作者串（1 字节长度），批注文本直接内联
+                            if (end - start >= 5) {
+                                int[] cursor = {start + 4};
+                                String text = readByteString(cursor, end, 1);
+                                if (!text.isEmpty()) {
+                                    sheet.comments.add(new CellComment(u16(start), u16(start + 2),
+                                            text, ""));
+                                }
+                            }
+                        }
+                    }
                     case REC_EOF -> {
                         p = end;
                         break sheetLoop;
@@ -404,6 +457,42 @@ final class BiffWorkbook {
                 sheet.rows.add(new DocBlock.Sheet.SheetRow(row.getKey() + 1, new ArrayList<>(row.getValue().values())));
             }
         }
+    }
+
+    /**
+     * TXO 的批注文本：首个 CONTINUE 的首字节 0/1 是编码标志（1 = UTF-16），其后是 cch 个字符；
+     * 首字节不是 0/1 时按 8 位文本处理。
+     */
+    private String readTxoText(int txoEnd, int cch, boolean highByte) {
+        if (cch <= 0 || cch > 0x10000 || txoEnd + 4 > data.length || u16(txoEnd) != REC_CONTINUE) {
+            return null;
+        }
+        int csize = u16(txoEnd + 2);
+        int cs = txoEnd + 4;
+        int cend = Math.min(data.length, cs + csize);
+        if (cs >= cend) {
+            return null;
+        }
+        boolean wide = highByte;
+        int textStart = cs;
+        int flag = data[cs] & 0xFF;
+        if (flag == 0 || flag == 1) {
+            wide = flag == 1;
+            textStart = cs + 1;
+        }
+        int bytes = wide ? cch * 2 : cch;
+        if (textStart + bytes > cend) {
+            bytes = cend - textStart;
+            if (bytes <= 0) {
+                return null;
+            }
+            cch = wide ? bytes / 2 : bytes;
+        }
+        StringBuilder sb = new StringBuilder(cch);
+        for (int i = 0; i < cch; i++) {
+            sb.append(wide ? (char) u16(textStart + i * 2) : (char) (data[textStart + i] & 0xFF));
+        }
+        return sb.toString();
     }
 
     private DocBlock.Sheet.SheetCell numericCell(int row, int column, int xf, double value) {

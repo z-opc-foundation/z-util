@@ -6,9 +6,11 @@ import com.zifang.util.doc.DocFormat;
 import com.zifang.util.doc.DocFormatDetector;
 import com.zifang.util.doc.DocParseException;
 import com.zifang.util.doc.DocReader;
+import com.zifang.util.doc.DocSpan;
 import com.zifang.util.doc.ole.CfbReader;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Excel 97-2003（BIFF8 二进制 .xls）读取器。零第三方依赖：OLE/CFB 容器解析 + BIFF 记录流自研实现。
@@ -65,7 +67,26 @@ public final class XlsDocReader implements DocReader {
         DocDocument doc = new DocDocument();
         for (BiffWorkbook.Sheet sheet : book.sheets()) {
             doc.add(new DocBlock.Sheet(sheet.name, sheet.rows, sheet.hidden));
+            // 批注以 [批注 作者] 列引用 Quote 块挂在表后（与 docx 模块口径一致）
+            for (BiffWorkbook.CellComment comment : sheet.comments) {
+                String label = comment.author() == null || comment.author().isBlank()
+                        ? "[批注] "
+                        : "[批注 " + comment.author() + "] ";
+                doc.add(new DocBlock.Quote(List.of(DocSpan.plain(
+                        label + cellRef(comment.row(), comment.col()) + ": " + comment.text()))));
+            }
         }
         return doc;
+    }
+
+    /** 行列 → Excel 引用（0 起行列 → A1 风格）。 */
+    private static String cellRef(int row, int col) {
+        StringBuilder sb = new StringBuilder();
+        int c = col;
+        do {
+            sb.insert(0, (char) ('A' + c % 26));
+            c = c / 26 - 1;
+        } while (c >= 0);
+        return sb.append(row + 1).toString();
     }
 }
