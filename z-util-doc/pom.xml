@@ -18,7 +18,7 @@
         <module>z-util-doc-txt</module>
         <module>z-util-doc-docx</module>
         <module>z-util-doc-epub</module>
-        <module>z-util-doc-doc</module>
+        <module>z-util-doc-word</module>
         <module>z-util-doc-pdf</module>
         <module>z-util-doc-xlsx</module>
         <module>z-util-doc-pptx</module>

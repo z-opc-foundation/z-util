@@ -4,7 +4,7 @@ OLE2 / Compound File Binary（CFB）容器读取层，`z-util-doc` 家族的公�
 
 ## 定位
 - 入口类：`com.zifang.util.doc.ole.CfbReader`。
-- 供 `z-util-doc-doc`（Word 97-2003）与 `z-util-doc-xls`（Excel 97-2003）共用，避免两份 CFB 实现。
+- 供 `z-util-doc-word`（Word 97-2003）与 `z-util-doc-xls`（Excel 97-2003）共用，避免两份 CFB 实现。
 
 ## 能力
 - **头部解析**：扇区大小（512 / 4096）、mini 扇区、FAT 扇区数、目录起始扇区。
