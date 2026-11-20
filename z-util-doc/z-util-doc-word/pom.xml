@@ -8,9 +8,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <name>z-util :: doc :: doc</name>
+    <name>z-util :: doc :: word</name>
     <description>Word 97-2003 二进制文档读取器：零 Apache 依赖（不用 POI/HWPF），FIB/piece table/CHPX/页眉页脚/脚注尾注批注自研实现。</description>
-    <artifactId>z-util-doc-doc</artifactId>
+    <artifactId>z-util-doc-word</artifactId>
 
     <dependencies>
         <dependency>

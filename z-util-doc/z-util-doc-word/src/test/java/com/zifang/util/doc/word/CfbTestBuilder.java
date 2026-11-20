@@ -1,4 +1,4 @@
-package com.zifang.util.doc.doc;
+package com.zifang.util.doc.word;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;

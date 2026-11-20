@@ -1,4 +1,4 @@
-package com.zifang.util.doc.doc;
+package com.zifang.util.doc.word;
 
 import java.util.ArrayList;
 import java.util.HashMap;

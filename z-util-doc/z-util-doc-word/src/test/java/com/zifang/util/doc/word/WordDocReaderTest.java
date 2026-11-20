@@ -1,4 +1,4 @@
-package com.zifang.util.doc.doc;
+package com.zifang.util.doc.word;
 
 import com.zifang.util.doc.DocDocument;
 import org.junit.jupiter.api.Test;
@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class DocDocReaderTest {
+class WordDocReaderTest {
 
-    private final DocDocReader reader = new DocDocReader();
+    private final WordDocReader reader = new WordDocReader();
 
     /** WordDocument 流：FIB + 正文（压缩 cp1252 piece）。 */
     private byte[] wordDocument(String[] paragraphs, boolean use1Table, int lcbClx) {

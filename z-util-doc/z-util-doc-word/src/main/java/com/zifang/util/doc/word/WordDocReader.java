@@ -1,4 +1,4 @@
-package com.zifang.util.doc.doc;
+package com.zifang.util.doc.word;
 
 import com.zifang.util.doc.DocParseException;
 
@@ -17,7 +17,7 @@ import java.util.Deque;
 import java.util.List;
 
 /** 二进制 Word（.doc, Word 97-2003）读取器：CFB 容器 + FIB/piece table/CHPX，纯 JDK。 */
-public class DocDocReader implements DocReader {
+public class WordDocReader implements DocReader {
 
     private static final String WORD_STREAM = "WordDocument";
 

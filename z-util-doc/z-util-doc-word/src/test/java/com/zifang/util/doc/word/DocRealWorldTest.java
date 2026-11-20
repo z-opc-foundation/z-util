@@ -1,4 +1,4 @@
-package com.zifang.util.doc.doc;
+package com.zifang.util.doc.word;
 
 import com.zifang.util.doc.DocBlock;
 import com.zifang.util.doc.DocDocument;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class DocRealWorldTest {
 
-    private final DocDocReader reader = new DocDocReader();
+    private final WordDocReader reader = new WordDocReader();
 
     private byte[] corpus(String name) throws IOException {
         try (InputStream in = getClass().getResourceAsStream("/corpus/" + name)) {
