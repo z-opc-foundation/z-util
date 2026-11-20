@@ -1,5 +1,7 @@
 package com.zifang.util.doc.doc;
 
+import com.zifang.util.doc.DocParseException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,9 +15,32 @@ public final class WordBinaryParser {
     private WordBinaryParser() {
     }
 
+    /** 版本校验：只支持 Word 97-2003（nFib >= 193）；更老的 Word 6/95 是另一套 FIB 布局。 */
+    public static void checkVersion(byte[] wordDoc) {
+        int nFib = u16(wordDoc, 2);
+        if (nFib < 193) {
+            throw new DocParseException("Word 二进制版本过旧（nFib=" + nFib + "），仅支持 Word 97-2003 及以后");
+        }
+    }
+
     /** fWhichTblStm：true → "1Table"，false → "0Table"。 */
     public static boolean usesTable1(byte[] wordDoc) {
         return (u16(wordDoc, 0x0A) & 0x0200) != 0;
+    }
+
+    /** 列表定义：PlfLst@738, PlfLfo@746。 */
+    public static DocLists lists(byte[] wordDoc, byte[] table) {
+        return DocLists.parse(table, u32(wordDoc, 738), u32(wordDoc, 742),
+                u32(wordDoc, 746), u32(wordDoc, 750));
+    }
+
+    /** 绘图数据（OfficeArt）在表流里的位置：fcDggInfo@554, lcbDggInfo@558。 */
+    public static int fcDggInfo(byte[] wordDoc) {
+        return u32(wordDoc, 554);
+    }
+
+    public static int lcbDggInfo(byte[] wordDoc) {
+        return u32(wordDoc, 558);
     }
 
     /** fibRgLw97 各子文档字数：main@76, footnote@80, header@84, macro@88, annotation@92, endnote@96。 */
@@ -138,8 +163,9 @@ public final class WordBinaryParser {
 
     // ---------- CHPX 字符格式 ----------
 
-    /** 字符 run：CP 区间 + 加粗/斜体/删除线。 */
-    public record CharRun(int cpStart, int cpEnd, boolean bold, boolean italic, boolean strike) {
+    /** 字符 run：CP 区间 + 加粗/斜体/删除线；picOffset >= 0 表示该 run 是图片（指向 Data 流）。 */
+    public record CharRun(int cpStart, int cpEnd, boolean bold, boolean italic, boolean strike,
+                          int picOffset) {
     }
 
     /**
@@ -175,6 +201,7 @@ public final class WordBinaryParser {
                 boolean bold = false;
                 boolean italic = false;
                 boolean strike = false;
+                int picOffset = -1;
                 if (rgb != 0) {
                     int chpx = rgb * 2;
                     int cb = fkp[chpx] & 0xFF;
@@ -183,9 +210,9 @@ public final class WordBinaryParser {
                         int sprm = u16(fkp, q);
                         int spra = (sprm >> 13) & 0x7;
                         int opSize = switch (spra) {
-                            case 0, 1, 2 -> 1;
-                            case 3, 5 -> 2;
-                            case 4 -> 4;
+                            case 0, 1 -> 1;
+                            case 2, 4, 5 -> 2;
+                            case 3 -> 4;
                             case 7 -> 3;
                             default -> -1;
                         };
@@ -202,6 +229,10 @@ public final class WordBinaryParser {
                                 strike = on;
                             }
                         }
+                        if (sprm == 0x6A03 && opSize == 4 && q + 2 + 4 <= 512) {
+                            // sprmCPicLocation：图片在 Data 流里的偏移
+                            picOffset = u32(fkp, q + 2);
+                        }
                         q += 2 + opSize;
                     }
                 }
@@ -213,7 +244,7 @@ public final class WordBinaryParser {
                 cpStart = Math.max(0, Math.min(cpStart, cpEnd));
                 cpEndRun = Math.max(0, Math.min(cpEndRun, cpEnd));
                 if (cpEndRun > cpStart) {
-                    out.add(new CharRun(cpStart, cpEndRun, bold, italic, strike));
+                    out.add(new CharRun(cpStart, cpEndRun, bold, italic, strike, picOffset));
                 }
             }
         }
@@ -248,6 +279,178 @@ public final class WordBinaryParser {
             }
         }
         return -1;
+    }
+
+    // ---------- PAPX 段落属性 ----------
+
+    /** 段落属性：样式索引、列表层级与列表号、是否在表内、是否行尾标记、该行单元格数。 */
+    public record Papx(int istd, int ilvl, int ilfo, boolean inTable, boolean rowEnd, int cellCount,
+                        boolean ilvlSet, boolean ilfoSet) {
+
+        /** 段落属性覆盖样式属性：段落显式给出的值优先，其余继承样式。 */
+        public Papx mergeOver(Papx base) {
+            if (base == null) {
+                return this;
+            }
+            return new Papx(istd,
+                    ilvlSet ? ilvl : base.ilvl(),
+                    ilfoSet ? ilfo : base.ilfo(),
+                    inTable || base.inTable(),
+                    rowEnd || base.rowEnd(),
+                    cellCount > 0 ? cellCount : base.cellCount(),
+                    ilvlSet || base.ilvlSet(),
+                    ilfoSet || base.ilfoSet());
+        }
+    }
+
+    /** PAPX 条目：覆盖 FC 区间 [fcStart, fcEnd)。 */
+    public record PapxEntry(int fcStart, int fcEnd, Papx papx) {
+    }
+
+    private static final int FC_STSHF = 162;
+    private static final int LCB_STSHF = 166;
+    private static final int FC_PLCFBTE_PAPX = 258;
+    private static final int LCB_PLCFBTE_PAPX = 262;
+
+    /** 样式表（istd → 样式名/类型）。 */
+    public static DocStyleSheet styleSheet(byte[] wordDoc, byte[] table) {
+        return DocStyleSheet.parse(table, u32(wordDoc, FC_STSHF), u32(wordDoc, LCB_STSHF),
+                u16(wordDoc, 2) >= 0x00C1);
+    }
+
+    /**
+     * PAPX 索引：plcfbtePapx → PAPX FKP 页 → 每段的 grpprl sprm。
+     * 返回按 FC 升序的条目列表。
+     */
+    public static List<PapxEntry> papxIndex(byte[] wordDoc, byte[] table) {
+        List<PapxEntry> out = new ArrayList<>();
+        if (table == null) {
+            return out;
+        }
+        int fc = u32(wordDoc, FC_PLCFBTE_PAPX);
+        int lcb = u32(wordDoc, LCB_PLCFBTE_PAPX);
+        if (lcb < 8 || fc < 0 || fc + lcb > table.length) {
+            return out;
+        }
+        int n = (lcb - 4) / 8;
+        for (int i = 0; i < n; i++) {
+            int pn = u32(table, fc + (n + 1) * 4 + i * 4) & 0x3FFFFF;
+            byte[] fkp = fkpPage(wordDoc, pn);
+            if (fkp == null) {
+                continue;
+            }
+            int crun = fkp[511] & 0xFF;
+            if (crun <= 0 || crun > 127) {
+                continue;
+            }
+            for (int j = 0; j < crun; j++) {
+                int fcStart = u32(fkp, j * 4);
+                int fcEnd = u32(fkp, (j + 1) * 4);
+                int bOffset = fkp[4 * (crun + 1) + j * 13] & 0xFF;
+                if (bOffset == 0) {
+                    continue;
+                }
+                int papxOffset = bOffset * 2;
+                int size = 2 * (fkp[papxOffset] & 0xFF);
+                if (size == 0) {
+                    papxOffset++;
+                    size = 2 * (fkp[papxOffset] & 0xFF);
+                } else {
+                    size--;
+                }
+                if (size < 2 || papxOffset + 1 + size > 512) {
+                    continue;
+                }
+                byte[] papx = new byte[size];
+                System.arraycopy(fkp, papxOffset + 1, papx, 0, size);
+                out.add(new PapxEntry(fcStart, fcEnd, parsePapx(papx)));
+            }
+        }
+        out.sort((a, b) -> Integer.compare(a.fcStart(), b.fcStart()));
+        return out;
+    }
+
+    /** 按 FC 找段落属性；找不到返回 null。 */
+    public static Papx papxAt(List<PapxEntry> index, int fc) {
+        for (PapxEntry entry : index) {
+            if (fc >= entry.fcStart() && fc < entry.fcEnd()) {
+                return entry.papx();
+            }
+        }
+        return null;
+    }
+
+    /** CP → 字符位置 FC（与 PAPX FKP 里的 rgfc 同一坐标系）。 */
+    public static int cpToFc(byte[] wordDoc, byte[] table, int cp) {
+        return cpToFc(pieces(wordDoc, table), cp);
+    }
+
+    /** PAPX：istd(2) + grpprl；sprm 里取列表层级与表格标记。 */
+    static Papx parsePapx(byte[] papx) {
+        int istd = u16(papx, 0);
+        int ilvl = 0;
+        int ilfo = 0;
+        boolean ilvlSet = false;
+        boolean ilfoSet = false;
+        boolean inTable = false;
+        boolean rowEnd = false;
+        int cellCount = 0;
+        int p = 2;
+        while (p + 2 <= papx.length) {
+            int sprm = u16(papx, p);
+            int spra = (sprm >> 13) & 0x7;
+            p += 2;
+            int[] operand = readOperand(papx, p, sprm, spra);
+            if (operand == null) {
+                break;
+            }
+            int operandStart = operand[0];
+            int operandLength = operand[1];
+            if (operandLength < 0 || operandStart + operandLength > papx.length) {
+                break;
+            }
+            switch (sprm) {
+                case 0x4600 -> istd = u16(papx, operandStart);         // sprmPIstd
+                case 0x260A -> {
+                    ilvl = papx[operandStart] & 0xFF;
+                    ilvlSet = true;
+                }
+                case 0x460B -> {
+                    ilfo = u16(papx, operandStart);
+                    ilfoSet = true;
+                }
+                case 0x2416 -> inTable = (papx[operandStart] & 0xFF) != 0;   // sprmPFInTable
+                case 0x2417 -> rowEnd = (papx[operandStart] & 0xFF) != 0;     // sprmPFTtp
+                case 0xD608 -> cellCount = operandLength > 0 ? (papx[operandStart] & 0xFF) : 0;
+                default -> {
+                }
+            }
+            p = operandStart + operandLength;
+        }
+        return new Papx(istd, ilvl, ilfo, inTable, rowEnd, cellCount, ilvlSet, ilfoSet);
+    }
+
+    /** sprm 操作数：返回 {起点, 长度}；解析失败返回 null。 */
+    private static int[] readOperand(byte[] buf, int p, int sprm, int spra) {
+        return switch (spra) {
+            case 0, 1 -> new int[]{p, 1};
+            case 2, 4, 5 -> new int[]{p, 2};
+            case 3 -> new int[]{p, 4};
+            case 7 -> new int[]{p, 3};
+            // 变长：0xD608（表定义）与 0xC615 用 2 字节长度，其余 1 字节
+            default -> {
+                if (sprm == 0xD608 || sprm == 0xC615) {
+                    if (p + 2 > buf.length) {
+                        yield null;
+                    }
+                    yield new int[]{p + 2, u16(buf, p)};
+                }
+                if (p >= buf.length) {
+                    yield null;
+                }
+                yield new int[]{p + 1, buf[p] & 0xFF};
+            }
+        };
     }
 
     // ---------- 页眉页脚 ----------
