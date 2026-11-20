@@ -283,9 +283,9 @@ public final class WordBinaryParser {
 
     // ---------- PAPX 段落属性 ----------
 
-    /** 段落属性：样式索引、列表层级与列表号、是否在表内、是否行尾标记、该行单元格数。 */
+    /** 段落属性：样式索引、列表层级与列表号、是否在表内、是否行尾标记、该行单元格数与纵向合并标志。 */
     public record Papx(int istd, int ilvl, int ilfo, boolean inTable, boolean rowEnd, int cellCount,
-                        boolean ilvlSet, boolean ilfoSet) {
+                       boolean ilvlSet, boolean ilfoSet, boolean[] vMerge, boolean[] vRestart) {
 
         /** 段落属性覆盖样式属性：段落显式给出的值优先，其余继承样式。 */
         public Papx mergeOver(Papx base) {
@@ -299,7 +299,9 @@ public final class WordBinaryParser {
                     rowEnd || base.rowEnd(),
                     cellCount > 0 ? cellCount : base.cellCount(),
                     ilvlSet || base.ilvlSet(),
-                    ilfoSet || base.ilfoSet());
+                    ilfoSet || base.ilfoSet(),
+                    vMerge != null ? vMerge : base.vMerge(),
+                    vRestart != null ? vRestart : base.vRestart());
         }
     }
 
@@ -385,7 +387,7 @@ public final class WordBinaryParser {
         return cpToFc(pieces(wordDoc, table), cp);
     }
 
-    /** PAPX：istd(2) + grpprl；sprm 里取列表层级与表格标记。 */
+    /** PAPX：istd(2) + grpprl；sprm 里取列表层级、表格标记与纵向合并标志。 */
     static Papx parsePapx(byte[] papx) {
         int istd = u16(papx, 0);
         int ilvl = 0;
@@ -395,6 +397,8 @@ public final class WordBinaryParser {
         boolean inTable = false;
         boolean rowEnd = false;
         int cellCount = 0;
+        boolean[] vMerge = null;
+        boolean[] vRestart = null;
         int p = 2;
         while (p + 2 <= papx.length) {
             int sprm = u16(papx, p);
@@ -421,13 +425,30 @@ public final class WordBinaryParser {
                 }
                 case 0x2416 -> inTable = (papx[operandStart] & 0xFF) != 0;   // sprmPFInTable
                 case 0x2417 -> rowEnd = (papx[operandStart] & 0xFF) != 0;     // sprmPFTtp
-                case 0xD608 -> cellCount = operandLength > 0 ? (papx[operandStart] & 0xFF) : 0;
+                case 0xD608 -> {                                              // sprmTDefTable
+                    if (operandLength > 0) {
+                        cellCount = papx[operandStart] & 0xFF;
+                        // 操作数：itcMac(1) + rgdxaCenter((n+1)×2 字节) + rgTc80(n×20 字节) + 尾字节
+                        int tcBase = operandStart + 1 + (cellCount + 1) * 2;
+                        if (cellCount > 0 && cellCount < 64
+                                && tcBase + cellCount * 20 <= operandStart + operandLength) {
+                            vMerge = new boolean[cellCount];
+                            vRestart = new boolean[cellCount];
+                            for (int c = 0; c < cellCount; c++) {
+                                int rgf = u16(papx, tcBase + c * 20);
+                                vMerge[c] = (rgf & 0x0020) != 0;       // fVertMerge
+                                vRestart[c] = (rgf & 0x0040) != 0;     // fVertRestart
+                            }
+                        }
+                    }
+                }
                 default -> {
                 }
             }
             p = operandStart + operandLength;
         }
-        return new Papx(istd, ilvl, ilfo, inTable, rowEnd, cellCount, ilvlSet, ilfoSet);
+        return new Papx(istd, ilvl, ilfo, inTable, rowEnd, cellCount, ilvlSet, ilfoSet,
+                vMerge, vRestart);
     }
 
     /** sprm 操作数：返回 {起点, 长度}；解析失败返回 null。 */

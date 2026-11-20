@@ -101,6 +101,36 @@ class DocRealWorldTest {
     }
 
     @Test
+    void verticalMergedCells() throws Exception {
+        // 连续行合成一张表；C 纵向合并两行（fVertMerge+fVertRestart 起始、空续接格跳过）
+        DocDocument doc = read("table-merges.doc");
+        List<DocBlock.Table> tables = new ArrayList<>();
+        for (DocBlock block : doc.getBlocks()) {
+            if (block instanceof DocBlock.Table table) {
+                tables.add(table);
+            }
+        }
+        assertEquals(1, tables.size(), "expected one accumulated table");
+        DocBlock.Table table = tables.get(0);
+        assertEquals(4, table.rows().size());
+        assertEquals(2, table.rows().get(0).cells().size());
+        DocBlock.Table.Cell merged = table.rows().get(1).cells().get(0);
+        assertEquals("C", cellPlainText(merged));
+        assertEquals(2, merged.rowspan(), "C should span two rows");
+        assertEquals(3, table.rows().get(2).cells().size());
+    }
+
+    private static String cellPlainText(DocBlock.Table.Cell cell) {
+        StringBuilder sb = new StringBuilder();
+        for (DocBlock inner : cell.blocks()) {
+            if (inner instanceof DocBlock.Paragraph p) {
+                sb.append(text(p.spans()));
+            }
+        }
+        return sb.toString();
+    }
+
+    @Test
     void listItemsDetected() throws Exception {
         DocDocument doc = read("simple-list.doc");
         List<String> items = new ArrayList<>();

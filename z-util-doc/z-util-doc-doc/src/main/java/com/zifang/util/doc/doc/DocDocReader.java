@@ -144,6 +144,7 @@ public class DocDocReader implements DocReader {
         List<DocBlock.Table.Row> tableRows = new ArrayList<>();
         List<DocBlock.Table.Cell> rowCells = new ArrayList<>();
         List<DocBlock> cellBlocks = new ArrayList<>();
+        TableMerger merger = new TableMerger();
 
         for (int i = 0; i < ranges.size(); i++) {
             int[] range = ranges.get(i);
@@ -154,18 +155,15 @@ public class DocDocReader implements DocReader {
 
             if (papx != null && papx.inTable()) {
                 if (papx.rowEnd()) {
-                    // 行尾标记：一行结束
+                    // 行尾标记：一行结束；连续行累积到同一张表，非表格段落出现时再落块
                     if (!cellBlocks.isEmpty()) {
                         rowCells.add(new DocBlock.Table.Cell(cellBlocks, 1, 1));
                         cellBlocks = new ArrayList<>();
                     }
                     if (!rowCells.isEmpty()) {
-                        tableRows.add(new DocBlock.Table.Row(rowCells, tableRows.isEmpty()));
+                        tableRows.add(merger.add(tableRows,
+                                new DocBlock.Table.Row(rowCells, tableRows.isEmpty()), papx));
                         rowCells = new ArrayList<>();
-                    }
-                    if (!tableRows.isEmpty()) {
-                        doc.add(new DocBlock.Table(new ArrayList<>(tableRows)));
-                        tableRows = new ArrayList<>();
                     }
                     continue;
                 }
@@ -180,6 +178,11 @@ public class DocDocReader implements DocReader {
                 continue;
             }
 
+            if (!tableRows.isEmpty()) {
+                doc.add(new DocBlock.Table(tableRows));
+                tableRows = new ArrayList<>();
+                merger = new TableMerger();
+            }
             if (plain.isEmpty()) {
                 continue;
             }
@@ -208,6 +211,66 @@ public class DocDocReader implements DocReader {
         if (!tableRows.isEmpty()) {
             doc.add(new DocBlock.Table(tableRows));
         }
+    }
+
+    /**
+     * 纵向合并消解：TC80 的 fVertMerge=1 且 fVertRestart=0 是续接上一行的合并单元格（跳过不输出，
+     * 锚点格 rowspan 加一）；个别写出器给续接格也带 fVertRestart，内容为空且上方有未闭合合并时
+     * 同样按续接处理。合并锚点跨行保持，连续多行并成一格。
+     */
+    private static final class TableMerger {
+
+        /** 列 → 合并锚点位置 {表内行下标, 行内 kept 列表下标}。 */
+        private final java.util.Map<Integer, int[]> openRuns = new java.util.HashMap<>();
+
+        DocBlock.Table.Row add(List<DocBlock.Table.Row> tableRows, DocBlock.Table.Row raw,
+                               WordBinaryParser.Papx papx) {
+            boolean[] merged = papx.vMerge();
+            boolean[] restart = papx.vRestart();
+            List<DocBlock.Table.Cell> cells = raw.cells();
+            List<DocBlock.Table.Cell> kept = new ArrayList<>();
+            java.util.Map<Integer, int[]> nextOpen = new java.util.HashMap<>(openRuns);
+            int col = 0;
+            for (int i = 0; i < cells.size(); i++) {
+                DocBlock.Table.Cell cell = cells.get(i);
+                boolean mergeFlag = merged != null && i < merged.length && merged[i];
+                boolean restartFlag = restart != null && i < restart.length && restart[i];
+                boolean continuation = mergeFlag && openRuns.containsKey(col)
+                        && (!restartFlag || cellText(cell).isBlank());
+                if (continuation) {
+                    int[] loc = openRuns.get(col);
+                    List<DocBlock.Table.Cell> anchorRow = tableRows.get(loc[0]).cells();
+                    DocBlock.Table.Cell start = anchorRow.get(loc[1]);
+                    anchorRow.set(loc[1], new DocBlock.Table.Cell(start.blocks(), start.colspan(),
+                            start.rowspan() + 1));
+                    nextOpen.put(col, loc);
+                    col += cell.colspan();
+                    continue;
+                }
+                kept.add(cell);
+                if (mergeFlag && restartFlag) {
+                    nextOpen.put(col, new int[]{tableRows.size(), kept.size() - 1});
+                } else if (!mergeFlag) {
+                    nextOpen.remove(col);
+                }
+                col += cell.colspan();
+            }
+            openRuns.clear();
+            openRuns.putAll(nextOpen);
+            return new DocBlock.Table.Row(kept, raw.header());
+        }
+    }
+
+    private static String cellText(DocBlock.Table.Cell cell) {
+        StringBuilder sb = new StringBuilder();
+        for (DocBlock block : cell.blocks()) {
+            if (block instanceof DocBlock.Paragraph p) {
+                for (DocSpan span : p.spans()) {
+                    sb.append(span.text());
+                }
+            }
+        }
+        return sb.toString();
     }
 
     /** 列表编号/符号作为首个 span 注入，正文照旧。 */

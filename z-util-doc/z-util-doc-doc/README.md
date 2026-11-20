@@ -17,7 +17,10 @@
   sprmPIfo 0x460B / sprmPFInTable 0x2416 / sprmPFTtp 0x2417），据此还原**标题、列表、表格**：
   - 样式表 STSH（`DocStyleSheet`）解析样式名与内置样式号，sti 1..9 或 "heading N"/"标题 N" 判定标题级别；
   - 样式自带的段落属性（UPX 里的 PAPX）沿 istdBase 继承，列表层级/列表号可以来自样式而非段落本身；
-  - 表内段落按 0x07 归并成单元格、行尾标记（sprmPFTtp）收拢成行。
+  - 表内段落按 0x07 归并成单元格、行尾标记（sprmPFTtp）收拢成行；连续行合成一张表；
+  - 行尾段落的 sprmTDefTable 操作数（itcMac + rgdxaCenter 短整数 + rgTc80×20 字节）里
+    TC80.rgf 的 fVertMerge/fVertRestart 还原纵向合并：续接格跳过、锚点格 rowspan 累加，
+    续接格带 restart 但内容为空时也按续接处理（兼容个别写出器）。
 - 列表：`DocLists` 解析 PlcfLst（cLst + LSTF 数组 + 各列表 LVL 数组；LSTF 28 字节 =
   lsid + tplc + rgistdPara + flags，简单列表 1 级、多级 9 级）与 PlcfLfo（LFO 16 字节 +
   LFOData：cp + LFOLVL 覆盖，fFormatting 整级换格式、fStartAt 换起始值）。LVL =
@@ -37,7 +40,7 @@
 ## 能力边界
 - 只支持 Word 97-2003（nFib ≥ 193）；Word 6/95 的旧 FIB 布局直接抛 `DocParseException`，不做猜测解析。
 - 加密 doc 不支持。
-- 不还原表格的合并单元格（纵向合并的行会被并到同一单元格），不做 TAP 的列宽/边框。
+- 不还原表格的横向合并与 TAP 的列宽/边框；嵌套表格平铺进所在单元格（内部行标记不拆行）。
 - 列表编号只支持常见 nfc（十进制/罗马/字母/序数词，其余兜底十进制）；不还原缩进、
   对齐与 grpprl 里的字体格式（编号文本按正文样式输出）。
 - 图片挂在正文之后（绘图数据里的浮动图形没有稳定的正文锚点），不还原尺寸与位置。
