@@ -1,21 +1,17 @@
 package com.zifang.util.monitor.net;
 
+import com.zifang.util.monitor.platform.NetStatsProbe;
+import com.zifang.util.monitor.platform.Platform;
 import com.zifang.util.monitor.sampling.MetricDefinition;
 import com.zifang.util.monitor.sampling.MetricsSampler;
 import com.zifang.util.monitor.sampling.SampleSink;
 
-import java.io.IOException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,22 +21,16 @@ import java.util.Map;
  * 采集网卡维度的累计收发量并换算成速率，以及 TCP 连接的状态分布。
  * </p>
  * <p>
- * 网卡计数来自 {@code /proc/net/dev}（Linux）：标准 JDK 的 {@link NetworkInterface}
- * 只暴露网卡名称、地址、MTU 这类静态信息，拿不到累计收发字节。因此 Linux 之外
- * 的平台只产出网卡静态信息与 TCP 连接数，不产出流量指标。
- * </p>
- * <p>
- * 速率是采集器自己算的：记住上一轮的累计值与时间戳，与本轮相减除以间隔秒数。
- * 因此第一轮采样的速率恒为 0。
+ * 网卡计数与 TCP 状态委托 {@link Platform#net()} 平台探针 —— Linux 读
+ * {@code /proc/net/dev} 与 {@code /proc/net/tcp}，macOS 调 {@code netstat}，
+ * 其余平台返回空 Map、流量指标自动不产出；标准 JDK 的 {@link NetworkInterface}
+ * 只暴露静态信息，网卡 up/MTU 这类指标仍走 JDK。速率是采集器自己算的：
+ * 记住上一轮的累计值与时间戳，与本轮相减除以间隔秒数，因此第一轮采样的速率恒缺。
  * </p>
  *
  * @author zifang
  */
 public class NetMonitor implements MetricsSampler {
-
-    private static final Path PROC_NET_DEV = Paths.get("/proc/net/dev");
-    private static final Path PROC_NET_TCP = Paths.get("/proc/net/tcp");
-    private static final Path PROC_NET_TCP6 = Paths.get("/proc/net/tcp6");
 
     private final List<MetricDefinition> definitions;
 
@@ -114,7 +104,7 @@ public class NetMonitor implements MetricsSampler {
         }
         sink.put("net.interface.count", interfaceCount);
 
-        Map<String, long[]> counters = readInterfaceCounters();
+        Map<String, long[]> counters = Platform.net().interfaceCounters();
         if (!counters.isEmpty()) {
             long bytesReceived = 0;
             long bytesSent = 0;
@@ -148,18 +138,18 @@ public class NetMonitor implements MetricsSampler {
             lastTimestamp = now;
         }
 
-        Map<String, Integer> tcpStates = readTcpStates();
+        Map<String, Integer> tcpStates = Platform.net().tcpStates();
         if (!tcpStates.isEmpty()) {
             int total = 0;
             for (Integer count : tcpStates.values()) {
                 total += count;
             }
             sink.put("net.tcp.total", total);
-            sink.put("net.tcp.established", tcpStates.getOrDefault("01", 0));
-            sink.put("net.tcp.time_wait", tcpStates.getOrDefault("06", 0));
-            sink.put("net.tcp.close_wait", tcpStates.getOrDefault("08", 0));
-            sink.put("net.tcp.listen", tcpStates.getOrDefault("0A", 0));
-            sink.put("net.tcp.syn_sent", tcpStates.getOrDefault("02", 0));
+            sink.put("net.tcp.established", tcpStates.getOrDefault(NetStatsProbe.STATE_ESTABLISHED, 0));
+            sink.put("net.tcp.time_wait", tcpStates.getOrDefault(NetStatsProbe.STATE_TIME_WAIT, 0));
+            sink.put("net.tcp.close_wait", tcpStates.getOrDefault(NetStatsProbe.STATE_CLOSE_WAIT, 0));
+            sink.put("net.tcp.listen", tcpStates.getOrDefault(NetStatsProbe.STATE_LISTEN, 0));
+            sink.put("net.tcp.syn_sent", tcpStates.getOrDefault(NetStatsProbe.STATE_SYN_SENT, 0));
         }
 
         sink.attribute("net.interface.names", String.join(",", names));
@@ -167,103 +157,5 @@ public class NetMonitor implements MetricsSampler {
 
     static String sanitize(String name) {
         return name.replaceAll("[^a-zA-Z0-9]", "_");
-    }
-
-    /**
-     * 读取每张网卡的累计计数。
-     *
-     * @return MapStringLongArray类型返回值，值为 {接收字节, 发送字节, 接收包数, 发送包数}
-     */
-    private static Map<String, long[]> readInterfaceCounters() {
-        if (!Files.isReadable(PROC_NET_DEV)) {
-            return Collections.emptyMap();
-        }
-        List<String> lines;
-        try {
-            lines = Files.readAllLines(PROC_NET_DEV, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return Collections.emptyMap();
-        }
-        return parseInterfaceCounters(lines);
-    }
-
-    /**
-     * 解析 {@code /proc/net/dev} 的内容。
-     *
-     * @param lines ListString类型参数
-     *
-     * @return MapStringLongArray类型返回值，值为 {接收字节, 发送字节, 接收包数, 发送包数}
-     */
-    static Map<String, long[]> parseInterfaceCounters(List<String> lines) {
-        Map<String, long[]> counters = new LinkedHashMap<>();
-        for (int i = 2; i < lines.size(); i++) {
-            String line = lines.get(i);
-            int colon = line.indexOf(':');
-            if (colon <= 0) {
-                continue;
-            }
-            String name = line.substring(0, colon).trim();
-            String[] columns = line.substring(colon + 1).trim().split("\\s+");
-            if (columns.length < 10) {
-                continue;
-            }
-            try {
-                long bytesReceived = Long.parseLong(columns[0]);
-                long packetsReceived = Long.parseLong(columns[1]);
-                long bytesSent = Long.parseLong(columns[8]);
-                long packetsSent = Long.parseLong(columns[9]);
-                counters.put(name, new long[]{bytesReceived, bytesSent, packetsReceived, packetsSent});
-            } catch (NumberFormatException ignored) {
-                // 解析不了的行直接跳过
-            }
-        }
-        return counters;
-    }
-
-    /**
-     * 读取 TCP 连接状态分布。
-     *
-     * @return MapStringInteger类型返回值，键为十六进制状态码
-     */
-    private static Map<String, Integer> readTcpStates() {
-        Map<String, Integer> states = new LinkedHashMap<>();
-        readTcpFile(PROC_NET_TCP, states);
-        readTcpFile(PROC_NET_TCP6, states);
-        return states;
-    }
-
-    private static void readTcpFile(Path path, Map<String, Integer> states) {
-        if (!Files.isReadable(path)) {
-            return;
-        }
-        try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            states.putAll(parseTcpStates(lines));
-        } catch (IOException ignored) {
-            // 读不到就不产出 TCP 指标
-        }
-    }
-
-    /**
-     * 解析 {@code /proc/net/tcp} 的内容。
-     *
-     * @param lines ListString类型参数
-     *
-     * @return MapStringInteger类型返回值，键为十六进制状态码
-     */
-    static Map<String, Integer> parseTcpStates(List<String> lines) {
-        Map<String, Integer> states = new LinkedHashMap<>();
-        for (int i = 1; i < lines.size(); i++) {
-            String line = lines.get(i).trim();
-            if (line.isEmpty()) {
-                continue;
-            }
-            String[] columns = line.split("\\s+");
-            if (columns.length < 4) {
-                continue;
-            }
-            states.merge(columns[3], 1, Integer::sum);
-        }
-        return states;
     }
 }

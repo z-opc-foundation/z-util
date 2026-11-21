@@ -1,16 +1,12 @@
 package com.zifang.util.monitor.os;
 
 import com.sun.management.OperatingSystemMXBean;
+import com.zifang.util.monitor.platform.Platform;
 import com.zifang.util.monitor.sampling.MetricDefinition;
 import com.zifang.util.monitor.sampling.MetricsSampler;
 import com.zifang.util.monitor.sampling.SampleSink;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,18 +16,19 @@ import java.util.List;
  * 宿主机监控采集器。
  * <p>
  * 采集操作系统层面的信息：CPU 核数与负载、物理内存与交换区、宿主机运行时长、
- * 进程 CPU 时间、文件描述符占用。跨平台实现 —— 有 {@code com.sun.management}
- * 扩展 bean 的读数走扩展接口，宿主机运行时长与文件描述符在 Linux 下读
- * {@code /proc}，其它平台自动降级为不产出该指标。
+ * 进程 CPU 时间、文件描述符占用。
+ * </p>
+ * <p>
+ * 分工 —— JVM 能自己拿到的读数（CPU、物理内存、交换区、进程 CPU 时间）走
+ * {@code com.sun.management} 扩展 bean，天然跨平台；「必须问操作系统」的读数
+ * （开机时长、文件描述符）委托 {@link Platform#host()} 平台探针，Linux 读
+ * {@code /proc}，macOS 走 {@code UnixOperatingSystemMXBean} + {@code sysctl}，
+ * 其余平台探针返回 -1，对应指标自动不产出。
  * </p>
  *
  * @author zifang
  */
 public class OsMonitor implements MetricsSampler {
-
-    private static final Path PROC_UPTIME = Paths.get("/proc/uptime");
-    private static final Path PROC_SELF_FD = Paths.get("/proc/self/fd");
-    private static final Path PROC_SELF_LIMITS = Paths.get("/proc/self/limits");
 
     private final java.lang.management.OperatingSystemMXBean osMXBean;
     private final OperatingSystemMXBean sunOsMXBean;
@@ -120,17 +117,17 @@ public class OsMonitor implements MetricsSampler {
             }
         }
 
-        long uptime = readHostUptimeMillis();
+        long uptime = Platform.host().uptimeMillis();
         if (uptime > 0) {
             sink.put("host.uptime", uptime);
         }
         sink.put("host.process.pid", ProcessHandle.current().pid());
 
-        int descriptors = countOpenFileDescriptors();
+        int descriptors = Platform.host().openFileDescriptorCount();
         if (descriptors >= 0) {
             sink.put("host.file.descriptors", descriptors);
         }
-        long limit = readFileDescriptorLimit();
+        long limit = Platform.host().fileDescriptorLimit();
         if (limit > 0) {
             sink.put("host.file.descriptors.limit", limit);
         }
@@ -141,93 +138,5 @@ public class OsMonitor implements MetricsSampler {
         sink.attribute("host.os.version", osMXBean.getVersion());
         sink.attribute("host.user.dir", System.getProperty("user.dir"));
         sink.attribute("host.java.version", System.getProperty("java.version"));
-    }
-
-    /**
-     * 读取宿主机运行时长。
-     *
-     * @return long类型返回值，非 Linux 或读取失败时返回 -1
-     */
-    private static long readHostUptimeMillis() {
-        String content = readFirstLine(PROC_UPTIME);
-        if (content == null) {
-            return -1;
-        }
-        return parseHostUptimeMillis(content);
-    }
-
-    /**
-     * 解析 {@code /proc/uptime} 的内容（秒 + 空闲秒）。
-     *
-     * @param content String类型参数
-     *
-     * @return long类型返回值，毫秒；解析不了时返回 -1
-     */
-    static long parseHostUptimeMillis(String content) {
-        if (content == null) {
-            return -1;
-        }
-        int space = content.indexOf(' ');
-        try {
-            double seconds = Double.parseDouble(space > 0 ? content.substring(0, space) : content.trim());
-            return (long) (seconds * 1000);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-
-    private static int countOpenFileDescriptors() {
-        if (!Files.isDirectory(PROC_SELF_FD)) {
-            return -1;
-        }
-        try (java.util.stream.Stream<Path> stream = Files.list(PROC_SELF_FD)) {
-            return (int) stream.count();
-        } catch (IOException e) {
-            return -1;
-        }
-    }
-
-    private static long readFileDescriptorLimit() {
-        return parseFileDescriptorLimit(readLines(PROC_SELF_LIMITS));
-    }
-
-    /**
-     * 解析 {@code /proc/self/limits} 里的文件描述符上限。
-     *
-     * @param lines ListString类型参数
-     *
-     * @return long类型返回值，读不到时返回 -1
-     */
-    static long parseFileDescriptorLimit(List<String> lines) {
-        for (String line : lines) {
-            if (!line.startsWith("Max open files")) {
-                continue;
-            }
-            String[] parts = line.replaceAll("^[^\\d]*", "").trim().split("\\s+");
-            if (parts.length > 0) {
-                try {
-                    return Long.parseLong(parts[0]);
-                } catch (NumberFormatException e) {
-                    return -1;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private static String readFirstLine(Path path) {
-        List<String> lines = readLines(path);
-        return lines.isEmpty() ? null : lines.get(0);
-    }
-
-    private static List<String> readLines(Path path) {
-        if (!Files.isReadable(path)) {
-            return Collections.emptyList();
-        }
-        try {
-            return Files.readAllLines(path, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return Collections.emptyList();
-        }
     }
 }

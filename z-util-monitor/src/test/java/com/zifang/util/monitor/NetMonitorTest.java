@@ -39,8 +39,8 @@ class NetMonitorTest {
     /**
      * testSecondSampleProducesRate方法。
      * <p>
-     * 速率依赖累计字节，而累计字节读自 {@code /proc/net/dev} —— 非 Linux 平台
-     * 没有这个文件，因此只在能读到累计量时才断言速率存在。
+     * 速率依赖累计字节，而累计字节读自平台探针 —— 不支持的平台上探针
+     * 返回空 Map，因此只在能读到累计量时才断言速率存在。
      * </p>
      */
     void testSecondSampleProducesRate() {

@@ -1,4 +1,4 @@
-package com.zifang.util.monitor.net;
+package com.zifang.util.monitor.platform;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,16 +7,15 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Linux {@code /proc} 解析测试。
+ * Linux 网络探针的纯解析测试。
  * <p>
- * 这些解析路径只在 Linux 上生效，macOS / Windows 的开发机跑不到，
- * 因此用真实的 {@code /proc} 文本样例直接验证解析逻辑。
+ * 用 {@code /proc} 文本样例直接验证解析逻辑，重点校验十六进制状态码
+ * 被翻译成归一化状态名。
  * </p>
  */
-class ProcParsingTest {
+class LinuxNetProbeTest {
 
     private static final List<String> NET_DEV = Arrays.asList(
             "Inter-|   Receive                                                |  Transmit",
@@ -36,7 +35,7 @@ class ProcParsingTest {
      * testParseInterfaceCounters方法。
      */
     void testParseInterfaceCounters() {
-        Map<String, long[]> counters = NetMonitor.parseInterfaceCounters(NET_DEV);
+        Map<String, long[]> counters = LinuxNetProbe.parseInterfaceCounters(NET_DEV);
 
         assertEquals(2, counters.size());
         long[] lo = counters.get("lo");
@@ -57,7 +56,7 @@ class ProcParsingTest {
      * testParseInterfaceCountersSkipsMalformedLines方法。
      */
     void testParseInterfaceCountersSkipsMalformedLines() {
-        Map<String, long[]> counters = NetMonitor.parseInterfaceCounters(Arrays.asList(
+        Map<String, long[]> counters = LinuxNetProbe.parseInterfaceCounters(Arrays.asList(
                 "Inter-|   Receive |  Transmit",
                 " face |bytes packets",
                 "  bad: not a number",
@@ -70,25 +69,15 @@ class ProcParsingTest {
 
     @Test
     /**
-     * testParseTcpStates方法。
+     * testParseTcpStatesMapsHexToNames方法。
      */
-    void testParseTcpStates() {
-        Map<String, Integer> states = NetMonitor.parseTcpStates(NET_TCP);
+    void testParseTcpStatesMapsHexToNames() {
+        Map<String, Integer> states = LinuxNetProbe.parseTcpStates(NET_TCP);
 
-        assertEquals(1, states.get("0A"));
-        assertEquals(1, states.get("01"));
-        assertEquals(1, states.get("06"));
-        assertEquals(1, states.get("08"));
+        assertEquals(1, states.get(NetStatsProbe.STATE_LISTEN));
+        assertEquals(1, states.get(NetStatsProbe.STATE_ESTABLISHED));
+        assertEquals(1, states.get(NetStatsProbe.STATE_TIME_WAIT));
+        assertEquals(1, states.get(NetStatsProbe.STATE_CLOSE_WAIT));
         assertEquals(4, states.size());
-    }
-
-    @Test
-    /**
-     * testSanitizeMethod方法。
-     */
-    void testSanitizeMethod() {
-        assertEquals("eth0", NetMonitor.sanitize("eth0"));
-        assertEquals("br_1234", NetMonitor.sanitize("br-1234"));
-        assertEquals("veth_abc_def", NetMonitor.sanitize("veth.abc_def"));
     }
 }
