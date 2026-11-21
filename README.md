@@ -167,6 +167,7 @@ POI/PDFBox 路线的 `z-util-office` 已从仓库删除（模块目录、根 pom
 | `z-util-doc-txt` | `TxtDocReader`：纯文本按空行分段，UTF-8 严格解码失败回退 GBK |
 | `z-util-doc-docx` | `DocxDocReader`：OOXML（zip+DOM，禁 DTD 防 XXE）；标题样式/numPr 列表/表格 gridSpan/图片 rels/core.xml 元数据 |
 | `z-util-doc-epub` | `EpubDocReader`：container.xml→OPF→spine 顺序解析 XHTML 章节，h1-h6/列表/表格/图片/行内样式 |
+| `z-util-doc-html` | `HtmlDocReader`：零依赖 HTML（不用 jsoup），h1-h6/内联样式/嵌套列表/表格 th·colspan·rowspan/引用/pre 语言标注/50 实体/meta 提取/GBK 等声明解码，宽容未闭合标签与裸属性 |
 | `z-util-doc-word` | `WordDocReader`：二进制 Word 97-2003（FIB/CLX piece table、CHPX/PAPX sprm、STSH 样式继承、域指令丢弃、列表定义与计数渲染编号文本、表格纵向合并（TC80 fVertMerge/fVertRestart）、OfficeArt 图片、页眉页脚/脚注/批注、SummaryInformation 元数据） |
 | `z-util-doc-xlsx` | `XlsxDocReader` + `XlsxWriter`：OOXML 表格读写（共享字符串/内联字符串/公式/日期序列号/合并单元格/隐藏表）；写入器零依赖产出 Excel/WPS 可开的工作簿 |
 | `z-util-doc-pptx` | `PptxDocReader`：OOXML 演示文稿（sldIdLst 顺序、形状文本与加粗斜体、a:tbl 表格、p:pic 图片、备注页） |

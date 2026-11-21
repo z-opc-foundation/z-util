@@ -27,6 +27,7 @@
         <module>z-util-doc-xls</module>
         <module>z-util-doc-rtf</module>
         <module>z-util-doc-odf</module>
+        <module>z-util-doc-html</module>
     </modules>
 
 </project>
