@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   build:
-    name: JDK 8 compile + test
+    name: JDK 17 compile + test
     # ⚠️ 刻意**固定** ubuntu-26.04，不用 ubuntu-latest。
     # 官方 runner-images 公告：`ubuntu-latest` 将切到 Ubuntu 26.04
     # （公告写 November 2026，CI 的 annotation 写 October 19，两处日期不一致），
@@ -44,11 +44,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         uses: actions/setup-java@v6
         with:
           distribution: corretto
-          java-version: '8'
+          # 2026-11-21 修正：compile.version 早已升到 17（java17 火车），workflow 还钉在 8，
+          # 于是每次 push 都「invalid target release: 17」——build workflow 长期假红，
+          # 把真正的回归信号埋掉了。升到 17 与仓库口径对齐。
+          java-version: '17'
           cache: maven
 
       - name: Guard — no cross-module duplicate classes
