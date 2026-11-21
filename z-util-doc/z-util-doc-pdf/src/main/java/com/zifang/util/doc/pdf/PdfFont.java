@@ -89,17 +89,17 @@ public final class PdfFont {
         return new ToUnicodeCMap();
     }
 
-    /** /W 数组：[c [w...] | c1 c2 w] 两种形态。 */
+    /** /W 数组：[c [w...] | c1 c2 w] 两种形态；数组本体也可能是间接对象。 */
     private static Map<Integer, double[]> loadCidWidths(PdfParser parser, PdfDict fontDict) {
         Map<Integer, double[]> result = new HashMap<>();
-        List<Object> w = fontDict.getArray("W");
+        List<Object> w = PdfDict.resolveList(parser.unref(fontDict.getRaw("W")), parser::unref);
         if (w == null) {
             // Type0 的宽度在 DescendantFonts[0] 上
             List<Object> dfs = fontDict.getArray("DescendantFonts");
             if (dfs != null && !dfs.isEmpty() && dfs.get(0) instanceof PdfRef r) {
                 PdfDict df = parser.getDict(r.obj);
                 if (df != null) {
-                    w = df.getArray("W");
+                    w = PdfDict.resolveList(parser.unref(df.getRaw("W")), parser::unref);
                 }
             }
         }

@@ -80,4 +80,15 @@ class PdfDocReaderTest {
     private static String plainText(DocDocument doc) {
         return doc.toPlainText();
     }
+
+    @Test
+    void readsPageTreeWithIndirectKids() throws IOException {
+        // 真实世界书件（495 页中文书）踩到的病灶：/Pages 的 /Kids 数组本身是间接对象
+        try (java.io.InputStream in = getClass().getResourceAsStream("/corpus/indirect-kids.pdf")) {
+            org.junit.jupiter.api.Assertions.assertNotNull(in, "corpus 缺失: indirect-kids.pdf");
+            DocDocument doc = reader.read(in.readAllBytes());
+            assertEquals(1, doc.getMeta().getPageCount());
+            assertTrue(plainText(doc).contains("Hello indirect kids"), plainText(doc));
+        }
+    }
 }

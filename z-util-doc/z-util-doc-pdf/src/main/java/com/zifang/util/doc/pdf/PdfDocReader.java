@@ -64,7 +64,8 @@ public class PdfDocReader implements DocReader {
             pages.add(node);
             return;
         }
-        List<Object> kids = node.getArray("Kids");
+        // /Kids 本身可能是间接对象（常见于增量更新/特定写出器），必须先解引用
+        List<Object> kids = PdfDict.resolveList(parser.unref(node.getRaw("Kids")), parser::unref);
         if (kids != null) {
             for (Object k : kids) {
                 PdfDict kid = parser.dict(k);
