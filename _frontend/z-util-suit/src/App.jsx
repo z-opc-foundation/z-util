@@ -42,6 +42,7 @@ function ProtectedShell() {
         <AppLayout
             menuItems={menuItems}
             appTitle="util 服务台"
+            appShort="z-util"
             appVersion={appVersion}
             appUser={user}
             appIcon={{ icon: <img src="/icon.png" alt="util 服务台" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}/>, color: '#64748b', label: 'util 服务台' }}
