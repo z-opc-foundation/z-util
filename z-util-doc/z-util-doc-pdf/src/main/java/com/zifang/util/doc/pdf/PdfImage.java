@@ -313,7 +313,7 @@ final class PdfImage {
         return false;
     }
 
-    /** 判断滤镜链里是否含当前无法解码的编码（JPX = JPEG2000）。 */
+    /** 判断滤镜链里是否含当前无法解码的编码（JPX = JPEG2000、JBIG2）。 */
     static boolean hasUnsupportedFilter(PdfDict img, PdfDict.RefResolver resolver) {
         Object filter = PdfDict.resolve(img.getRaw("Filter"), resolver, 8);
         List<?> list;
@@ -325,8 +325,7 @@ final class PdfImage {
             return false;
         }
         for (Object o : list) {
-            if (o instanceof PdfName n && ("JPXDecode".equals(n.name) || "CCITTFaxDecode".equals(n.name)
-                    || "JBIG2Decode".equals(n.name))) {
+            if (o instanceof PdfName n && ("JPXDecode".equals(n.name) || "JBIG2Decode".equals(n.name))) {
                 return true;
             }
         }

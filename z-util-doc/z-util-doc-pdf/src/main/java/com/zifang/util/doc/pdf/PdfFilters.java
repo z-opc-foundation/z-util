@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-/** PDF 流过滤器：Flate / LZW / ASCIIHex / ASCII85 / RunLength + PNG 预测器还原。 */
+/** PDF 流过滤器：Flate / LZW / ASCIIHex / ASCII85 / RunLength / CCITTFax（G3 1D/2D、G4）+ PNG 预测器还原。 */
 public final class PdfFilters {
 
     private PdfFilters() {
@@ -58,6 +58,7 @@ public final class PdfFilters {
             case "ASCIIHexDecode" -> asciiHex(data);
             case "ASCII85Decode" -> ascii85(data);
             case "RunLengthDecode" -> runLength(data);
+            case "CCITTFaxDecode" -> CcittFax.decode(data, parms);
             default -> data;
         };
         if (parms != null) {

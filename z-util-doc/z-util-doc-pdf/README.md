@@ -11,6 +11,8 @@
 - 字体：`PdfFont` —— 简单字体（1 字节码，Cp1252 兜底）、Type0/CID（2 字节码）与 Type3（按 /FontMatrix 换算字宽），`/Widths`、`/W`、ToUnicode CMap（`ToUnicodeCMap`，bfchar/bfrange）。
 - 图片：`PdfImage` —— DCTDecode 原样输出 JPEG；其余滤镜解出裸采样后按色彩空间重新封装成 PNG
   （DeviceGray/DeviceRGB/DeviceCMYK/ICCBased/Indexed，CMYK 转 RGB，/SMask 补 alpha 通道，位深 1/2/4/8/16）。
+- CCITT：`CcittFax` —— G3 一维（K=0）、G3 二维（K>0）与 G4（K=-1，T.6 全模式），
+  支持 /EncodedByteAlign /EndOfLine /EndOfBlock /Rows /BlackIs1；位流损坏按行补白收尾。
 - 版面：`LayoutAssembler` —— 字号定正文/标题（字号直方图，行数优先）、行距并段、bullet/编号识别、x 对齐简易表格、图片按页追加。
 
 ## 版面拼接规则
@@ -21,7 +23,7 @@
 ## 能力边界
 - 加密 PDF 不支持；CID 字体无 ToUnicode 时提取为空。
 - 表格是坐标聚类的简化版，复杂合并单元格/无线表格识别留给上层（MinerU 形态）。
-- 图片：JPXDecode（JPEG2000）、CCITTFax、JBIG2 不解码；DIB 位图不封装。
+- 图片：JPXDecode（JPEG2000）、JBIG2 不解码；DIB 位图不封装。
 - 内联图片（`BI...ID...EI`）跳过，只取 XObject 图片。
 - 不做矢量绘图还原（路径、填充、描边）。
 
